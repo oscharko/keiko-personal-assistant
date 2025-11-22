@@ -1,0 +1,124 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "keiko-personal-assistant"
+version = "1.0.0"
+description = "Keiko is a personal assistant for professionals."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["personal-assistant", "ai", "productivity"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business",
+]
+authors = [
+    { name = "Leroy Anozie", email = "leroy.anozie@x1f.one" },
+    { name = "Dr. Leschek Homann", email = "leschek.homann@x1f.one" },
+    { name = "Oliver Scharkowski", email = "oliver.scharkowski@itgain.de" }
+]
+
+[project.urls]
+Homepage = "https://github.com/oscharko/keiko-personal-assistant"
+Repository = "https://github.com/oscharko/keiko-personal-assistant"
+Issues = "https://github.com/oscharko/keiko-personal-assistant/issues"
+
+[project.dependencies]
+# Add your runtime dependencies here
+# Example: "requests>=2.31.0"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+src = ["app/backend", "scripts", "app/functions"]
+
+[tool.ruff.lint]
+# Enable additional rule categories for better code quality
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "PTH", # flake8-use-pathlib
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "E701",  # multiple statements on one line
+    "UP045", # use of deprecated syntax
+]
+
+[tool.ruff.lint.isort]
+known-local-folder = ["scripts"]
+
+[tool.ruff.format]
+# Use ruff formatter instead of black
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+pythonpath = ["app/backend", "scripts", "app/functions"]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+source = ["scripts", "app"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+skip_covered = false
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.mypy]
+check_untyped_defs = true
+python_version = "3.10"
+
+[[tool.mypy.overrides]]
+module = [
+    "msal.*",
+    "msgraph.*",
+    "kiota_abstractions.*",
+    "kiota.*",
+    "azure.cognitiveservices.*",
+    "azure.cognitiveservices.speech.*",
+    "pymupdf.*",
+]
+ignore_missing_imports = true
