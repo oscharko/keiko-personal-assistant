@@ -1,22 +1,23 @@
-import { History24Regular } from "@fluentui/react-icons";
-import { Button } from "@fluentui/react-components";
+import { ChevronDown24Regular, ChevronRight24Regular, History24Regular } from "@fluentui/react-icons";
 import { useTranslation } from "react-i18next";
 
 import styles from "./HistoryButton.module.css";
 
 interface Props {
     className?: string;
-    onClick: () => void;
     disabled?: boolean;
+    isOpen?: boolean;
+    label?: string;
+    onClick: () => void;
 }
 
-export const HistoryButton = ({ className, disabled, onClick }: Props) => {
+export const HistoryButton = ({ className, disabled, isOpen = false, label, onClick }: Props) => {
     const { t } = useTranslation();
     return (
-        <div className={`${styles.container} ${className ?? ""}`}>
-            <Button icon={<History24Regular />} disabled={disabled} onClick={onClick}>
-                {t("history.openChatHistory")}
-            </Button>
-        </div>
+        <button type="button" className={`${styles.container} ${className ?? ""}`} disabled={disabled} onClick={onClick}>
+            {/*<History24Regular className={styles.icon} />*/}
+            <span className={styles.label}>{label ?? t("history.openChatHistory")}</span>
+            <span className={styles.chevron}>{isOpen ? <ChevronDown24Regular /> : <ChevronRight24Regular />}</span>
+        </button>
     );
 };

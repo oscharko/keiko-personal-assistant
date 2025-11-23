@@ -41,7 +41,7 @@ import { UserChatMessage } from "../../components/UserChatMessage";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
 import { HistoryPanel } from "../../components/HistoryPanel";
 import { HistoryProviderOptions, useHistoryManager } from "../../components/HistoryProviders";
-import { HistoryButton } from "../../components/HistoryButton";
+import { HISTORY_SELECT_EVENT } from "../../components/HistoryProviders/events";
 import { SettingsButton } from "../../components/SettingsButton";
 import { ClearChatButton } from "../../components/ClearChatButton";
 import { UploadFile } from "../../components/UploadFile";
@@ -359,6 +359,34 @@ const Chat = () => {
         updateStreamingPreference(streamingEnabled, streamingDisabledByOverrides);
     }, [streamingDisabledByOverrides, streamingEnabled]);
 
+    useEffect(() => {
+        const handleHistorySelect = async (event: Event) => {
+            if (!((useLogin && showChatHistoryCosmos) || showChatHistoryBrowser)) return;
+            const detail = (event as CustomEvent<{ id?: string }>).detail;
+            const id = detail?.id;
+            if (!id) return;
+            const token = client ? await getToken(client) : undefined;
+            const storedAnswers = await historyManager.getItem(id, token);
+            if (!storedAnswers || storedAnswers.length === 0) return;
+            setAnswers(storedAnswers);
+            setSpeechUrls(new Array(storedAnswers.length).fill(null));
+            setStreamedAnswers([]);
+            setActiveCitation(undefined);
+            setActiveAnalysisPanelTab(undefined);
+            setError(undefined);
+            setIsHistoryPanelOpen(false);
+            setIsStreaming(false);
+            setIsLoading(false);
+            lastQuestionRef.current = storedAnswers[storedAnswers.length - 1][0];
+            chatMessageStreamEnd.current?.scrollIntoView({ behavior: "auto" });
+        };
+
+        window.addEventListener(HISTORY_SELECT_EVENT, handleHistorySelect as EventListener);
+        return () => {
+            window.removeEventListener(HISTORY_SELECT_EVENT, handleHistorySelect as EventListener);
+        };
+    }, [client, historyManager, showChatHistoryBrowser, showChatHistoryCosmos]);
+
     const handleSettingsChange = (field: string, value: any) => {
         switch (field) {
             case "promptTemplate":
@@ -508,11 +536,11 @@ const Chat = () => {
                 <title>{t("pageTitle")}</title>
             </Helmet>
             <div className={styles.commandsSplitContainer}>
-                <div className={styles.commandsContainer}>
+{/*                <div className={styles.commandsContainer}>
                     {((useLogin && showChatHistoryCosmos) || showChatHistoryBrowser) && (
                         <HistoryButton className={styles.commandButton} onClick={() => setIsHistoryPanelOpen(!isHistoryPanelOpen)} />
                     )}
-                </div>
+                </div>*/}
                 <div className={styles.commandsContainer}>
                     <ClearChatButton className={styles.commandButton} onClick={clearChat} disabled={!lastQuestionRef.current || isLoading} />
                     {showUserUpload && <UploadFile className={styles.commandButton} disabled={!loggedIn} />}
