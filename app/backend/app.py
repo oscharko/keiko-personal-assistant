@@ -112,6 +112,7 @@ bp = Blueprint("routes", __name__, static_folder="static")
 # Fix Windows registry issue with mimetypes
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 
 @bp.route("/")
@@ -134,6 +135,42 @@ async def favicon():
 @bp.route("/assets/<path:path>")
 async def assets(path):
     return await send_from_directory(Path(__file__).resolve().parent / "static" / "assets", path)
+
+
+# Serve manifest and icon files
+@bp.route("/site.webmanifest")
+async def webmanifest():
+    return await bp.send_static_file("site.webmanifest")
+
+
+@bp.route("/apple-touch-icon.png")
+async def apple_touch_icon():
+    return await bp.send_static_file("apple-touch-icon.png")
+
+
+@bp.route("/favicon-16x16.png")
+async def favicon_16():
+    return await bp.send_static_file("favicon-16x16.png")
+
+
+@bp.route("/favicon-32x32.png")
+async def favicon_32():
+    return await bp.send_static_file("favicon-32x32.png")
+
+
+@bp.route("/favicon.svg")
+async def favicon_svg():
+    return await bp.send_static_file("favicon.svg")
+
+
+@bp.route("/android-chrome-192x192.png")
+async def android_chrome_192():
+    return await bp.send_static_file("android-chrome-192x192.png")
+
+
+@bp.route("/android-chrome-512x512.png")
+async def android_chrome_512():
+    return await bp.send_static_file("android-chrome-512x512.png")
 
 
 @bp.route("/content/<path>")
