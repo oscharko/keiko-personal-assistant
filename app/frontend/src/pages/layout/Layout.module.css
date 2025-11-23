@@ -11,8 +11,20 @@
 .main {
     display: flex;
     flex: 1;
-    min-height: 0; /* allow inner scroll areas to work inside flex container */
+    min-height: 0;
+    /* allow inner scroll areas to work inside flex container */
     overflow: hidden;
+    position: relative;
+    /* Ensure it contains absolute children if any */
+}
+
+.contentContainer {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    z-index: 0;
+    /* Ensure it's below header if needed, but header is usually separate */
 }
 
 .header {
@@ -61,7 +73,8 @@
 }
 
 .headerNavList.show {
-    display: flex; /* Show when toggled */
+    display: flex;
+    /* Show when toggled */
 }
 
 .headerNavPageLink {

@@ -1,30 +1,28 @@
-import React, {RefObject, useEffect, useRef, useState} from "react";
-import {Link, NavLink, Outlet} from "react-router-dom";
-import {useTranslation} from "react-i18next";
+import React, { RefObject, useEffect, useRef, useState } from "react";
+import { Link, NavLink, Outlet } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import styles from "./Layout.module.css";
 
-import {useLogin} from "../../authConfig";
+import { useLogin } from "../../authConfig";
 
-import {LoginButton} from "../../components/LoginButton";
-import {IconButton} from "@fluentui/react";
-import {motion} from "framer-motion";
+import { LoginButton } from "../../components/LoginButton";
+import { IconButton } from "@fluentui/react";
+import { motion } from "framer-motion";
+import Sidebar from "../../components/Sidebar/Sidebar";
 
 const Layout = () => {
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     const [menuOpen, setMenuOpen] = useState(false);
     const [isBetaAuth, setIsBetaAuth] = useState(false);
     const menuRef: RefObject<HTMLDivElement> = useRef(null);
 
-    const FloatingPaths = ({position}: { position: number }) => {
-        const paths = Array.from({length: 30}, (_, i) => ({
+    const FloatingPaths = ({ position }: { position: number }) => {
+        const paths = Array.from({ length: 30 }, (_, i) => ({
             id: i,
-            d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${
-                380 - i * 5 * position
-            } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${
-                152 - i * 5 * position
-            } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${
-                684 - i * 5 * position
-            } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
+            d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position
+                } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position
+                } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position
+                } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
             color: `rgba(15,23,42,${0.1 + i * 0.03})`,
             width: 0.5 + i * 0.03,
         }));
@@ -39,7 +37,7 @@ const Layout = () => {
                             stroke='currentColor'
                             strokeWidth={path.width}
                             strokeOpacity={0.1 + path.id * 0.03}
-                            initial={{pathLength: 0.3, opacity: 0.6}}
+                            initial={{ pathLength: 0.3, opacity: 0.6 }}
                             animate={{
                                 pathLength: 1,
                                 opacity: [0.3, 0.6, 0.3],
@@ -103,8 +101,8 @@ const Layout = () => {
     return (
         <>
             <div className={styles.floatingPaths}>
-                <FloatingPaths position={-1}/>
-                <FloatingPaths position={1}/>
+                <FloatingPaths position={-1} />
+                <FloatingPaths position={1} />
             </div>
             <div className={styles.layout}>
                 <header className={styles.header} role={"banner"}>
@@ -112,7 +110,7 @@ const Layout = () => {
                         <Link to="/" className={styles.headerTitleContainer}>
                             <h3 className={styles.headerTitle}>{t("headerTitle")}</h3>
                         </Link>
-{/*                        <nav>
+                        {/*                        <nav>
                             <ul className={`${styles.headerNavList} ${menuOpen ? styles.show : ""}`}>
                                 <li>
                                     <NavLink
@@ -135,10 +133,10 @@ const Layout = () => {
                             </ul>
                         </nav>*/}
                         <div className={styles.loginMenuContainer}>
-                            {useLogin && <LoginButton/>}
+                            {useLogin && <LoginButton />}
                             {isBetaAuth && (
                                 <IconButton
-                                    iconProps={{iconName: "SignOut"}}
+                                    iconProps={{ iconName: "SignOut" }}
                                     title={t("logout")}
                                     ariaLabel={t("logout")}
                                     onClick={handleLogout}
@@ -158,7 +156,7 @@ const Layout = () => {
                                 />
                             )}
                             <IconButton
-                                iconProps={{iconName: "GlobalNavButton"}}
+                                iconProps={{ iconName: "GlobalNavButton" }}
                                 className={styles.menuToggle}
                                 onClick={toggleMenu}
                                 ariaLabel={t("labels.toggleMenu")}
@@ -167,10 +165,13 @@ const Layout = () => {
                     </div>
                 </header>
 
-                <main className={styles.main} id="main-content">
-                    <Outlet/>
-                </main>
-            </div>
+                <div className={styles.contentContainer}>
+                    <Sidebar />
+                    <main className={styles.main} id="main-content">
+                        <Outlet />
+                    </main>
+                </div>
+            </div >
         </>
     );
 };
