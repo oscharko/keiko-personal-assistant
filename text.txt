@@ -1,0 +1,12 @@
+Feature	Status
+✅ Client-side Chat History	AKTIVIERT
+✅ Language Picker	AKTIVIERT
+✅ Speech Input (Browser)	AKTIVIERT
+✅ Speech Output (Browser)	AKTIVIERT
+✅ Query Rewriting	AKTIVIERT
+✅ Semantic Ranker	AKTIVIERT
+
+Login-Tests - Alle erfolgreich:
+tester1@keiko.de / TestPass123! - Token erfolgreich generiert
+tester2@keiko.de / BetaTest2025! - Token erfolgreich generiert
+demo@keiko.de / DemoKeiko2025! - Token erfolgreich generiert

@@ -1,0 +1,35 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.loginBox {
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    min-width: 400px;
+    max-width: 500px;
+}
+
+.title {
+    text-align: center;
+    color: #333;
+    font-weight: 600;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-top: -10px;
+}
+
+.info {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
