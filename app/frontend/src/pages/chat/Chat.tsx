@@ -1,7 +1,34 @@
-import { useRef, useState, useEffect, useContext } from "react";
-import { useTranslation } from "react-i18next";
-import { Helmet } from "react-helmet-async";
-import { Panel, DefaultButton } from "@fluentui/react";
+import {useCallback, useContext, useEffect, useRef, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {Helmet} from "react-helmet-async";
+import {DefaultButton, Panel} from "@fluentui/react";
+import keikoLogo from "../../assets/Logo_Keiko_DCFF4A.svg";
+import styles from "./Chat.module.css";
+
+import {
+    chatApi,
+    ChatAppRequest,
+    ChatAppResponse,
+    ChatAppResponseOrError,
+    configApi,
+    ResponseMessage,
+    RetrievalMode,
+    SpeechConfig
+} from "../../api";
+import {Answer, AnswerError, AnswerLoading} from "../../components/Answer";
+import {QuestionInput} from "../../components/QuestionInput";
+import {UserChatMessage} from "../../components/UserChatMessage";
+import {AnalysisPanel, AnalysisPanelTabs} from "../../components/AnalysisPanel";
+import {HistoryPanel} from "../../components/HistoryPanel";
+import {HistoryProviderOptions, useHistoryManager} from "../../components/HistoryProviders";
+import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../../components/HistoryProviders/events";
+import {UploadFile} from "../../components/UploadFile";
+import {getToken, requireAccessControl, useLogin} from "../../authConfig";
+import {useMsal} from "@azure/msal-react";
+import {TokenClaimsDisplay} from "../../components/TokenClaimsDisplay";
+import {LoginContext} from "../../loginContext";
+import {LanguagePicker} from "../../i18n/LanguagePicker";
+import {Settings} from "../../components/Settings/Settings";
 
 async function* readNDJSONStream(reader: ReadableStream<any>) {
     const textDecoder = new TextDecoder();
@@ -10,10 +37,10 @@ async function* readNDJSONStream(reader: ReadableStream<any>) {
 
     try {
         while (true) {
-            const { done, value } = await streamReader.read();
+            const {done, value} = await streamReader.read();
             if (done) break;
 
-            buffer += textDecoder.decode(value, { stream: true });
+            buffer += textDecoder.decode(value, {stream: true});
             const lines = buffer.split("\n");
             buffer = lines.pop() || "";
 
@@ -30,27 +57,6 @@ async function* readNDJSONStream(reader: ReadableStream<any>) {
         streamReader.releaseLock();
     }
 }
-
-import keikoLogo from "../../assets/Logo_Keiko_DCFF4A.svg";
-import styles from "./Chat.module.css";
-
-import { chatApi, configApi, RetrievalMode, ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, ResponseMessage, SpeechConfig } from "../../api";
-import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
-import { QuestionInput } from "../../components/QuestionInput";
-import { UserChatMessage } from "../../components/UserChatMessage";
-import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
-import { HistoryPanel } from "../../components/HistoryPanel";
-import { HistoryProviderOptions, useHistoryManager } from "../../components/HistoryProviders";
-import { HISTORY_SELECT_EVENT } from "../../components/HistoryProviders/events";
-import { SettingsButton } from "../../components/SettingsButton";
-import { ClearChatButton } from "../../components/ClearChatButton";
-import { UploadFile } from "../../components/UploadFile";
-import { useLogin, getToken, requireAccessControl } from "../../authConfig";
-import { useMsal } from "@azure/msal-react";
-import { TokenClaimsDisplay } from "../../components/TokenClaimsDisplay";
-import { LoginContext } from "../../loginContext";
-import { LanguagePicker } from "../../i18n/LanguagePicker";
-import { Settings } from "../../components/Settings/Settings";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
@@ -181,7 +187,7 @@ const Chat = () => {
                     answer += newContent;
                     const latestResponse: ChatAppResponse = {
                         ...askResponse,
-                        message: { content: answer, role: askResponse.message.role }
+                        message: {content: answer, role: askResponse.message.role}
                     };
                     setStreamedAnswers([...answers, [question, latestResponse]]);
                     resolve(null);
@@ -199,7 +205,7 @@ const Chat = () => {
                     await updateState(event["delta"]["content"]);
                 } else if (event["context"]) {
                     // Update context with new keys from latest event
-                    askResponse.context = { ...askResponse.context, ...event["context"] };
+                    askResponse.context = {...askResponse.context, ...event["context"]};
                 } else if (event["error"]) {
                     throw Error(event["error"]);
                 }
@@ -209,13 +215,13 @@ const Chat = () => {
         }
         const fullResponse: ChatAppResponse = {
             ...askResponse,
-            message: { content: answer, role: askResponse.message.role }
+            message: {content: answer, role: askResponse.message.role}
         };
         return fullResponse;
     };
 
     const client = useLogin ? useMsal().instance : undefined;
-    const { loggedIn } = useContext(LoginContext);
+    const {loggedIn} = useContext(LoginContext);
 
     const historyProvider: HistoryProviderOptions = (() => {
         if (useLogin && showChatHistoryCosmos) return HistoryProviderOptions.CosmosDB;
@@ -266,19 +272,19 @@ const Chat = () => {
 
         try {
             const messages: ResponseMessage[] = answers.flatMap(a => [
-                { content: a[0], role: "user" },
-                { content: a[1].message.content, role: "assistant" }
+                {content: a[0], role: "user"},
+                {content: a[1].message.content, role: "assistant"}
             ]);
 
             const request: ChatAppRequest = {
-                messages: [...messages, { content: question, role: "user" }],
+                messages: [...messages, {content: question, role: "user"}],
                 context: {
                     overrides: {
                         prompt_template: promptTemplate.length === 0 ? undefined : promptTemplate,
                         include_category: includeCategory.length === 0 ? undefined : includeCategory,
                         exclude_category: excludeCategory.length === 0 ? undefined : excludeCategory,
                         top: retrieveCount,
-                        ...(useAgenticKnowledgeBase ? { retrieval_reasoning_effort: agenticReasoningEffort } : {}),
+                        ...(useAgenticKnowledgeBase ? {retrieval_reasoning_effort: agenticReasoningEffort} : {}),
                         temperature: temperature,
                         minimum_reranker_score: minimumRerankerScore,
                         minimum_search_score: minimumSearchScore,
@@ -296,7 +302,7 @@ const Chat = () => {
                         use_agentic_knowledgebase: useAgenticKnowledgeBase,
                         use_web_source: webSourceSupported ? webSourceEnabled : false,
                         use_sharepoint_source: sharePointSourceSupported ? sharePointSourceEnabled : false,
-                        ...(seed !== null ? { seed: seed } : {})
+                        ...(seed !== null ? {seed: seed} : {})
                     }
                 },
                 // AI Chat Protocol: Client must pass on any session state received from the server
@@ -336,7 +342,7 @@ const Chat = () => {
         }
     };
 
-    const clearChat = () => {
+    const clearChat = useCallback(() => {
         lastQuestionRef.current = "";
         error && setError(undefined);
         setActiveCitation(undefined);
@@ -346,10 +352,16 @@ const Chat = () => {
         setStreamedAnswers([]);
         setIsLoading(false);
         setIsStreaming(false);
-    };
+    }, [error]);
 
-    useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading]);
-    useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "auto" }), [streamedAnswers]);
+    useEffect(() => {
+        const onClearChat = () => clearChat();
+        window.addEventListener(CLEAR_CHAT_EVENT, onClearChat);
+        return () => window.removeEventListener(CLEAR_CHAT_EVENT, onClearChat);
+    }, [clearChat]);
+
+    useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({behavior: "smooth"}), [isLoading]);
+    useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({behavior: "auto"}), [streamedAnswers]);
     useEffect(() => {
         getConfig();
     }, []);
@@ -378,7 +390,7 @@ const Chat = () => {
             setIsStreaming(false);
             setIsLoading(false);
             lastQuestionRef.current = storedAnswers[storedAnswers.length - 1][0];
-            chatMessageStreamEnd.current?.scrollIntoView({ behavior: "auto" });
+            chatMessageStreamEnd.current?.scrollIntoView({behavior: "auto"});
         };
 
         window.addEventListener(HISTORY_SELECT_EVENT, handleHistorySelect as EventListener);
@@ -436,13 +448,12 @@ const Chat = () => {
             case "includeCategory":
                 setIncludeCategory(value);
                 break;
-            case "shouldStream":
-                {
-                    const normalizedShouldStream = !!value;
-                    forcedStreamingRef.current = false;
-                    previousShouldStreamRef.current = normalizedShouldStream;
-                    setShouldStream(normalizedShouldStream);
-                }
+            case "shouldStream": {
+                const normalizedShouldStream = !!value;
+                forcedStreamingRef.current = false;
+                previousShouldStreamRef.current = normalizedShouldStream;
+                setShouldStream(normalizedShouldStream);
+            }
                 break;
             case "useSuggestFollowupQuestions":
                 setUseSuggestFollowupQuestions(value);
@@ -502,10 +513,6 @@ const Chat = () => {
         }
     };
 
-    const onExampleClicked = (example: string) => {
-        makeApiRequest(example);
-    };
-
     const onShowCitation = (citation: string, index: number) => {
         if (activeCitation === citation && activeAnalysisPanelTab === AnalysisPanelTabs.CitationTab && selectedAnswer === index) {
             setActiveAnalysisPanelTab(undefined);
@@ -527,7 +534,13 @@ const Chat = () => {
         setSelectedAnswer(index);
     };
 
-    const { t, i18n } = useTranslation();
+    const {t, i18n} = useTranslation();
+
+    useEffect(() => {
+        const openSettings = () => setIsConfigPanelOpen(true);
+        globalThis.addEventListener("open-settings-panel", openSettings);
+        return () => globalThis.removeEventListener("open-settings-panel", openSettings);
+    }, []);
 
     return (
         <div className={styles.container}>
@@ -536,25 +549,31 @@ const Chat = () => {
                 <title>{t("pageTitle")}</title>
             </Helmet>
             <div className={styles.commandsSplitContainer}>
-{/*                <div className={styles.commandsContainer}>
+                {/*                <div className={styles.commandsContainer}>
                     {((useLogin && showChatHistoryCosmos) || showChatHistoryBrowser) && (
                         <HistoryButton className={styles.commandButton} onClick={() => setIsHistoryPanelOpen(!isHistoryPanelOpen)} />
                     )}
                 </div>*/}
                 <div className={styles.commandsContainer}>
-                    <ClearChatButton className={styles.commandButton} onClick={clearChat} disabled={!lastQuestionRef.current || isLoading} />
-                    {showUserUpload && <UploadFile className={styles.commandButton} disabled={!loggedIn} />}
-                    <SettingsButton className={styles.commandButton} onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} />
+                    {/*<ClearChatButton className={styles.commandButton} onClick={clearChat} disabled={!lastQuestionRef.current || isLoading} />*/}
+                    {showUserUpload && <UploadFile className={styles.commandButton} disabled={!loggedIn}/>}
+                    {/*                    <SettingsButton className={styles.commandButton}
+                                    onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)}/>*/}
                 </div>
             </div>
-            <div className={styles.chatRoot} style={{ marginLeft: isHistoryPanelOpen ? "300px" : "0" }}>
-                <div className={`${styles.chatContainer} ${lastQuestionRef.current ? styles.chatContainerWithMessages : styles.chatContainerCentered}`}>
+            <div className={styles.chatRoot} style={{marginLeft: isHistoryPanelOpen ? "300px" : "0"}}>
+                <div
+                    className={`${styles.chatContainer} ${lastQuestionRef.current ? styles.chatContainerWithMessages : styles.chatContainerCentered}`}>
                     {!lastQuestionRef.current ? (
                         <div className={styles.chatEmptyState}>
                             <div className={styles.chatEmptyHeader}>
-                                <img src={keikoLogo} alt="App logo" width="120" height="120" />
+                                <div className={styles.chatHeaderBox}>
+                                    <img src={keikoLogo} alt="App logo" className={styles.chatHeaderLogo}/>
+                                    <h1 className={styles.chatHeaderText}>Ask Keiko</h1>
+                                </div>
+
                                 {showLanguagePicker && (
-                                    <LanguagePicker onLanguageChange={newLang => i18n.changeLanguage(newLang)} />
+                                    <LanguagePicker onLanguageChange={newLang => i18n.changeLanguage(newLang)}/>
                                 )}
                             </div>
                             <div className={styles.chatEmptyInputRow}>
@@ -574,7 +593,7 @@ const Chat = () => {
                             {isStreaming &&
                                 streamedAnswers.map((streamedAnswer, index) => (
                                     <div key={index}>
-                                        <UserChatMessage message={streamedAnswer[0]} />
+                                        <UserChatMessage message={streamedAnswer[0]}/>
                                         <div className={styles.chatMessageGpt}>
                                             <Answer
                                                 isStreaming={true}
@@ -597,7 +616,7 @@ const Chat = () => {
                             {!isStreaming &&
                                 answers.map((answer, index) => (
                                     <div key={index}>
-                                        <UserChatMessage message={answer[0]} />
+                                        <UserChatMessage message={answer[0]}/>
                                         <div className={styles.chatMessageGpt}>
                                             <Answer
                                                 isStreaming={false}
@@ -619,21 +638,22 @@ const Chat = () => {
                                 ))}
                             {isLoading && (
                                 <>
-                                    <UserChatMessage message={lastQuestionRef.current} />
+                                    <UserChatMessage message={lastQuestionRef.current}/>
                                     <div className={styles.chatMessageGptMinWidth}>
-                                        <AnswerLoading />
+                                        <AnswerLoading/>
                                     </div>
                                 </>
                             )}
                             {error ? (
                                 <>
-                                    <UserChatMessage message={lastQuestionRef.current} />
+                                    <UserChatMessage message={lastQuestionRef.current}/>
                                     <div className={styles.chatMessageGptMinWidth}>
-                                        <AnswerError error={error.toString()} onRetry={() => makeApiRequest(lastQuestionRef.current)} />
+                                        <AnswerError error={error.toString()}
+                                                     onRetry={() => makeApiRequest(lastQuestionRef.current)}/>
                                     </div>
                                 </>
                             ) : null}
-                            <div ref={chatMessageStreamEnd} />
+                            <div ref={chatMessageStreamEnd}/>
                         </div>
                     )}
 
@@ -682,7 +702,8 @@ const Chat = () => {
                     isBlocking={false}
                     onDismiss={() => setIsConfigPanelOpen(false)}
                     closeButtonAriaLabel={t("labels.closeButton")}
-                    onRenderFooterContent={() => <DefaultButton onClick={() => setIsConfigPanelOpen(false)}>{t("labels.closeButton")}</DefaultButton>}
+                    onRenderFooterContent={() => <DefaultButton
+                        onClick={() => setIsConfigPanelOpen(false)}>{t("labels.closeButton")}</DefaultButton>}
                     isFooterAtBottom={true}
                 >
                     <Settings
@@ -724,7 +745,7 @@ const Chat = () => {
                         hideMinimalRetrievalReasoningOption={hideMinimalRetrievalReasoningOption}
                         onChange={handleSettingsChange}
                     />
-                    {useLogin && <TokenClaimsDisplay />}
+                    {useLogin && <TokenClaimsDisplay/>}
                 </Panel>
             </div>
         </div>

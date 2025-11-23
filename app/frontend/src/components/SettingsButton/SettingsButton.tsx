@@ -1,21 +1,21 @@
-import { Settings24Regular } from "@fluentui/react-icons";
-import { Button } from "@fluentui/react-components";
-import { useTranslation } from "react-i18next";
+import {Settings24Regular} from "@fluentui/react-icons";
+import {useTranslation} from "react-i18next";
 
 import styles from "./SettingsButton.module.css";
 
 interface Props {
     className?: string;
     onClick: () => void;
+    disabled?: boolean;
 }
 
-export const SettingsButton = ({ className, onClick }: Props) => {
-    const { t } = useTranslation();
+export const SettingsButton = ({className, disabled, onClick}: Props) => {
+    const {t} = useTranslation();
     return (
-        <div className={`${styles.container} ${className ?? ""}`}>
-            <Button icon={<Settings24Regular />} onClick={onClick}>
-                {t("developerSettings")}
-            </Button>
-        </div>
+        <button type="button" className={`${styles.container} ${className ?? ""}`} disabled={disabled}
+                onClick={onClick}>
+            <Settings24Regular className={styles.icon}/>
+            <span className={styles.label}>{t("developerSettings")}</span>
+        </button>
     );
 };

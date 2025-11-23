@@ -28,8 +28,8 @@
 }
 
 .header {
-    background-color: #DCFF4A;
-    color: #333333;
+    background-color: #252527;
+    color: #DCFF4A;
 }
 
 .headerContainer {
@@ -44,7 +44,7 @@
 .headerTitleContainer {
     display: flex;
     align-items: center;
-    color: #333333;
+    color: #DCFF4A;
     text-decoration: none;
 }
 

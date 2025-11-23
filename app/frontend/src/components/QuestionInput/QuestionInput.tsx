@@ -1,13 +1,13 @@
-import { useState, useEffect, useContext } from "react";
-import { Stack, TextField } from "@fluentui/react";
-import { Button, Tooltip } from "@fluentui/react-components";
-import { Send28Filled } from "@fluentui/react-icons";
-import { useTranslation } from "react-i18next";
+import {useContext, useEffect, useState} from "react";
+import {Stack, TextField} from "@fluentui/react";
+import {Button, Tooltip} from "@fluentui/react-components";
+import {Send28Filled} from "@fluentui/react-icons";
+import {useTranslation} from "react-i18next";
 
 import styles from "./QuestionInput.module.css";
-import { SpeechInput } from "./SpeechInput";
-import { LoginContext } from "../../loginContext";
-import { requireLogin } from "../../authConfig";
+import {SpeechInput} from "./SpeechInput";
+import {LoginContext} from "../../loginContext";
+import {requireLogin} from "../../authConfig";
 
 interface Props {
     onSend: (question: string) => void;
@@ -18,10 +18,10 @@ interface Props {
     showSpeechInput?: boolean;
 }
 
-export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend, initQuestion, showSpeechInput }: Props) => {
+export const QuestionInput = ({onSend, disabled, placeholder, clearOnSend, initQuestion, showSpeechInput}: Props) => {
     const [question, setQuestion] = useState<string>("");
-    const { loggedIn } = useContext(LoginContext);
-    const { t } = useTranslation();
+    const {loggedIn} = useContext(LoginContext);
+    const {t} = useTranslation();
     const [isComposing, setIsComposing] = useState(false);
 
     useEffect(() => {
@@ -88,10 +88,11 @@ export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend, init
             />
             <div className={styles.questionInputButtonsContainer}>
                 <Tooltip content={t("tooltips.submitQuestion")} relationship="label">
-                    <Button size="large" icon={<Send28Filled primaryFill="rgba(115, 118, 225, 1)" />} disabled={sendQuestionDisabled} onClick={sendQuestion} />
+                    <Button size="large" icon={<Send28Filled primaryFill="#333333"/>}
+                            disabled={sendQuestionDisabled} onClick={sendQuestion}/>
                 </Tooltip>
             </div>
-            {showSpeechInput && <SpeechInput updateQuestion={setQuestion} />}
+            {showSpeechInput && <SpeechInput updateQuestion={setQuestion}/>}
         </Stack>
     );
 };

@@ -46,6 +46,31 @@
     align-self: end;
 }
 
+.chatHeaderBox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    color: #DCFF4A;
+    margin-bottom: -2.25rem;
+}
+
+.chatHeaderText {
+    padding-top: 52px;
+}
+
+.chatHeaderLogo {
+    width: 82px;
+    height: 82px;
+    transform: scaleX(-1);
+}
+
+.chatHeaderTitle {
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .chatEmptyInputRow {
     display: flex;
     justify-content: center;

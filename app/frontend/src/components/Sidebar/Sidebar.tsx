@@ -1,16 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IconButton, Icon, Spinner, SpinnerSize } from "@fluentui/react";
-import { useTranslation } from "react-i18next";
-import { useMsal } from "@azure/msal-react";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {Icon, Spinner, SpinnerSize} from "@fluentui/react";
+import {useTranslation} from "react-i18next";
+import {useMsal} from "@azure/msal-react";
 
 import styles from "./Sidebar.module.css";
-import keikoLogo from "../../assets/Logo_Keiko_DCFF4A.svg";
-import { configApi } from "../../api";
-import { getToken, useLogin } from "../../authConfig";
-import { HistoryButton } from "../HistoryButton";
-import { useHistoryManager } from "../HistoryProviders";
-import { HistoryMetaData, HistoryProviderOptions } from "../HistoryProviders/IProvider";
-import { HISTORY_SELECT_EVENT } from "../HistoryProviders/events";
+import {configApi} from "../../api";
+import {getToken, useLogin} from "../../authConfig";
+import {HistoryButton} from "../HistoryButton";
+import {useHistoryManager} from "../HistoryProviders";
+import {HistoryMetaData, HistoryProviderOptions} from "../HistoryProviders/IProvider";
+import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../HistoryProviders/events";
+import {ClearChatButton} from "../ClearChatButton";
+import {SettingsButton} from "../SettingsButton";
 
 interface SidebarProps {
     className?: string;
@@ -18,16 +19,15 @@ interface SidebarProps {
 
 const HISTORY_COUNT_PER_LOAD = 20;
 
-const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-    const { t } = useTranslation();
-    const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar: React.FC<SidebarProps> = ({className}) => {
+    const {t} = useTranslation();
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [historyItems, setHistoryItems] = useState<HistoryMetaData[]>([]);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
     const [hasMoreHistory, setHasMoreHistory] = useState(false);
     const [showChatHistoryBrowser, setShowChatHistoryBrowser] = useState(false);
     const [showChatHistoryCosmos, setShowChatHistoryCosmos] = useState(false);
-
     const hasMoreHistoryRef = useRef(false);
     const isHistoryLoadingRef = useRef(false);
     const historyListRef = useRef<HTMLDivElement | null>(null);
@@ -104,50 +104,33 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     };
 
     const handleHistorySelect = (id: string) => {
-        window.dispatchEvent(new CustomEvent(HISTORY_SELECT_EVENT, { detail: { id } }));
+        globalThis.dispatchEvent(new CustomEvent(HISTORY_SELECT_EVENT, {detail: {id}}));
     };
-
-    const menuItems = [
-        { icon: "Edit", label: "New chat" },
-        { icon: "Search", label: "Search chats" },
-        { icon: "Pulse", label: "Pulse" },
-        { icon: "Library", label: "Library" },
-        { icon: "Code", label: "Codex" },
-        { icon: "World", label: "Atlas" },
-        { icon: "AppIconDefault", label: "GPTs" }
-    ];
 
     return (
         <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : styles.expanded} ${className || ""}`}>
             <div className={styles.header}>
-                {!isCollapsed && <img src={keikoLogo} alt="Keiko" className={styles.logo} />}
-                <button className={styles.toggleButton} onClick={toggleSidebar} aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
-                    <Icon iconName={isCollapsed ? "DoubleChevronRight12" : "DoubleChevronLeft12"} />
+                <button className={styles.toggleButton} onClick={toggleSidebar}
+                        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
+                    <Icon iconName={isCollapsed ? "DoubleChevronRight12" : "DoubleChevronLeft12"}/>
                 </button>
             </div>
 
             <div className={styles.menuItems}>
-                {menuItems.map((item, index) => (
-                    <div key={index} className={styles.menuItem} title={isCollapsed ? item.label : undefined}>
-                        <div className={styles.menuItemIcon}>
-                            <Icon iconName={item.icon} />
-                        </div>
-                        <span className={styles.menuItemText}>{item.label}</span>
-                    </div>
-                ))}
 
-                <div className={styles.divider} />
+                <div className={styles.historySection}>
+                    <ClearChatButton className={styles.historyHeader}
+                                     onClick={() => globalThis.dispatchEvent(new Event(CLEAR_CHAT_EVENT))}/>
+                    <SettingsButton className={styles.historyHeader}
+                                    onClick={() => globalThis.dispatchEvent(new Event("open-settings-panel"))}/>
+                </div>
 
-{/*                <div className={styles.menuItem}>
-                    <div className={styles.menuItemIcon}>
-                        <Icon iconName="ProjectCollection" />
-                    </div>
-                    <span className={styles.menuItemText}>Projects &gt;</span>
-                </div>*/}
+                <div className={styles.divider}/>
 
                 {historySupported && (
                     <div className={styles.historySection}>
-                        <HistoryButton className={styles.historyHeader} isOpen={isHistoryOpen} onClick={() => setIsHistoryOpen(prev => !prev)} />
+                        <HistoryButton className={styles.historyHeader} isOpen={isHistoryOpen}
+                                       onClick={() => setIsHistoryOpen(prev => !prev)}/>
                         {isHistoryOpen && !isCollapsed && (
                             <div className={styles.historyList} ref={historyListRef} onScroll={handleHistoryScroll}>
                                 {historyItems.map(item => (
@@ -161,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                                         {item.title}
                                     </button>
                                 ))}
-                                {isHistoryLoading && <Spinner size={SpinnerSize.xSmall} className={styles.spinner} />}
+                                {isHistoryLoading && <Spinner size={SpinnerSize.xSmall} className={styles.spinner}/>}
                                 {!isHistoryLoading && historyItems.length === 0 && (
                                     <div className={styles.noHistory}>{t("history.noHistory")}</div>
                                 )}
