@@ -20,14 +20,14 @@ if [ $out -ne 0 ]; then
 fi
 
 echo ""
-echo "Restoring frontend npm packages"
+echo "Restoring frontend yarn packages"
 echo ""
 
 cd app/frontend
-npm install
+yarn
 out=$?
 if [ $out -ne 0 ]; then
-    echo "Failed to restore frontend npm packages"
+    echo "Failed to restore frontend yarn packages"
     exit $out
 fi
 
@@ -35,7 +35,7 @@ echo ""
 echo "Building frontend"
 echo ""
 
-npm run build
+yarn run build
 out=$?
 if [ $out -ne 0 ]; then
     echo "Failed to build frontend"

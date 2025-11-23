@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Stack, TextField, PrimaryButton, MessageBar, MessageBarType, Text } from "@fluentui/react";
 import styles from "./BetaLogin.module.css";
+import { MouseEffect } from "../MouseEffect/MouseEffect";
 
 interface BetaLoginProps {
     onLoginSuccess: (token: string, username: string) => void;
@@ -54,6 +55,7 @@ export const BetaLogin = ({ onLoginSuccess }: BetaLoginProps) => {
 
     return (
         <div className={styles.container}>
+            <MouseEffect />
             <div className={styles.loginBox}>
                 <Stack tokens={{ childrenGap: 20 }}>
                     <Text variant="xxLarge" className={styles.title}>

@@ -1,16 +1,27 @@
-import { defineConfig } from "vite";
+import {defineConfig} from "vite";
 import react from "@vitejs/plugin-react";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
 
-// https://vitejs.dev/config/
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
 export default defineConfig({
     plugins: [react()],
     resolve: {
-        preserveSymlinks: true
+        preserveSymlinks: true,
+        alias: {
+            react: path.resolve(__dirname, "./node_modules/react"),
+            "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
+            "@fluentui/react-icons": path.resolve(__dirname, "./node_modules/@fluentui/react-icons")
+        }
     },
     build: {
         outDir: "../backend/static",
         emptyOutDir: true,
         sourcemap: true,
+
         rollupOptions: {
             output: {
                 manualChunks: id => {
@@ -18,13 +29,17 @@ export default defineConfig({
                         return "fluentui-icons";
                     } else if (id.includes("@fluentui/react")) {
                         return "fluentui-react";
+                    } else if (id.includes("react") || id.includes("react-dom") || id.includes("scheduler")) {
+                        return "react-vendor";
                     } else if (id.includes("node_modules")) {
                         return "vendor";
                     }
                 }
             }
         },
-        target: "esnext"
+        target: "esnext",
+
+
     },
     server: {
         proxy: {
@@ -38,7 +53,9 @@ export default defineConfig({
             "/upload": "http://localhost:50505",
             "/delete_uploaded": "http://localhost:50505",
             "/list_uploaded": "http://localhost:50505",
-            "/chat_history": "http://localhost:50505"
+            "/chat_history": "http://localhost:50505",
+            "/auth/status": "http://localhost:50505",
+            "/auth/login": "http://localhost:50505"
         }
     }
 });

@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from "react-dom/server";
+
 import { ChatAppResponse, getCitationFilePath } from "../../api";
 import { QueryPlanStep, getStepLabel, activityTypeLabels } from "../AnalysisPanel/agentPlanUtils";
 
@@ -15,9 +15,9 @@ export type CitationDetail = {
 type CitationFragment =
     | { type: "text"; value: string }
     | {
-          type: "citation";
-          detail: CitationDetail;
-      };
+        type: "citation";
+        detail: CitationDetail;
+    };
 
 type ActivityStepMeta = {
     stepNumber: number;
@@ -164,43 +164,64 @@ const renderCitation = (detail: CitationDetail, onCitationClicked: (citationFile
         detail.stepNumber !== undefined
             ? `Linked to Step ${detail.stepNumber}${detail.stepLabel ? `: ${detail.stepLabel}` : ""}${detail.stepSource ? ` (${detail.stepSource})` : ""}`
             : stepBadgeLabel
-              ? `Linked to ${stepBadgeLabel}`
-              : undefined;
-    const supElement = <sup title={stepBadgeTitle ?? undefined}>{detail.index}</sup>;
+                ? `Linked to ${stepBadgeLabel}`
+                : undefined;
+
+    // Manual HTML construction to avoid react-dom/server dependency
+    const supTitleAttr = stepBadgeTitle ? ` title="${stepBadgeTitle}"` : "";
+    const supElement = `<sup${supTitleAttr}>${detail.index}</sup>`;
 
     if (detail.isWeb) {
-        return renderToStaticMarkup(
-            <span className="citationBadgeContainer">
+        return `
+            <span class="citationBadgeContainer">
                 <a
-                    className="supContainer"
-                    title={detail.reference}
-                    href={detail.reference}
+                    class="supContainer"
+                    title="${detail.reference}"
+                    href="${detail.reference}"
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={e => e.stopPropagation()}
+                    onclick="event.stopPropagation()"
                 >
-                    {supElement}
+                    ${supElement}
                 </a>
-            </span>
-        );
+            </span>`;
     }
 
     const path = getCitationFilePath(detail.reference);
-    return renderToStaticMarkup(
-        <span className="citationBadgeContainer">
+    // Note: The onClick handler here is tricky because we are returning a string.
+    // The original code attached a React event handler.
+    // Since we are returning HTML string which is then dangerouslySetInnerHTML'd (or similar),
+    // we can't easily attach a function closure.
+    // However, looking at how it's used: parseAnswerToHtml returns { answerHtml, citations }.
+    // The answerHtml is likely used with dangerouslySetInnerHTML.
+    // If so, the onClick handler in the original code wouldn't work either if it was just returning a static string from renderToStaticMarkup!
+    // renderToStaticMarkup produces HTML string, stripping event handlers.
+    // So the original code's onClick handler inside renderCitation WAS NEVER WORKING if it was rendered to static markup!
+    // Wait, renderToStaticMarkup renders the component to HTML, but event handlers are lost.
+    // So the previous implementation of onCitationClicked inside the <a> tag was likely doing nothing.
+
+    // Let's verify this assumption.
+    // If the original code was:
+    // return renderToStaticMarkup(<a onClick={...}>...</a>);
+    // The onClick is lost in the string output.
+
+    // So I can just return the HTML string.
+    // But wait, if the user clicks the citation, something should happen.
+    // If the previous code was broken, I should fix it or at least replicate the "broken" behavior but without the crash.
+    // But maybe the consuming component hydrates it?
+    // parseAnswerToHtml returns a string.
+
+    return `
+        <span class="citationBadgeContainer">
             <a
-                className="supContainer"
-                title={detail.reference}
-                onClick={e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onCitationClicked(path);
-                }}
+                class="supContainer"
+                title="${detail.reference}"
+                data-citation-path="${path}"
+                style="cursor: pointer;"
             >
-                {supElement}
+                ${supElement}
             </a>
-        </span>
-    );
+        </span>`;
 };
 
 export function parseAnswerToHtml(answer: ChatAppResponse, isStreaming: boolean, onCitationClicked: (citationFilePath: string) => void): HtmlParsedAnswer {

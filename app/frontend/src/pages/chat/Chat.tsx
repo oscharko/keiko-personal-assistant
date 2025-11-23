@@ -2,7 +2,35 @@ import { useRef, useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
 import { Panel, DefaultButton } from "@fluentui/react";
-import readNDJSONStream from "ndjson-readablestream";
+// import readNDJSONStream from "ndjson-readablestream";
+
+async function* readNDJSONStream(reader: ReadableStream<any>) {
+    const textDecoder = new TextDecoder();
+    const streamReader = reader.getReader();
+    let buffer = "";
+
+    try {
+        while (true) {
+            const { done, value } = await streamReader.read();
+            if (done) break;
+
+            buffer += textDecoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+                if (line.trim()) {
+                    yield JSON.parse(line);
+                }
+            }
+        }
+        if (buffer.trim()) {
+            yield JSON.parse(buffer);
+        }
+    } finally {
+        streamReader.releaseLock();
+    }
+}
 
 import appLogo from "../../assets/applogo.svg";
 import styles from "./Chat.module.css";

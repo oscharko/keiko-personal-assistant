@@ -41,11 +41,13 @@ class BetaAuthHelper:
         self.users: dict[str, str] = {}
         if enabled:
             users_json = os.getenv("BETA_AUTH_USERS", "{}")
+            # Handle potential shell escaping of exclamation marks
+            users_json = users_json.replace("\\!", "!")
             try:
                 self.users = json.loads(users_json)
                 logger.info(f"Beta auth enabled with {len(self.users)} test users")
             except json.JSONDecodeError:
-                logger.error("Failed to parse BETA_AUTH_USERS environment variable")
+                logger.error(f"Failed to parse BETA_AUTH_USERS environment variable. Value was: {users_json}")
                 self.users = {}
 
     def _hash_password(self, password: str) -> str:

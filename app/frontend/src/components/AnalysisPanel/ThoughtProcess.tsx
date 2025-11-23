@@ -55,13 +55,16 @@ export const ThoughtProcess = ({ thoughts, onCitationClicked }: Props) => {
                                 results={Array.isArray(t.description) ? t.description : []}
                             />
                         )}
-                        {Array.isArray(t.description) || (t.description !== null && typeof t.description === "object") ? (
-                            <SyntaxHighlighter language="json" wrapLines wrapLongLines className={styles.tCodeBlock} style={a11yLight}>
-                                {JSON.stringify(t.description, (key, value) => truncateImageUrl(value), 2)}
-                            </SyntaxHighlighter>
-                        ) : (
-                            <div>{t.description}</div>
-                        )}
+                        {(() => {
+                            const HighlighterComponent = SyntaxHighlighter as any;
+                            return Array.isArray(t.description) || (t.description !== null && typeof t.description === "object") ? (
+                                <HighlighterComponent language="json" wrapLines wrapLongLines className={styles.tCodeBlock} style={a11yLight}>
+                                    {JSON.stringify(t.description, (key, value) => truncateImageUrl(value), 2)}
+                                </HighlighterComponent>
+                            ) : (
+                                <div>{t.description}</div>
+                            );
+                        })()}
                     </li>
                 );
             })}

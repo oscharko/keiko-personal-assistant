@@ -90,12 +90,14 @@ const renderDetail = (step: QueryPlanStep) => {
 
             return <TokenUsageGraph tokenUsage={usage} labels={{ prompt: "Input", output: "Output", total: "Total tokens" }} title="" />;
         }
-        default:
+        default: {
+            const HighlighterComponent = SyntaxHighlighter as any;
             return (
-                <SyntaxHighlighter language="json" wrapLines wrapLongLines className={styles.tCodeBlock} style={a11yLight}>
+                <HighlighterComponent language="json" wrapLines wrapLongLines className={styles.tCodeBlock} style={a11yLight}>
                     {JSON.stringify(step, null, 2)}
-                </SyntaxHighlighter>
+                </HighlighterComponent>
             );
+        }
     }
 };
 

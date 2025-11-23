@@ -81,3 +81,8 @@ fabric.properties
 /docs/internal/
 /.azure/
 /scripts/.venv/
+
+# Node.js / npm / yarn
+# We use yarn, so ignore npm lock files
+package-lock.json
+/app/backend/.env
