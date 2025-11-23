@@ -1,18 +1,61 @@
-import React, { useState, useEffect, useRef, RefObject } from "react";
-import { Outlet, NavLink, Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import React, {RefObject, useEffect, useRef, useState} from "react";
+import {Link, NavLink, Outlet} from "react-router-dom";
+import {useTranslation} from "react-i18next";
 import styles from "./Layout.module.css";
 
-import { useLogin } from "../../authConfig";
+import {useLogin} from "../../authConfig";
 
-import { LoginButton } from "../../components/LoginButton";
-import { IconButton } from "@fluentui/react";
+import {LoginButton} from "../../components/LoginButton";
+import {IconButton} from "@fluentui/react";
+import {motion} from "framer-motion";
 
 const Layout = () => {
-    const { t } = useTranslation();
+    const {t} = useTranslation();
     const [menuOpen, setMenuOpen] = useState(false);
     const [isBetaAuth, setIsBetaAuth] = useState(false);
     const menuRef: RefObject<HTMLDivElement> = useRef(null);
+
+    const FloatingPaths = ({position}: { position: number }) => {
+        const paths = Array.from({length: 30}, (_, i) => ({
+            id: i,
+            d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${
+                380 - i * 5 * position
+            } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${
+                152 - i * 5 * position
+            } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${
+                684 - i * 5 * position
+            } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
+            color: `rgba(15,23,42,${0.1 + i * 0.03})`,
+            width: 0.5 + i * 0.03,
+        }));
+
+        return (
+            <div className={styles.floatingPaths01}>
+                <svg className={styles.floatingPaths02} viewBox='0 0 696 316' fill='none'>
+                    {paths.map((path) => (
+                        <motion.path
+                            key={path.id}
+                            d={path.d}
+                            stroke='currentColor'
+                            strokeWidth={path.width}
+                            strokeOpacity={0.1 + path.id * 0.03}
+                            initial={{pathLength: 0.3, opacity: 0.6}}
+                            animate={{
+                                pathLength: 1,
+                                opacity: [0.3, 0.6, 0.3],
+                                pathOffset: [0, 1, 0],
+                            }}
+                            transition={{
+                                duration: 20 + Math.random() * 10,
+                                repeat: Number.POSITIVE_INFINITY,
+                                ease: 'linear',
+                            }}
+                        />
+                    ))}
+                </svg>
+            </div>
+        );
+    }
 
     // Check if beta auth is enabled
     useEffect(() => {
@@ -58,67 +101,77 @@ const Layout = () => {
     }, [menuOpen]);
 
     return (
-        <div className={styles.layout}>
-            <header className={styles.header} role={"banner"}>
-                <div className={styles.headerContainer} ref={menuRef}>
-                    <Link to="/" className={styles.headerTitleContainer}>
-                        <h3 className={styles.headerTitle}>{t("headerTitle")}</h3>
-                    </Link>
-                    <nav>
-                        <ul className={`${styles.headerNavList} ${menuOpen ? styles.show : ""}`}>
-                            <li>
-                                <NavLink
-                                    to="/"
-                                    className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    {t("chat")}
-                                </NavLink>
-                            </li>
-                            <li>
-                                <NavLink
-                                    to="/qa"
-                                    className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    {t("qa")}
-                                </NavLink>
-                            </li>
-                        </ul>
-                    </nav>
-                    <div className={styles.loginMenuContainer}>
-                        {useLogin && <LoginButton />}
-                        {isBetaAuth && (
+        <>
+            <div className={styles.floatingPaths}>
+                <FloatingPaths position={-1}/>
+                <FloatingPaths position={1}/>
+            </div>
+            <div className={styles.layout}>
+                <header className={styles.header} role={"banner"}>
+                    <div className={styles.headerContainer} ref={menuRef}>
+                        <Link to="/" className={styles.headerTitleContainer}>
+                            <h3 className={styles.headerTitle}>{t("headerTitle")}</h3>
+                        </Link>
+{/*                        <nav>
+                            <ul className={`${styles.headerNavList} ${menuOpen ? styles.show : ""}`}>
+                                <li>
+                                    <NavLink
+                                        to="/"
+                                        className={({isActive}) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        {t("chat")}
+                                    </NavLink>
+                                </li>
+                                <li>
+                                    <NavLink
+                                        to="/qa"
+                                        className={({isActive}) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        {t("qa")}
+                                    </NavLink>
+                                </li>
+                            </ul>
+                        </nav>*/}
+                        <div className={styles.loginMenuContainer}>
+                            {useLogin && <LoginButton/>}
+                            {isBetaAuth && (
+                                <IconButton
+                                    iconProps={{iconName: "SignOut"}}
+                                    title={t("logout")}
+                                    ariaLabel={t("logout")}
+                                    onClick={handleLogout}
+                                    styles={{
+                                        root: {
+                                            backgroundColor: "#333333",
+                                            color: "#ffffff",
+                                            marginLeft: "8px",
+                                            borderRadius: "20%"
+                                        },
+                                        rootHovered: {
+                                            backgroundColor: "#ffffff",
+                                            color: "#333333",
+                                            borderRadius: "20%"
+                                        }
+                                    }}
+                                />
+                            )}
                             <IconButton
-                                iconProps={{ iconName: "SignOut" }}
-                                title={t("logout")}
-                                ariaLabel={t("logout")}
-                                onClick={handleLogout}
-                                styles={{
-                                    root: {
-                                        color: "white",
-                                        marginLeft: "8px"
-                                    },
-                                    rootHovered: {
-                                        color: "#e0e0e0"
-                                    }
-                                }}
+                                iconProps={{iconName: "GlobalNavButton"}}
+                                className={styles.menuToggle}
+                                onClick={toggleMenu}
+                                ariaLabel={t("labels.toggleMenu")}
                             />
-                        )}
-                        <IconButton
-                            iconProps={{ iconName: "GlobalNavButton" }}
-                            className={styles.menuToggle}
-                            onClick={toggleMenu}
-                            ariaLabel={t("labels.toggleMenu")}
-                        />
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
 
-            <main className={styles.main} id="main-content">
-                <Outlet />
-            </main>
-        </div>
+                <main className={styles.main} id="main-content">
+                    <Outlet/>
+                </main>
+            </div>
+        </>
     );
 };
 

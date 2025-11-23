@@ -53,8 +53,8 @@ h2 {
     text-align: center;
     border-radius: 0.25em;
     padding: 0em 0.5em;
-    background: #d1dbfa;
-    color: #123bb6;
+    background: #DCFF4A;
+    color: #000000;
     text-decoration: none;
     cursor: pointer;
 }
@@ -120,8 +120,8 @@ sup {
     min-width: 0.875em;
     height: 0.875em;
     border-radius: 0.1875em;
-    background: #d1dbfa;
-    color: #123bb6;
+    background: #DCFF4A;
+    color: #000000;
     text-decoration-color: transparent;
     outline: transparent solid 0.0625em;
     cursor: pointer;
@@ -133,9 +133,9 @@ sup {
     justify-content: center;
     border-radius: 999px;
     background: #f4f6ff;
-    color: #123bb6;
+    color: #000000;
     font-weight: 600;
-    border: 0.0625em solid #d1dbfa;
+    border: 0.0625em solid #DCFF4A;
 }
 
 .citationStepBadgeInline {

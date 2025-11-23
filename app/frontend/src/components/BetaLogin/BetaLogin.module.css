@@ -3,34 +3,41 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    /* background removed to show MouseEffect */
     position: relative;
-    /* Ensure z-index context if needed */
 }
 
 .loginBox {
-    background: white;
+    background: #333333;
     padding: 40px;
     border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
     min-width: 400px;
     max-width: 500px;
 }
 
 .title {
     text-align: center;
-    color: #333;
+    color: #DCFF4A;
     font-weight: 600;
+}
+
+.logo {
+    display: block;
+    margin: 0 auto;
 }
 
 .subtitle {
     text-align: center;
-    color: #666;
+    color: #DCFF4A;
     margin-top: -10px;
 }
 
 .info {
     text-align: center;
-    color: #999;
+    color: #DCFF4A;
     font-style: italic;
+}
+
+.loginBox :global(.ms-Label) {
+    color: #DCFF4A;
 }

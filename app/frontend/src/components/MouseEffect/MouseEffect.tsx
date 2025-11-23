@@ -48,7 +48,7 @@ export const MouseEffect: React.FC = () => {
                 const y = (Math.random() * ((canvas.height - size * 2) - (size * 2)) + size * 2);
                 const directionX = (Math.random() * 2) - 1; // -1 to 1
                 const directionY = (Math.random() * 2) - 1; // -1 to 1
-                const color = '#4285F4'; // Google Blue-ish
+                const color = '#000000';
 
                 particles.push({
                     x,

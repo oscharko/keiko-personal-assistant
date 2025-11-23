@@ -2,7 +2,6 @@ import { useRef, useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
 import { Panel, DefaultButton } from "@fluentui/react";
-// import readNDJSONStream from "ndjson-readablestream";
 
 async function* readNDJSONStream(reader: ReadableStream<any>) {
     const textDecoder = new TextDecoder();
@@ -32,13 +31,12 @@ async function* readNDJSONStream(reader: ReadableStream<any>) {
     }
 }
 
-import appLogo from "../../assets/applogo.svg";
+import keikoLogo from "../../assets/Logo_Keiko_DCFF4A.svg";
 import styles from "./Chat.module.css";
 
 import { chatApi, configApi, RetrievalMode, ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, ResponseMessage, SpeechConfig } from "../../api";
 import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
-import { ExampleList } from "../../components/Example";
 import { UserChatMessage } from "../../components/UserChatMessage";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
 import { HistoryPanel } from "../../components/HistoryPanel";
@@ -522,16 +520,26 @@ const Chat = () => {
                 </div>
             </div>
             <div className={styles.chatRoot} style={{ marginLeft: isHistoryPanelOpen ? "300px" : "0" }}>
-                <div className={styles.chatContainer}>
+                <div className={`${styles.chatContainer} ${lastQuestionRef.current ? styles.chatContainerWithMessages : styles.chatContainerCentered}`}>
                     {!lastQuestionRef.current ? (
                         <div className={styles.chatEmptyState}>
-                            <img src={appLogo} alt="App logo" width="120" height="120" />
-
-                            <h1 className={styles.chatEmptyStateTitle}>{t("chatEmptyStateTitle")}</h1>
-                            <h2 className={styles.chatEmptyStateSubtitle}>{t("chatEmptyStateSubtitle")}</h2>
-                            {showLanguagePicker && <LanguagePicker onLanguageChange={newLang => i18n.changeLanguage(newLang)} />}
-
-                            <ExampleList onExampleClicked={onExampleClicked} useMultimodalAnswering={showMultimodalOptions} />
+                            <div className={styles.chatEmptyHeader}>
+                                <img src={keikoLogo} alt="App logo" width="120" height="120" />
+                                {showLanguagePicker && (
+                                    <LanguagePicker onLanguageChange={newLang => i18n.changeLanguage(newLang)} />
+                                )}
+                            </div>
+                            <div className={styles.chatEmptyInputRow}>
+                                <div className={styles.chatInput}>
+                                    <QuestionInput
+                                        clearOnSend
+                                        placeholder={t("defaultExamples.placeholder")}
+                                        disabled={isLoading}
+                                        onSend={question => makeApiRequest(question)}
+                                        showSpeechInput={showSpeechInput}
+                                    />
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div className={styles.chatMessageStream}>
@@ -601,15 +609,17 @@ const Chat = () => {
                         </div>
                     )}
 
-                    <div className={styles.chatInput}>
-                        <QuestionInput
-                            clearOnSend
-                            placeholder={t("defaultExamples.placeholder")}
-                            disabled={isLoading}
-                            onSend={question => makeApiRequest(question)}
-                            showSpeechInput={showSpeechInput}
-                        />
-                    </div>
+                    {lastQuestionRef.current && (
+                        <div className={`${styles.chatInput} ${styles.chatInputSticky}`}>
+                            <QuestionInput
+                                clearOnSend
+                                placeholder={t("defaultExamples.placeholder")}
+                                disabled={isLoading}
+                                onSend={question => makeApiRequest(question)}
+                                showSpeechInput={showSpeechInput}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {answers.length > 0 && activeAnalysisPanelTab && (

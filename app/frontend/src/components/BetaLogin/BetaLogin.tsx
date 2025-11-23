@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Stack, TextField, PrimaryButton, MessageBar, MessageBarType, Text } from "@fluentui/react";
 import styles from "./BetaLogin.module.css";
 import { MouseEffect } from "../MouseEffect/MouseEffect";
+import keikoLogo from "../../assets/Logo_Keiko_DCFF4A.svg";
 
 interface BetaLoginProps {
     onLoginSuccess: (token: string, username: string) => void;
@@ -54,16 +55,15 @@ export const BetaLogin = ({ onLoginSuccess }: BetaLoginProps) => {
     };
 
     return (
-        <div className={styles.container}>
-            <MouseEffect />
+        <>
+        <MouseEffect />
+            <div className={styles.container}>
             <div className={styles.loginBox}>
                 <Stack tokens={{ childrenGap: 20 }}>
                     <Text variant="xxLarge" className={styles.title}>
                         Keiko Personal Assistant
                     </Text>
-                    <Text variant="large" className={styles.subtitle}>
-                        Beta-Zugang
-                    </Text>
+                    <img src={keikoLogo} className={styles.logo} alt="App logo" width="80" height="80" />
 
                     {error && (
                         <MessageBar messageBarType={MessageBarType.error} isMultiline={false}>
@@ -91,7 +91,33 @@ export const BetaLogin = ({ onLoginSuccess }: BetaLoginProps) => {
                         canRevealPassword
                     />
 
-                    <PrimaryButton text={isLoading ? "Anmelden..." : "Anmelden"} onClick={handleLogin} disabled={isLoading} />
+                    <PrimaryButton
+                        text={isLoading ? "Anmelden..." : "Anmelden"}
+                        onClick={handleLogin}
+                        disabled={isLoading}
+                        styles={{
+                            root: {
+                                backgroundColor: '#DCFF4A',
+                                borderColor: '#DCFF4A',
+                                color: '#000000'
+                            },
+                            rootHovered: {
+                                backgroundColor: '#c8eb36',
+                                borderColor: '#ffffff',
+                                color: '#333333'
+                            },
+                            rootPressed: {
+                                backgroundColor: '#b4d722',
+                                borderColor: '#b4d722',
+                                color: '#333333'
+                            },
+                            rootDisabled: {
+                                backgroundColor: '#666666',
+                                borderColor: '#666666',
+                                color: '#999999'
+                            }
+                        }}
+                    />
 
                     <Text variant="small" className={styles.info}>
                         Dies ist eine Beta-Version. Bitte verwenden Sie die Ihnen zugewiesenen Zugangsdaten.
@@ -99,6 +125,7 @@ export const BetaLogin = ({ onLoginSuccess }: BetaLoginProps) => {
                 </Stack>
             </div>
         </div>
+        </>
     );
 };
 
