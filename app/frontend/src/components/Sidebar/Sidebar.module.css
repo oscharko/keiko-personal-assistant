@@ -1,13 +1,14 @@
 .sidebar {
     display: flex;
     flex-direction: column;
-    background-color: #252527;
+    background-color: #000000;
     color: #DCFF4A;
     height: 100%;
     transition: width 0.3s ease;
     border-right: 1px solid #333;
     flex-shrink: 0;
     z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .collapsed {

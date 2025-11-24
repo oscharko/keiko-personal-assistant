@@ -9,6 +9,7 @@ import {LoginButton} from "../../components/LoginButton";
 import {IconButton} from "@fluentui/react";
 import {motion} from "framer-motion";
 import Sidebar from "../../components/Sidebar/Sidebar";
+import {MouseEffect} from "../../components/MouseEffect/MouseEffect";
 
 const Layout = () => {
     const {t} = useTranslation();
@@ -100,10 +101,11 @@ const Layout = () => {
 
     return (
         <>
-            <div className={styles.floatingPaths}>
+            <MouseEffect/>
+            {/*            <div className={styles.floatingPaths}>
                 <FloatingPaths position={-1}/>
                 <FloatingPaths position={1}/>
-            </div>
+            </div>*/}
             <div className={styles.layout}>
                 <header className={styles.header} role={"banner"}>
                     <div className={styles.headerContainer} ref={menuRef}>

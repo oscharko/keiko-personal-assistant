@@ -10,7 +10,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "generate-favicons": "node generate-favicons.js"
+    "generate-favicons": "node generate-favicons.js",
+    "generate-pwa-icons": "node generate-pwa-icons.js"
   },
   "dependencies": {
     "@azure/msal-browser": "^4.16.0",

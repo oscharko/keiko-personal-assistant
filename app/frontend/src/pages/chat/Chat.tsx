@@ -2,7 +2,6 @@ import {useCallback, useContext, useEffect, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {Helmet} from "react-helmet-async";
 import {DefaultButton, Panel} from "@fluentui/react";
-import keikoLogo from "../../assets/Logo_Keiko_DCFF4A.svg";
 import styles from "./Chat.module.css";
 
 import {
@@ -567,10 +566,10 @@ const Chat = () => {
                     {!lastQuestionRef.current ? (
                         <div className={styles.chatEmptyState}>
                             <div className={styles.chatEmptyHeader}>
-                                <div className={styles.chatHeaderBox}>
+                                {/*                                <div className={styles.chatHeaderBox}>
                                     <img src={keikoLogo} alt="App logo" className={styles.chatHeaderLogo}/>
                                     <h1 className={styles.chatHeaderText}>Ask Keiko</h1>
-                                </div>
+                                </div>*/}
 
                                 {showLanguagePicker && (
                                     <LanguagePicker onLanguageChange={newLang => i18n.changeLanguage(newLang)}/>

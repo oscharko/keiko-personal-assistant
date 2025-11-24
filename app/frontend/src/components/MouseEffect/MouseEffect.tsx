@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, {useEffect, useRef} from 'react';
 import styles from './MouseEffect.module.css';
 
 interface Particle {
@@ -25,7 +25,7 @@ export const MouseEffect: React.FC = () => {
 
         let animationFrameId: number;
         let particles: Particle[] = [];
-        let mouse = { x: 0, y: 0, radius: 100 };
+        let mouse = {x: 0, y: 0, radius: 100};
 
         const handleResize = () => {
             canvas.width = window.innerWidth;
@@ -120,7 +120,7 @@ export const MouseEffect: React.FC = () => {
 
     return (
         <div className={styles.canvasContainer}>
-            <canvas ref={canvasRef} className={styles.canvas} />
+            <canvas ref={canvasRef} className={styles.canvas}/>
         </div>
     );
 };
