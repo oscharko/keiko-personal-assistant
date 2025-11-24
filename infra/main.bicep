@@ -530,10 +530,8 @@ var appEnvVariables = {
   AZURE_TENANT_ID: tenantId
   AZURE_AUTH_TENANT_ID: tenantIdForAuth
   AZURE_AUTHENTICATION_ISSUER_URI: authenticationIssuerUri
-  // Beta authentication (temporary)
+  // Beta authentication (temporary) - BETA_AUTH_USERS and BETA_AUTH_SECRET_KEY are set as secrets
   BETA_AUTH_ENABLED: betaAuthEnabled
-  BETA_AUTH_USERS: betaAuthUsers
-  BETA_AUTH_SECRET_KEY: betaAuthSecretKey
   // CORS support, for frontends on other hosts
   ALLOWED_ORIGIN: join(allowedOrigins, ';')
   USE_VECTORS: useVectors
@@ -637,26 +635,45 @@ module acaBackend 'core/host/container-app-upsert.bicep' = if (deploymentTarget 
     targetPort: 8000
     containerCpuCoreCount: '1.0'
     containerMemory: '2Gi'
-    containerMinReplicas: usePrivateEndpoint ? 1 : 0
+    // Keep at least 1 replica running to avoid cold starts
+    containerMinReplicas: 1
     allowedOrigins: allowedOrigins
     env: union(appEnvVariables, {
       // For using managed identity to access Azure resources. See https://github.com/microsoft/azure-container-apps/issues/442
       AZURE_CLIENT_ID: (deploymentTarget == 'containerapps') ? acaIdentity.outputs.clientId : ''
     })
-    secrets: useAuthentication ? {
-      azureclientappsecret: clientAppSecret
-      azureserverappsecret: serverAppSecret
-    } : {}
-    envSecrets: useAuthentication ? [
-      {
-        name: 'AZURE_CLIENT_APP_SECRET'
-        secretRef: 'azureclientappsecret'
-      }
-      {
-        name: 'AZURE_SERVER_APP_SECRET'
-        secretRef: 'azureserverappsecret'
-      }
-    ] : []
+    secrets: union(
+      useAuthentication ? {
+        azureclientappsecret: clientAppSecret
+        azureserverappsecret: serverAppSecret
+      } : {},
+      !empty(betaAuthSecretKey) ? {
+        betaauthsecretkey: betaAuthSecretKey
+        betaauthusers: betaAuthUsers
+      } : {}
+    )
+    envSecrets: union(
+      useAuthentication ? [
+        {
+          name: 'AZURE_CLIENT_APP_SECRET'
+          secretRef: 'azureclientappsecret'
+        }
+        {
+          name: 'AZURE_SERVER_APP_SECRET'
+          secretRef: 'azureserverappsecret'
+        }
+      ] : [],
+      !empty(betaAuthSecretKey) ? [
+        {
+          name: 'BETA_AUTH_SECRET_KEY'
+          secretRef: 'betaauthsecretkey'
+        }
+        {
+          name: 'BETA_AUTH_USERS'
+          secretRef: 'betaauthusers'
+        }
+      ] : []
+    )
   }
 }
 

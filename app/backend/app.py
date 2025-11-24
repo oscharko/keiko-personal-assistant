@@ -117,7 +117,12 @@ mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 @bp.route("/")
 async def index():
-    return await bp.send_static_file("index.html")
+    response = await make_response(await bp.send_static_file("index.html"))
+    # No cache for index.html to ensure users always get the latest version
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 # Empty page is recommended for login redirect to work.
@@ -129,48 +134,76 @@ async def redirect():
 
 @bp.route("/favicon.ico")
 async def favicon():
-    return await bp.send_static_file("favicon.ico")
+    response = await make_response(await bp.send_static_file("favicon.ico"))
+    # Cache favicon for 1 week
+    response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    return response
+
+
+@bp.route("/favicon.svg")
+async def favicon_svg():
+    response = await make_response(await bp.send_static_file("favicon.svg"))
+    response.headers["Content-Type"] = "image/svg+xml"
+    # Cache favicon for 1 week
+    response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    return response
+
+
+@bp.route("/favicon-16x16.png")
+async def favicon_16():
+    response = await make_response(await bp.send_static_file("favicon-16x16.png"))
+    # Cache favicon for 1 week
+    response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    return response
+
+
+@bp.route("/favicon-32x32.png")
+async def favicon_32():
+    response = await make_response(await bp.send_static_file("favicon-32x32.png"))
+    # Cache favicon for 1 week
+    response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    return response
+
+
+@bp.route("/apple-touch-icon.png")
+async def apple_touch_icon():
+    response = await make_response(await bp.send_static_file("apple-touch-icon.png"))
+    # Cache favicon for 1 week
+    response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    return response
+
+
+@bp.route("/android-chrome-192x192.png")
+async def android_chrome_192():
+    response = await make_response(await bp.send_static_file("android-chrome-192x192.png"))
+    # Cache favicon for 1 week
+    response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    return response
+
+
+@bp.route("/android-chrome-512x512.png")
+async def android_chrome_512():
+    response = await make_response(await bp.send_static_file("android-chrome-512x512.png"))
+    # Cache favicon for 1 week
+    response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    return response
 
 
 @bp.route("/assets/<path:path>")
 async def assets(path):
-    return await send_from_directory(Path(__file__).resolve().parent / "static" / "assets", path)
+    response = await make_response(await send_from_directory(Path(__file__).resolve().parent / "static" / "assets", path))
+    # Assets have hashed filenames, so cache them for 1 year
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
 
 
 # Serve manifest and icon files
 @bp.route("/site.webmanifest")
 async def webmanifest():
-    return await bp.send_static_file("site.webmanifest")
-
-
-@bp.route("/apple-touch-icon.png")
-async def apple_touch_icon():
-    return await bp.send_static_file("apple-touch-icon.png")
-
-
-@bp.route("/favicon-16x16.png")
-async def favicon_16():
-    return await bp.send_static_file("favicon-16x16.png")
-
-
-@bp.route("/favicon-32x32.png")
-async def favicon_32():
-    return await bp.send_static_file("favicon-32x32.png")
-
-
-@bp.route("/favicon.svg")
-async def favicon_svg():
-    return await bp.send_static_file("favicon.svg")
-
-
-@bp.route("/android-chrome-192x192.png")
-async def android_chrome_192():
-    return await bp.send_static_file("android-chrome-192x192.png")
-
-
-@bp.route("/android-chrome-512x512.png")
-async def android_chrome_512():
-    return await bp.send_static_file("android-chrome-512x512.png")
+    response = await make_response(await bp.send_static_file("site.webmanifest"))
+    # Cache manifest for 1 day
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
 
 
 @bp.route("/content/<path>")
@@ -888,6 +921,8 @@ async def close_clients():
 
 def create_app():
     app = Quart(__name__)
+    # Disable default cache headers for static files so we can set custom headers
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = None
     app.register_blueprint(bp)
     app.register_blueprint(chat_history_cosmosdb_bp)
 

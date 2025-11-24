@@ -290,6 +290,15 @@
     "clientAppSecret": {
       "value": "${AZURE_CLIENT_APP_SECRET}"
     },
+    "betaAuthEnabled": {
+      "value": "${BETA_AUTH_ENABLED=false}"
+    },
+    "betaAuthUsers": {
+      "value": "${BETA_AUTH_USERS=}"
+    },
+    "betaAuthSecretKey": {
+      "value": "${BETA_AUTH_SECRET_KEY=}"
+    },
     "allowedOrigin": {
       "value": "${ALLOWED_ORIGIN}"
     },
