@@ -21,7 +21,8 @@ import {AnalysisPanel, AnalysisPanelTabs} from "../../components/AnalysisPanel";
 import {HistoryPanel} from "../../components/HistoryPanel";
 import {HistoryProviderOptions, useHistoryManager} from "../../components/HistoryProviders";
 import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../../components/HistoryProviders/events";
-import {UploadFile} from "../../components/UploadFile";
+import {UploadContainer} from "../../components/UploadContainer";
+import {OPEN_UPLOAD_PANEL_EVENT} from "../../components/Sidebar/Sidebar";
 import {getToken, requireAccessControl, useLogin} from "../../authConfig";
 import {useMsal} from "@azure/msal-react";
 import {TokenClaimsDisplay} from "../../components/TokenClaimsDisplay";
@@ -60,6 +61,7 @@ async function* readNDJSONStream(reader: ReadableStream<any>) {
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
+    const [isUploadPanelOpen, setIsUploadPanelOpen] = useState(false);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
     const [temperature, setTemperature] = useState<number>(0.3);
     const [seed, setSeed] = useState<number | null>(null);
@@ -541,6 +543,13 @@ const Chat = () => {
         return () => globalThis.removeEventListener("open-settings-panel", openSettings);
     }, []);
 
+    // Event listener for opening the upload panel from the sidebar
+    useEffect(() => {
+        const openUploadPanel = () => setIsUploadPanelOpen(true);
+        globalThis.addEventListener(OPEN_UPLOAD_PANEL_EVENT, openUploadPanel);
+        return () => globalThis.removeEventListener(OPEN_UPLOAD_PANEL_EVENT, openUploadPanel);
+    }, []);
+
     return (
         <div className={styles.container}>
             {/* Setting the page title using react-helmet-async */}
@@ -555,7 +564,6 @@ const Chat = () => {
                 </div>*/}
                 <div className={styles.commandsContainer}>
                     {/*<ClearChatButton className={styles.commandButton} onClick={clearChat} disabled={!lastQuestionRef.current || isLoading} />*/}
-                    {showUserUpload && <UploadFile className={styles.commandButton} disabled={!loggedIn}/>}
                     {/*                    <SettingsButton className={styles.commandButton}
                                     onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)}/>*/}
                 </div>
@@ -747,6 +755,14 @@ const Chat = () => {
                     {useLogin && <TokenClaimsDisplay/>}
                 </Panel>
             </div>
+
+            {/* Upload Container Panel */}
+            {showUserUpload && (
+                <UploadContainer
+                    isOpen={isUploadPanelOpen}
+                    onClose={() => setIsUploadPanelOpen(false)}
+                />
+            )}
         </div>
     );
 };

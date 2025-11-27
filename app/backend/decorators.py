@@ -13,12 +13,26 @@ from error import error_response
 
 def authenticated_path(route_fn: Callable[[str, dict[str, Any]], Any]):
     """
-    Decorator for routes that request a specific file that might require access control enforcement
+    Decorator for routes that request a specific file that might require access control enforcement.
+    Supports both Beta Auth and Azure AD authentication.
     """
 
     @wraps(route_fn)
     async def auth_handler(path=""):
-        # If authentication is enabled, validate the user can access the file
+        # Check beta auth first
+        beta_auth = current_app.config.get("BETA_AUTH_HELPER")
+        if beta_auth and beta_auth.enabled:
+            try:
+                auth_claims = await beta_auth.get_auth_claims_if_enabled(request.headers)
+                # For beta auth, we allow access if the user is authenticated
+                # No Azure Search RBAC enforcement in beta mode since we don't have Azure AD tokens
+                return await route_fn(path, auth_claims)
+            except BetaAuthError as e:
+                abort(e.status_code)
+            except AuthError:
+                abort(403)
+
+        # Fall back to Azure AD auth
         auth_helper = current_app.config[CONFIG_AUTH_CLIENT]
         search_client = current_app.config[CONFIG_SEARCH_CLIENT]
         authorized = False

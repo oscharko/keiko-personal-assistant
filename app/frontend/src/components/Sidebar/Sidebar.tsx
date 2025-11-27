@@ -12,6 +12,10 @@ import {HistoryMetaData, HistoryProviderOptions} from "../HistoryProviders/IProv
 import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../HistoryProviders/events";
 import {ClearChatButton} from "../ClearChatButton";
 import {SettingsButton} from "../SettingsButton";
+import {UploadButton} from "../UploadButton";
+
+// Custom event name for opening the upload panel
+export const OPEN_UPLOAD_PANEL_EVENT = "open-upload-panel";
 
 interface SidebarProps {
     className?: string;
@@ -28,6 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
     const [hasMoreHistory, setHasMoreHistory] = useState(false);
     const [showChatHistoryBrowser, setShowChatHistoryBrowser] = useState(false);
     const [showChatHistoryCosmos, setShowChatHistoryCosmos] = useState(false);
+    const [showUserUpload, setShowUserUpload] = useState(false);
     const hasMoreHistoryRef = useRef(false);
     const isHistoryLoadingRef = useRef(false);
     const historyListRef = useRef<HTMLDivElement | null>(null);
@@ -38,6 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
         configApi().then(config => {
             setShowChatHistoryBrowser(config.showChatHistoryBrowser);
             setShowChatHistoryCosmos(config.showChatHistoryCosmos);
+            setShowUserUpload(config.showUserUpload);
         });
     }, []);
 
@@ -123,6 +129,12 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
                                      onClick={() => globalThis.dispatchEvent(new Event(CLEAR_CHAT_EVENT))}/>
                     <SettingsButton className={styles.historyHeader}
                                     onClick={() => globalThis.dispatchEvent(new Event("open-settings-panel"))}/>
+                    {showUserUpload && (
+                        <UploadButton
+                            className={styles.historyHeader}
+                            onClick={() => globalThis.dispatchEvent(new Event(OPEN_UPLOAD_PANEL_EVENT))}
+                        />
+                    )}
                 </div>
 
                 <div className={styles.divider}/>

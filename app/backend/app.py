@@ -103,7 +103,7 @@ from prepdocs import (
     setup_openai_client,
     setup_search_info,
 )
-from prepdocslib.blobmanager import AdlsBlobManager, BlobManager
+from prepdocslib.blobmanager import AdlsBlobManager, BlobManager, UserBlobManager
 from prepdocslib.embeddings import ImageEmbeddings
 from prepdocslib.filestrategy import UploadUserFileStrategy
 from prepdocslib.listfilestrategy import File
@@ -229,12 +229,21 @@ async def content_file(path: str, auth_claims: dict[str, Any]):
 
     if result is None:
         current_app.logger.info("Path not found in general Blob container: %s", path)
-        if current_app.config[CONFIG_USER_UPLOAD_ENABLED]:
-            user_oid = auth_claims["oid"]
-            user_blob_manager: AdlsBlobManager = current_app.config[CONFIG_USER_BLOB_MANAGER]
-            result = await user_blob_manager.download_blob(path, user_oid=user_oid)
-            if result is None:
-                current_app.logger.exception("Path not found in DataLake: %s", path)
+        user_upload_enabled = current_app.config.get(CONFIG_USER_UPLOAD_ENABLED, False)
+        current_app.logger.info("CONFIG_USER_UPLOAD_ENABLED: %s, auth_claims: %s", user_upload_enabled, auth_claims)
+        if user_upload_enabled:
+            # Use 'oid' for Azure Entra ID auth, 'sub' for Beta auth
+            user_oid = auth_claims.get("oid") or auth_claims.get("sub")
+            current_app.logger.info("Trying user blob manager with user_oid: %s", user_oid)
+            if user_oid:
+                user_blob_manager = current_app.config[CONFIG_USER_BLOB_MANAGER]
+                result = await user_blob_manager.download_blob(path, user_oid=user_oid)
+                if result is None:
+                    current_app.logger.warning("Path not found in user storage: %s for user: %s", path, user_oid)
+            else:
+                current_app.logger.warning("No user_oid found in auth_claims: %s", auth_claims)
+        else:
+            current_app.logger.warning("User upload is disabled, cannot check user blob storage")
 
     if not result:
         abort(404)
@@ -490,8 +499,11 @@ async def upload(auth_claims: dict[str, Any]):
         file = request_files.getlist("file")[0]
         adls_manager: AdlsBlobManager = current_app.config[CONFIG_USER_BLOB_MANAGER]
         file_url = await adls_manager.upload_blob(file, file.filename, user_oid)
+        # Reset file pointer to beginning for parsing after blob upload
+        file.seek(0)
         ingester: UploadUserFileStrategy = current_app.config[CONFIG_INGESTER]
-        await ingester.add_file(File(content=file, url=file_url, acls={"oids": [user_oid]}), user_oid=user_oid)
+        # Use empty acls for demo/beta auth since index has no oids field
+        await ingester.add_file(File(content=file, url=file_url, acls={}), user_oid=user_oid)
         return jsonify({"message": "File uploaded successfully"}), 200
     except Exception as error:
         current_app.logger.error("Error uploading file: %s", error)
@@ -723,19 +735,49 @@ async def setup_clients():
     )
 
     user_blob_manager = None
+    # Check if beta auth is enabled for user upload without Azure AD
+    beta_auth_enabled = os.getenv("BETA_AUTH_ENABLED", "").lower() == "true"
+
     if USE_USER_UPLOAD:
         current_app.logger.info("USE_USER_UPLOAD is true, setting up user upload feature")
-        if not AZURE_USERSTORAGE_ACCOUNT or not AZURE_USERSTORAGE_CONTAINER:
+
+        # Use AZURE_STORAGE_ACCOUNT as fallback if AZURE_USERSTORAGE_ACCOUNT is not set
+        effective_userstorage_account = AZURE_USERSTORAGE_ACCOUNT or AZURE_STORAGE_ACCOUNT
+        effective_userstorage_container = AZURE_USERSTORAGE_CONTAINER or "user-content"
+
+        if not effective_userstorage_account:
             raise ValueError(
-                "AZURE_USERSTORAGE_ACCOUNT and AZURE_USERSTORAGE_CONTAINER must be set when USE_USER_UPLOAD is true"
+                "AZURE_USERSTORAGE_ACCOUNT or AZURE_STORAGE_ACCOUNT must be set when USE_USER_UPLOAD is true"
             )
-        if not AZURE_ENFORCE_ACCESS_CONTROL:
-            raise ValueError("AZURE_ENFORCE_ACCESS_CONTROL must be true when USE_USER_UPLOAD is true")
-        user_blob_manager = AdlsBlobManager(
-            endpoint=f"https://{AZURE_USERSTORAGE_ACCOUNT}.dfs.core.windows.net",
-            container=AZURE_USERSTORAGE_CONTAINER,
-            credential=azure_credential,
-        )
+
+        # Only require AZURE_ENFORCE_ACCESS_CONTROL if not using beta auth
+        if not AZURE_ENFORCE_ACCESS_CONTROL and not beta_auth_enabled:
+            raise ValueError(
+                "AZURE_ENFORCE_ACCESS_CONTROL must be true when USE_USER_UPLOAD is true (or use BETA_AUTH_ENABLED=true)"
+            )
+
+        # Use UserBlobManager (standard Blob Storage) for beta auth environments
+        # Use AdlsBlobManager (ADLS Gen2) for production environments with Azure AD
+        if beta_auth_enabled:
+            current_app.logger.info(
+                f"User upload configured with UserBlobManager (Blob Storage) - "
+                f"account: {effective_userstorage_account}, container: {effective_userstorage_container}"
+            )
+            user_blob_manager = UserBlobManager(
+                endpoint=f"https://{effective_userstorage_account}.blob.core.windows.net",
+                container=effective_userstorage_container,
+                credential=azure_credential,
+            )
+        else:
+            current_app.logger.info(
+                f"User upload configured with AdlsBlobManager (ADLS Gen2) - "
+                f"account: {effective_userstorage_account}, container: {effective_userstorage_container}"
+            )
+            user_blob_manager = AdlsBlobManager(
+                endpoint=f"https://{effective_userstorage_account}.dfs.core.windows.net",
+                container=effective_userstorage_container,
+                credential=azure_credential,
+            )
         current_app.config[CONFIG_USER_BLOB_MANAGER] = user_blob_manager
 
         # Set up ingester

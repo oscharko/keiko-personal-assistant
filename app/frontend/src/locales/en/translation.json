@@ -30,7 +30,20 @@
         "deleteFile": "Delete file",
         "deletingFile": "Deleting file...",
         "errorDeleting": "Error deleting.",
-        "fileDeleted": "File deleted"
+        "fileDeleted": "File deleted",
+        "uploadButton": "Upload",
+        "title": "Document Management",
+        "uploading": "Uploading...",
+        "dropHere": "Drop the file here",
+        "dragDrop": "Drag & drop a file here, or click to select",
+        "supportedTypes": "Supported files: PDF, HTML, TXT, MD, JPEG, PNG",
+        "uploadedFiles": "Uploaded Documents",
+        "filename": "Filename",
+        "actions": "Actions",
+        "noFiles": "No files uploaded",
+        "delete": "Delete",
+        "confirmDelete": "Are you sure you want to delete {{filename}}?",
+        "invalidFileType": "Invalid file type. Please upload a supported file format."
     },
     "developerSettings": "Developer settings",
 
