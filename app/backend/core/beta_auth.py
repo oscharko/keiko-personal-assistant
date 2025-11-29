@@ -44,17 +44,79 @@ class BetaAuthHelper:
         self.user_oids: dict[str, str] = {}
         if enabled:
             users_json = os.getenv("BETA_AUTH_USERS", "{}")
-            # Handle potential shell escaping of exclamation marks (both \\! and \!)
-            users_json = users_json.replace("\\!", "!")
-            try:
-                self.users = json.loads(users_json)
-                # Generate unique OIDs for each user based on their username
-                for username in self.users:
-                    self.user_oids[username] = self._generate_user_oid(username)
+            self.users = self._parse_users_json(users_json)
+            # Generate unique OIDs for each user based on their username
+            for username in self.users:
+                self.user_oids[username] = self._generate_user_oid(username)
+            if self.users:
                 logger.info(f"Beta auth enabled with {len(self.users)} test users")
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse BETA_AUTH_USERS: {e}. Value was: {users_json}")
-                self.users = {}
+            else:
+                logger.warning("Beta auth enabled but no users configured")
+
+    def _parse_users_json(self, value: str) -> dict[str, str]:
+        """
+        Parse the BETA_AUTH_USERS JSON string with robust handling of various formats.
+
+        Handles different escaping scenarios from dev and prod environments:
+        - Plain JSON: {"user": "pass"}
+        - Escaped quotes from shell/Azure: {\"user\": \"pass\"}
+        - Surrounding quotes: "{...}" or '{...}'
+
+        Args:
+            value: The raw environment variable value
+
+        Returns:
+            Dictionary of username -> password mappings
+        """
+        if not value or value == "{}":
+            return {}
+
+        original_value = value
+
+        # Try parsing as-is first (works when python-dotenv already processed escapes)
+        try:
+            result = json.loads(value)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        # Remove surrounding quotes if present
+        if len(value) >= 2:
+            if (value[0] == '"' and value[-1] == '"') or \
+               (value[0] == "'" and value[-1] == "'"):
+                value = value[1:-1]
+
+        # Try again after removing quotes
+        try:
+            result = json.loads(value)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        # Handle escaped quotes (\" -> ")
+        value = value.replace('\\"', '"')
+
+        # Try again after unescaping
+        try:
+            result = json.loads(value)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        # Handle escaped exclamation marks (bash history expansion)
+        value = value.replace("\\!", "!")
+
+        # Final attempt
+        try:
+            result = json.loads(value)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse BETA_AUTH_USERS: {e}. Original value: {original_value}")
+            return {}
 
     def _generate_user_oid(self, username: str) -> str:
         """

@@ -1,314 +1,295 @@
 {
-    "pageTitle": "Keiko Personal Assistant",
-    "headerTitle": "ITGAIN part of x1F",
-    "headerCenterTitle": "Keiko your Personal Assistant",
-    "chat": "Chat",
-    "qa": "Ask a question",
-    "login": "Login",
-    "logout": "Logout",
-    "clearChat": "Clear chat",
-    "history": {
-        "chatHistory": "Chat history",
-        "openChatHistory": "Your chats",
-        "noHistory": "No chat history",
-        "deleteModalTitle": "Delete chat history",
-        "deleteModalDescription": "This action cannot be undone. Delete this chat history?",
-        "deleteLabel": "Delete",
-        "cancelLabel": "Cancel",
-        "today": "Today",
-        "yesterday": "Yesterday",
-        "last7days": "Last 7 days",
-        "last30days": "Last 30 days"
+  "pageTitle": "Keiko Personal Assistant",
+  "headerTitle": "ITGAIN part of x1F",
+  "headerCenterTitle": "Keiko your Personal Assistant",
+  "chat": "Chat",
+  "qa": "Ask a question",
+  "login": "Login",
+  "logout": "Logout",
+  "clearChat": "Clear chat",
+  "history": {
+    "chatHistory": "Chat history",
+    "openChatHistory": "Your chats",
+    "noHistory": "No chat history",
+    "deleteModalTitle": "Delete chat history",
+    "deleteModalDescription": "This action cannot be undone. Delete this chat history?",
+    "deleteLabel": "Delete",
+    "cancelLabel": "Cancel",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last7days": "Last 7 days",
+    "last30days": "Last 30 days"
+  },
+  "upload": {
+    "fileLabel": "Upload file:",
+    "uploadedFilesLabel": "Previously uploaded files:",
+    "noFilesUploaded": "No files uploaded yet",
+    "loading": "Loading...",
+    "manageFileUploads": "Manage file uploads",
+    "uploadingFiles": "Uploading files...",
+    "uploadedFileError": "Error uploading file - please try again or contact admin.",
+    "deleteFile": "Delete file",
+    "deletingFile": "Deleting file...",
+    "errorDeleting": "Error deleting.",
+    "fileDeleted": "File deleted",
+    "uploadButton": "Upload",
+    "title": "Document Management",
+    "subtitle": "Upload your documents easily and ask questions based on them.",
+    "backToChat": "Back to Chat",
+    "uploading": "Uploading...",
+    "dropHere": "Drop the file here",
+    "dragDrop": "Drag & drop a file here, or click to select",
+    "supportedTypes": "Supported files: PDF, HTML, TXT, MD, JPEG, PNG",
+    "uploadedFiles": "Uploaded Documents",
+    "filename": "Filename",
+    "actions": "Actions",
+    "noFiles": "No files uploaded",
+    "delete": "Delete",
+    "confirmDelete": "Are you sure you want to delete {{filename}}?",
+    "invalidFileType": "Invalid file type. Please upload a supported file format."
+  },
+  "developerSettings": "Developer settings",
+  "playground": {
+    "navButton": "Playground",
+    "title": "RAG Playground",
+    "subtitle": "Experiment with Retrieval-Augmented Generation parameters to optimize your AI assistant",
+    "backToChat": "Back to Chat",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "sections": {
+      "response": "Response Settings",
+      "responseDescription": "Configure how the AI generates and delivers responses to your questions.",
+      "search": "Search & Retrieval",
+      "searchDescription": "Fine-tune how the system searches and retrieves relevant information from your knowledge base.",
+      "llm": "Language Model",
+      "llmDescription": "Adjust the behavior and creativity of the underlying language model."
     },
-    "upload": {
-        "fileLabel": "Upload file:",
-        "uploadedFilesLabel": "Previously uploaded files:",
-        "noFilesUploaded": "No files uploaded yet",
-        "loading": "Loading...",
-        "manageFileUploads": "Manage file uploads",
-        "uploadingFiles": "Uploading files...",
-        "uploadedFileError": "Error uploading file - please try again or contact admin.",
-        "deleteFile": "Delete file",
-        "deletingFile": "Deleting file...",
-        "errorDeleting": "Error deleting.",
-        "fileDeleted": "File deleted",
-        "uploadButton": "Upload",
-        "title": "Document Management",
-        "uploading": "Uploading...",
-        "dropHere": "Drop the file here",
-        "dragDrop": "Drag & drop a file here, or click to select",
-        "supportedTypes": "Supported files: PDF, HTML, TXT, MD, JPEG, PNG",
-        "uploadedFiles": "Uploaded Documents",
-        "filename": "Filename",
-        "actions": "Actions",
-        "noFiles": "No files uploaded",
-        "delete": "Delete",
-        "confirmDelete": "Are you sure you want to delete {{filename}}?",
-        "invalidFileType": "Invalid file type. Please upload a supported file format."
+    "explanations": {
+      "streaming": "When enabled, responses appear word-by-word as they are generated, providing a more interactive experience. Disable for complete responses delivered all at once.",
+      "followupQuestions": "The AI will suggest relevant follow-up questions based on your conversation, helping you explore topics more deeply.",
+      "agenticRetrieval": "Uses an intelligent agent to plan and execute multiple search queries, improving the quality of retrieved information for complex questions.",
+      "agenticReasoningEffort": "Controls how much reasoning the retrieval agent uses when planning searches. Higher effort can find more relevant information but takes longer.",
+      "webSource": "Augments your knowledge base with real-time web search results, useful for current events or topics not in your documents.",
+      "sharePointSource": "Includes content from your connected SharePoint sites alongside your indexed documents.",
+      "searchScore": "Sets the minimum relevance score for search results. Higher values return only the most relevant matches, while lower values include more results.",
+      "retrieveCount": "The number of document chunks to retrieve from the knowledge base. More chunks provide more context but may slow down responses.",
+      "rerankerScore": "Minimum score from the semantic reranker (0-4 scale). Higher values ensure only the most semantically relevant results are used.",
+      "semanticRanker": "Uses AI to re-rank search results based on semantic meaning, improving relevance beyond keyword matching.",
+      "semanticCaptions": "Extracts the most relevant sentences from documents instead of using full chunks, providing more focused context to the AI.",
+      "queryRewriting": "Automatically rewrites your question to improve search results, especially helpful for conversational or ambiguous queries.",
+      "queryAnswer": "Extracts direct answers from documents using semantic understanding. Requires semantic ranker to be enabled.",
+      "retrievalMode": "Choose how documents are searched: Hybrid combines keyword and semantic search, Vectors uses only semantic similarity, Text uses only keyword matching.",
+      "vectorK": "Number of nearest neighbors to retrieve during vector search. Higher values cast a wider net but may include less relevant results.",
+      "includeCategory": "Filter search results to only include documents from specific categories.",
+      "excludeCategory": "Filter out documents from specific categories in search results.",
+      "temperature": "Controls response creativity. Lower values (0.0-0.3) produce focused, consistent answers. Higher values (0.7-1.0) generate more creative, varied responses.",
+      "seed": "Set a specific seed number for reproducible responses. Using the same seed with identical inputs will produce similar outputs.",
+      "maxResponseTokens": "Maximum number of tokens in the AI's response. Higher values allow longer responses but increase cost and latency.",
+      "topP": "Nucleus sampling parameter. Lower values (0.1-0.5) make responses more focused, higher values (0.9-1.0) allow more diverse word choices.",
+      "frequencyPenalty": "Reduces repetition by penalizing tokens based on how often they appear. Positive values discourage repetition, negative values encourage it.",
+      "presencePenalty": "Encourages the model to explore new topics. Positive values promote topic diversity, negative values keep responses focused on existing topics.",
+      "maxHistoryMessages": "Number of previous messages to include as context. More history provides better context but increases token usage.",
+      "stopSequences": "Comma-separated sequences that will stop the AI's response when encountered. Useful for controlling response format.",
+      "reasoningEffort": "Controls how much the model 'thinks' before responding. Higher effort produces more thorough answers but takes longer.",
+      "promptTemplate": "Customize the instructions given to the AI. Use '>>>' at the start to append to the default prompt instead of replacing it.",
+      "promptTemplatePrefix": "Text to prepend before the main prompt. Useful for adding consistent context or instructions.",
+      "promptTemplateSuffix": "Text to append after the main prompt. Useful for adding consistent closing instructions or format requirements.",
+      "textSources": "Include text content from retrieved documents as context for the AI's response.",
+      "imageSources": "Include images from retrieved documents as visual context for the AI's response."
     },
-    "developerSettings": "Developer settings",
-
-    "playground": {
-        "navButton": "Playground",
-        "title": "RAG Playground",
-        "subtitle": "Experiment with Retrieval-Augmented Generation parameters to optimize your AI assistant",
-        "backToChat": "Back to Chat",
-        "enabled": "Enabled",
-        "disabled": "Disabled",
-        "sections": {
-            "response": "Response Settings",
-            "responseDescription": "Configure how the AI generates and delivers responses to your questions.",
-            "search": "Search & Retrieval",
-            "searchDescription": "Fine-tune how the system searches and retrieves relevant information from your knowledge base.",
-            "llm": "Language Model",
-            "llmDescription": "Adjust the behavior and creativity of the underlying language model."
-        },
-        "explanations": {
-            "streaming": "When enabled, responses appear word-by-word as they are generated, providing a more interactive experience. Disable for complete responses delivered all at once.",
-            "followupQuestions": "The AI will suggest relevant follow-up questions based on your conversation, helping you explore topics more deeply.",
-            "agenticRetrieval": "Uses an intelligent agent to plan and execute multiple search queries, improving the quality of retrieved information for complex questions.",
-            "agenticReasoningEffort": "Controls how much reasoning the retrieval agent uses when planning searches. Higher effort can find more relevant information but takes longer.",
-            "webSource": "Augments your knowledge base with real-time web search results, useful for current events or topics not in your documents.",
-            "sharePointSource": "Includes content from your connected SharePoint sites alongside your indexed documents.",
-            "searchScore": "Sets the minimum relevance score for search results. Higher values return only the most relevant matches, while lower values include more results.",
-            "retrieveCount": "The number of document chunks to retrieve from the knowledge base. More chunks provide more context but may slow down responses.",
-            "rerankerScore": "Minimum score from the semantic reranker (0-4 scale). Higher values ensure only the most semantically relevant results are used.",
-            "semanticRanker": "Uses AI to re-rank search results based on semantic meaning, improving relevance beyond keyword matching.",
-            "semanticCaptions": "Extracts the most relevant sentences from documents instead of using full chunks, providing more focused context to the AI.",
-            "queryRewriting": "Automatically rewrites your question to improve search results, especially helpful for conversational or ambiguous queries.",
-            "queryAnswer": "Extracts direct answers from documents using semantic understanding. Requires semantic ranker to be enabled.",
-            "retrievalMode": "Choose how documents are searched: Hybrid combines keyword and semantic search, Vectors uses only semantic similarity, Text uses only keyword matching.",
-            "vectorK": "Number of nearest neighbors to retrieve during vector search. Higher values cast a wider net but may include less relevant results.",
-            "includeCategory": "Filter search results to only include documents from specific categories.",
-            "excludeCategory": "Filter out documents from specific categories in search results.",
-            "temperature": "Controls response creativity. Lower values (0.0-0.3) produce focused, consistent answers. Higher values (0.7-1.0) generate more creative, varied responses.",
-            "seed": "Set a specific seed number for reproducible responses. Using the same seed with identical inputs will produce similar outputs.",
-            "maxResponseTokens": "Maximum number of tokens in the AI's response. Higher values allow longer responses but increase cost and latency.",
-            "topP": "Nucleus sampling parameter. Lower values (0.1-0.5) make responses more focused, higher values (0.9-1.0) allow more diverse word choices.",
-            "frequencyPenalty": "Reduces repetition by penalizing tokens based on how often they appear. Positive values discourage repetition, negative values encourage it.",
-            "presencePenalty": "Encourages the model to explore new topics. Positive values promote topic diversity, negative values keep responses focused on existing topics.",
-            "maxHistoryMessages": "Number of previous messages to include as context. More history provides better context but increases token usage.",
-            "stopSequences": "Comma-separated sequences that will stop the AI's response when encountered. Useful for controlling response format.",
-            "reasoningEffort": "Controls how much the model 'thinks' before responding. Higher effort produces more thorough answers but takes longer.",
-            "promptTemplate": "Customize the instructions given to the AI. Use '>>>' at the start to append to the default prompt instead of replacing it.",
-            "promptTemplatePrefix": "Text to prepend before the main prompt. Useful for adding consistent context or instructions.",
-            "promptTemplateSuffix": "Text to append after the main prompt. Useful for adding consistent closing instructions or format requirements.",
-            "textSources": "Include text content from retrieved documents as context for the AI's response.",
-            "imageSources": "Include images from retrieved documents as visual context for the AI's response."
-        },
-        "placeholders": {
-            "excludeCategory": "Enter category to exclude...",
-            "seed": "Enter a number for reproducibility...",
-            "promptTemplate": "Enter custom instructions for the AI...",
-            "promptTemplatePrefix": "Enter text to prepend to the prompt...",
-            "promptTemplateSuffix": "Enter text to append to the prompt...",
-            "stopSequences": "Enter comma-separated stop sequences..."
-        },
-        "temperatureLabels": {
-            "precise": "Precise",
-            "creative": "Creative"
-        },
-        "topPLabels": {
-            "focused": "Focused",
-            "diverse": "Diverse"
-        },
-        "penaltyLabels": {
-            "allowRepetition": "Allow Repetition",
-            "reduceRepetition": "Reduce Repetition",
-            "stayOnTopic": "Stay on Topic",
-            "exploreTopics": "Explore Topics"
-        },
-        "info": {
-            "title": "About RAG Technology",
-            "description": "Retrieval-Augmented Generation (RAG) combines the power of large language models with your organization's knowledge base. When you ask a question, the system first searches for relevant information in your documents, then uses that context to generate accurate, grounded responses. The settings above let you fine-tune this process for your specific needs."
-        }
+    "placeholders": {
+      "excludeCategory": "Enter category to exclude...",
+      "seed": "Enter a number for reproducibility...",
+      "promptTemplate": "Enter custom instructions for the AI...",
+      "promptTemplatePrefix": "Enter text to prepend to the prompt...",
+      "promptTemplateSuffix": "Enter text to append to the prompt...",
+      "stopSequences": "Enter comma-separated stop sequences..."
     },
-
-    "chatEmptyStateTitle": "Keiko",
-    "chatEmptyStateSubtitle": "Ask anything or try an example",
-    "defaultExamples": {
-        "1": "What is included in my Northwind Health Plus plan that is not in standard?",
-        "2": "What happens in a performance review?",
-        "3": "What does a Product Manager do?",
-        "placeholder": "Type a new question (e.g. does my plan cover annual eye exams?)"
+    "temperatureLabels": {
+      "precise": "Precise",
+      "creative": "Creative"
     },
-    "askTitle": "Ask your data",
-    "multimodalExamples": {
-        "1": "Compare the impact of interest rates and GDP in financial markets.",
-        "2": "What is the expected trend for the S&P 500 index over the next five years? Compare it to the past S&P 500 performance",
-        "3": "Can you identify any correlation between oil prices and stock market trends?",
-        "placeholder": "Example: Does my plan cover annual eye exams?"
+    "topPLabels": {
+      "focused": "Focused",
+      "diverse": "Diverse"
     },
-    "generatingAnswer": "Generating answer",
-    "citationWithColon": "Citation:",
-    "followupQuestions": "Follow-up questions:",
-
-    "tooltips": {
-        "submitQuestion": "Submit question",
-        "enhancePrompt": "Enhance prompt - Rewrite to improve clarity and context",
-        "askWithVoice": "Ask question with voice",
-        "stopRecording": "Stop recording question",
-        "showThoughtProcess": "Show thought process",
-        "showSupportingContent": "Show supporting content",
-        "speakAnswer": "Speak answer",
-        "info": "Info",
-        "save": "Save",
-        "copy": "Copy",
-        "copied": "Copied!"
+    "penaltyLabels": {
+      "allowRepetition": "Allow Repetition",
+      "reduceRepetition": "Reduce Repetition",
+      "stayOnTopic": "Stay on Topic",
+      "exploreTopics": "Explore Topics"
     },
-
-    "headerTexts":{
-        "thoughtProcess": "Thought Process",
-        "supportingContent": "Supporting Content",
-        "citation": "Citation"
-    },
-
-    "labels": {
-        "toggleMenu": "Toggle menu",
-        "languagePicker": "Select your language",
-        "headerText": "Configure answer generation",
-        "closeButton": "Close",
-        "promptTemplate": "Override prompt template",
-        "temperature": "Temperature",
-        "seed": "Seed",
-        "minimumSearchScore": "Minimum search score",
-        "minimumRerankerScore": "Minimum reranker score",
-        "retrieveCount": "Retrieve this many search results:",
-        "agenticReasoningEffort": "Retrieval reasoning effort",
-        "agenticReasoningEffortOptions": {
-            "minimal": "Minimal",
-            "low": "Low",
-            "medium": "Medium"
-        },
-        "includeCategory": "Include category",
-        "includeCategoryOptions": {
-            "all": "All"
-        },
-        "excludeCategory": "Exclude category",
-        "useSemanticRanker": "Use semantic ranker for retrieval",
-        "useSemanticCaptions": "Use semantic captions",
-        "useQueryRewriting": "Use query rewriting for retrieval",
-        "reasoningEffort": "Reasoning effort",
-        "reasoningEffortOptions": {
-            "minimal": "Minimal (GPT-5 only)",
-            "low": "Low",
-            "medium": "Medium",
-            "high": "High"
-        },
-        "useSuggestFollowupQuestions": "Suggest follow-up questions",
-        "useAgenticKnowledgeBase": "Use agentic retrieval",
-        "useWebSource": "Include web source",
-        "useSharePointSource": "Include Sharepoint source",
-        "llmInputs": "LLM input sources",
-        "llmInputsOptions": {
-            "texts": "Text sources",
-            "images": "Image sources",
-            "textAndImages": "Text and image sources"
-        },
-        "retrievalMode": {
-            "label": "Retrieval mode",
-            "options": {
-                "hybrid": "Vectors + Text (Hybrid)",
-                "vectors": "Vectors",
-                "texts": "Text"
-            }
-        },
-        "vector": {
-            "label": "Included vector fields",
-            "options": {
-                "embedding": "Text embeddings",
-                "imageEmbedding": "Image embeddings"
-            }
-        },
-        "useOidSecurityFilter": "Use oid security filter",
-        "useGroupsSecurityFilter": "Use groups security filter",
-        "shouldStream": "Stream chat completion responses",
-        "maxResponseTokens": "Maximum response tokens",
-        "topP": "Top P (Nucleus Sampling)",
-        "frequencyPenalty": "Frequency penalty",
-        "presencePenalty": "Presence penalty",
-        "maxHistoryMessages": "Maximum history messages",
-        "stopSequences": "Stop sequences",
-        "promptTemplatePrefix": "Prompt prefix",
-        "promptTemplateSuffix": "Prompt suffix",
-        "vectorK": "Vector K (Nearest Neighbors)",
-        "useQueryAnswer": "Use extractive answers"
-    },
-
-    "helpTexts": {
-        "promptTemplate":
-            "Overrides the prompt used to generate the answer based on the question and search results. To append to existing prompt instead of replace whole prompt, start your prompt with '>>>'.",
-        "temperature":
-            "Sets the temperature of the request to the LLM that generates the answer. Higher temperatures result in more creative responses, but they may be less grounded.",
-        "seed": "Sets a seed to improve the reproducibility of the model's responses. The seed can be any integer.",
-        "searchScore":
-             "Sets a minimum score for search results coming back from Azure AI search. The score range depends on whether you're using hybrid (default), vectors only, or text only.",
-        "rerankerScore":
-             "Sets a minimum score for search results coming back from the semantic reranker. The score always ranges between 0-4. The higher the score, the more semantically relevant the result is to the question.",
-        "retrieveNumber":
-             "Sets the number of search results to retrieve from Azure AI search. More results may increase the likelihood of finding the correct answer, but may lead to the model getting 'lost in the middle'.",
-        "agenticReasoningEffort":
-            "Controls the amount of reasoning the agent uses while planning retrieval subqueries. Higher effort can improve recall at the cost of additional latency and tokens.",
-        "includeCategory":
-            "Specifies a category to include in the search results. There are no categories used in the default data set.",
-         "excludeCategory":
-            "Specifies a category to exclude from the search results. There are no categories used in the default data set.",
-         "useSemanticReranker":
-            "Enables the Azure AI Search semantic ranker, a model that re-ranks search results based on semantic similarity to the user's query.",
-        "useQueryRewriting":
-            "Enables Azure AI Search query rewriting, a process that modifies the user's query to improve search results. Requires semantic ranker to be enabled.",
-        "reasoningEffort":
-            "Sets the reasoning effort for the LLM. Higher values result in more reasoning, but may take longer to generate a response. The default is medium.",
-        "useSemanticCaptions":
-             "Sends semantic captions to the LLM instead of the full search result. A semantic caption is extracted from a search result during the process of semantic ranking.",
-        "suggestFollowupQuestions": "Asks the LLM to suggest follow-up questions based on the user's query.",
-        "textEmbeddings": "When selected, search will use embeddings from the text-only embeddings model of extracted text chunks.",
-        "imageEmbeddings": "When selected, search will use embeddings from the multimodal embeddings model of extracted images.",
-        "llmTextInputs": "When selected, text content from the search results will be sent to the LLM as context.",
-        "llmImageInputs": "When selected, images from the search results will be sent to the LLM as context.",
-        "retrievalMode":
-            "Sets the retrieval mode for the Azure AI Search query. `Vectors + Text (Hybrid)` uses a combination of vector search and full text search, `Vectors` uses only vector search, and `Text` uses only full text search. Hybrid is generally optimal.",
-        "streamChat": "Continuously streams the response to the chat UI as it is generated.",
-        "useOidSecurityFilter": "Filter search results based on the authenticated user's OID.",
-        "useGroupsSecurityFilter": "Filter search results based on the authenticated user's groups.",
-        "useAgenticKnowledgeBase": "Use agentic retrieval from Azure AI Search for multi-query planning. Always uses semantic ranker.",
-        "useWebSource": "Augment retrieval with web search results alongside your indexed data set.",
-        "useSharePointSource": "Augment retrieval with SharePoint content alongside your indexed data set."
-    },
-
-    "overallSettings": "Overall settings",
-    "searchSettings": "Search settings",
-    "llmSettings": "LLM settings",
-
-    "news": {
-        "navButton": "News",
-        "title": "Personalized News",
-        "subtitle": "Stay informed with AI-curated news based on your interests",
-        "loading": "Loading your personalized news...",
-        "backToChat": "Back to Chat",
-        "refresh": "Refresh News",
-        "refreshing": "Refreshing...",
-        "refreshNow": "Refresh Now",
-        "settings": "Topics",
-        "close": "Close",
-        "retry": "Try Again",
-        "emptyTitle": "No Topics Configured",
-        "emptyDescription": "Add topics you want to follow to see personalized news updates.",
-        "configureTopics": "Configure Topics",
-        "noNewsTitle": "No News Available",
-        "noNewsDescription": "Click refresh to fetch the latest news for your topics.",
-        "errorTitle": "Unable to Load News",
-        "summary": "Summary",
-        "readOriginal": "Read Original Article",
-        "citations": "Sources",
-        "relatedTopics": "Related Topics",
-        "preferencesTitle": "News Topics",
-        "preferencesDescription": "Add up to 5 topics you want to follow. We will search for the latest news and provide AI-generated summaries.",
-        "addTermPlaceholder": "Enter a topic (e.g., Artificial Intelligence)",
-        "add": "Add",
-        "termsCount": "{{current}} of {{max}} topics configured",
-        "noTermsConfigured": "No topics configured yet. Add your first topic above.",
-        "deleteTerm": "Delete {{term}}",
-        "preferencesInfo": "News is refreshed automatically and cached for 1 hour to optimize performance and reduce costs."
+    "info": {
+      "title": "About RAG Technology",
+      "description": "Retrieval-Augmented Generation (RAG) combines the power of large language models with your organization's knowledge base. When you ask a question, the system first searches for relevant information in your documents, then uses that context to generate accurate, grounded responses. The settings above let you fine-tune this process for your specific needs."
     }
+  },
+  "chatEmptyStateTitle": "Keiko",
+  "chatEmptyStateSubtitle": "Ask anything or try an example",
+  "defaultExamples": {
+    "1": "What is included in my Northwind Health Plus plan that is not in standard?",
+    "2": "What happens in a performance review?",
+    "3": "What does a Product Manager do?",
+    "placeholder": "Type a new question (e.g. does my plan cover annual eye exams?)"
+  },
+  "askTitle": "Ask your data",
+  "multimodalExamples": {
+    "1": "Compare the impact of interest rates and GDP in financial markets.",
+    "2": "What is the expected trend for the S&P 500 index over the next five years? Compare it to the past S&P 500 performance",
+    "3": "Can you identify any correlation between oil prices and stock market trends?",
+    "placeholder": "Example: Does my plan cover annual eye exams?"
+  },
+  "generatingAnswer": "Generating answer",
+  "citationWithColon": "Citation:",
+  "followupQuestions": "Follow-up questions:",
+  "tooltips": {
+    "submitQuestion": "Submit question",
+    "enhancePrompt": "Enhance prompt - Rewrite to improve clarity and context",
+    "askWithVoice": "Ask question with voice",
+    "stopRecording": "Stop recording question",
+    "showThoughtProcess": "Show thought process",
+    "showSupportingContent": "Show supporting content",
+    "speakAnswer": "Speak answer",
+    "info": "Info",
+    "save": "Save",
+    "copy": "Copy",
+    "copied": "Copied!"
+  },
+  "headerTexts": {
+    "thoughtProcess": "Thought Process",
+    "supportingContent": "Supporting Content",
+    "citation": "Citation"
+  },
+  "labels": {
+    "toggleMenu": "Toggle menu",
+    "languagePicker": "Select your language",
+    "headerText": "Configure answer generation",
+    "closeButton": "Close",
+    "promptTemplate": "Override prompt template",
+    "temperature": "Temperature",
+    "seed": "Seed",
+    "minimumSearchScore": "Minimum search score",
+    "minimumRerankerScore": "Minimum reranker score",
+    "retrieveCount": "Retrieve this many search results:",
+    "agenticReasoningEffort": "Retrieval reasoning effort",
+    "agenticReasoningEffortOptions": {
+      "minimal": "Minimal",
+      "low": "Low",
+      "medium": "Medium"
+    },
+    "includeCategory": "Include category",
+    "includeCategoryOptions": {
+      "all": "All"
+    },
+    "excludeCategory": "Exclude category",
+    "useSemanticRanker": "Use semantic ranker for retrieval",
+    "useSemanticCaptions": "Use semantic captions",
+    "useQueryRewriting": "Use query rewriting for retrieval",
+    "reasoningEffort": "Reasoning effort",
+    "reasoningEffortOptions": {
+      "minimal": "Minimal (GPT-5 only)",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "useSuggestFollowupQuestions": "Suggest follow-up questions",
+    "useAgenticKnowledgeBase": "Use agentic retrieval",
+    "useWebSource": "Include web source",
+    "useSharePointSource": "Include Sharepoint source",
+    "llmInputs": "LLM input sources",
+    "llmInputsOptions": {
+      "texts": "Text sources",
+      "images": "Image sources",
+      "textAndImages": "Text and image sources"
+    },
+    "retrievalMode": {
+      "label": "Retrieval mode",
+      "options": {
+        "hybrid": "Vectors + Text (Hybrid)",
+        "vectors": "Vectors",
+        "texts": "Text"
+      }
+    },
+    "vector": {
+      "label": "Included vector fields",
+      "options": {
+        "embedding": "Text embeddings",
+        "imageEmbedding": "Image embeddings"
+      }
+    },
+    "useOidSecurityFilter": "Use oid security filter",
+    "useGroupsSecurityFilter": "Use groups security filter",
+    "shouldStream": "Stream chat completion responses",
+    "maxResponseTokens": "Maximum response tokens",
+    "topP": "Top P (Nucleus Sampling)",
+    "frequencyPenalty": "Frequency penalty",
+    "presencePenalty": "Presence penalty",
+    "maxHistoryMessages": "Maximum history messages",
+    "stopSequences": "Stop sequences",
+    "promptTemplatePrefix": "Prompt prefix",
+    "promptTemplateSuffix": "Prompt suffix",
+    "vectorK": "Vector K (Nearest Neighbors)",
+    "useQueryAnswer": "Use extractive answers"
+  },
+  "helpTexts": {
+    "promptTemplate": "Overrides the prompt used to generate the answer based on the question and search results. To append to existing prompt instead of replace whole prompt, start your prompt with '>>>'.",
+    "temperature": "Sets the temperature of the request to the LLM that generates the answer. Higher temperatures result in more creative responses, but they may be less grounded.",
+    "seed": "Sets a seed to improve the reproducibility of the model's responses. The seed can be any integer.",
+    "searchScore": "Sets a minimum score for search results coming back from Azure AI search. The score range depends on whether you're using hybrid (default), vectors only, or text only.",
+    "rerankerScore": "Sets a minimum score for search results coming back from the semantic reranker. The score always ranges between 0-4. The higher the score, the more semantically relevant the result is to the question.",
+    "retrieveNumber": "Sets the number of search results to retrieve from Azure AI search. More results may increase the likelihood of finding the correct answer, but may lead to the model getting 'lost in the middle'.",
+    "agenticReasoningEffort": "Controls the amount of reasoning the agent uses while planning retrieval subqueries. Higher effort can improve recall at the cost of additional latency and tokens.",
+    "includeCategory": "Specifies a category to include in the search results. There are no categories used in the default data set.",
+    "excludeCategory": "Specifies a category to exclude from the search results. There are no categories used in the default data set.",
+    "useSemanticReranker": "Enables the Azure AI Search semantic ranker, a model that re-ranks search results based on semantic similarity to the user's query.",
+    "useQueryRewriting": "Enables Azure AI Search query rewriting, a process that modifies the user's query to improve search results. Requires semantic ranker to be enabled.",
+    "reasoningEffort": "Sets the reasoning effort for the LLM. Higher values result in more reasoning, but may take longer to generate a response. The default is medium.",
+    "useSemanticCaptions": "Sends semantic captions to the LLM instead of the full search result. A semantic caption is extracted from a search result during the process of semantic ranking.",
+    "suggestFollowupQuestions": "Asks the LLM to suggest follow-up questions based on the user's query.",
+    "textEmbeddings": "When selected, search will use embeddings from the text-only embeddings model of extracted text chunks.",
+    "imageEmbeddings": "When selected, search will use embeddings from the multimodal embeddings model of extracted images.",
+    "llmTextInputs": "When selected, text content from the search results will be sent to the LLM as context.",
+    "llmImageInputs": "When selected, images from the search results will be sent to the LLM as context.",
+    "retrievalMode": "Sets the retrieval mode for the Azure AI Search query. `Vectors + Text (Hybrid)` uses a combination of vector search and full text search, `Vectors` uses only vector search, and `Text` uses only full text search. Hybrid is generally optimal.",
+    "streamChat": "Continuously streams the response to the chat UI as it is generated.",
+    "useOidSecurityFilter": "Filter search results based on the authenticated user's OID.",
+    "useGroupsSecurityFilter": "Filter search results based on the authenticated user's groups.",
+    "useAgenticKnowledgeBase": "Use agentic retrieval from Azure AI Search for multi-query planning. Always uses semantic ranker.",
+    "useWebSource": "Augment retrieval with web search results alongside your indexed data set.",
+    "useSharePointSource": "Augment retrieval with SharePoint content alongside your indexed data set."
+  },
+  "overallSettings": "Overall settings",
+  "searchSettings": "Search settings",
+  "llmSettings": "LLM settings",
+  "news": {
+    "navButton": "News",
+    "title": "Personalized News",
+    "subtitle": "Stay informed with AI-curated news based on your interests",
+    "loading": "Loading your personalized news...",
+    "backToChat": "Back to Chat",
+    "refresh": "Refresh News",
+    "refreshing": "Refreshing...",
+    "refreshNow": "Refresh Now",
+    "settings": "Topics",
+    "close": "Close",
+    "retry": "Try Again",
+    "emptyTitle": "No Topics Configured",
+    "emptyDescription": "Add topics you want to follow to see personalized news updates.",
+    "configureTopics": "Configure Topics",
+    "noNewsTitle": "No News Available",
+    "noNewsDescription": "Click refresh to fetch the latest news for your topics.",
+    "errorTitle": "Unable to Load News",
+    "summary": "Summary",
+    "readOriginal": "Read Original Article",
+    "citations": "Sources",
+    "relatedTopics": "Related Topics",
+    "preferencesTitle": "News Topics",
+    "preferencesDescription": "Add up to 5 topics you want to follow. We will search for the latest news and provide AI-generated summaries.",
+    "addTermPlaceholder": "Enter a topic (e.g., Artificial Intelligence)",
+    "add": "Add",
+    "termsCount": "{{current}} of {{max}} topics configured",
+    "noTermsConfigured": "No topics configured yet. Add your first topic above.",
+    "deleteTerm": "Delete {{term}}",
+    "preferencesInfo": "News is refreshed automatically and cached for 1 hour to optimize performance and reduce costs."
+  }
 }

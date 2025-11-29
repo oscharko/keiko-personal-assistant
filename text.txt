@@ -13,6 +13,3 @@ demo_04@x1f.one | DemoKeiko4004
 admin@x1f.one | oscharko
 
 Endpoint: https://capps-backend-vyuvvvwlwg5jo.ashyrock-7e45fce0.eastus.azurecontainerapps.io/
-
-Ich sehe jetzt das Problem. Die Container existieren nicht mehr (leere Ausgabe). Das Problem ist, dass Azure Resource Manager (ARM) bei einem "what-if" keine Aenderungen erkennt, weil die Cosmos DB-Datenbank noch existiert, aber die Container fehlen.
-Das Problem liegt daran, dass das AVM-Modul fuer Cosmos DB die Container nicht neu erstellt, wenn sie geloescht wurden. Ich muss die Container manuell ueber Azure CLI erstellen, da Bicep sie nicht wiederherstellt:

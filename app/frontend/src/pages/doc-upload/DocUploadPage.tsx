@@ -118,87 +118,101 @@ export function Component(): JSX.Element {
 
     return (
         <div className={styles.container}>
-            <Helmet><title>{t("upload.title", "Document Management")} - Keiko</title></Helmet>
+            <Helmet>
+                <title>{t("upload.title", "Document Management")} - Keiko</title>
+            </Helmet>
 
             <div className={styles.header}>
-                <h1 className={styles.title}>{t("upload.title", "Document Management")}</h1>
+                <div className={styles.headerLeft}>
+                    <h1 className={styles.title}>{t("upload.title")}</h1>
+                    <p className={styles.subtitle}>{t("upload.subtitle")}</p>
+                </div>
                 <button className={styles.backButton} onClick={() => navigate("/")}>
-                    <Icon iconName="Back"/>{t("upload.backToChat", "Back to Chat")}
+                    <Icon iconName="Back"/>
+                    {t("upload.backToChat")}
                 </button>
             </div>
 
+
             {error && <div className={styles.error}>{error}</div>}
 
-            <div className={`${styles.uploadArea} ${isDragActive ? styles.dragActive : ""}`}
-                 onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
-                 onClick={() => fileInputRef.current?.click()}>
-                <ParticleBackground
-                    backgroundColor="#DCFF4A"
-                    particleColor="#000000"
-                />
-                <div className={styles.uploadContent}>
-                    <input type="file" ref={fileInputRef} className={styles.fileInput} onChange={onFileSelect}
-                           accept={ACCEPTED_FILE_TYPES} style={{display: "none"}}/>
-                    <Icon iconName="CloudUpload" className={styles.uploadIcon}/>
-                    {isUploading ?
-                        <Spinner size={SpinnerSize.medium} label={t("upload.uploading", "Uploading...")}/> : (
-                            <>
-                                <p className={styles.uploadText}>{isDragActive ? t("upload.dropHere", "Drop here")
-                                    : t("upload.dragDrop", "Drag & drop a file here, or click to select")}</p>
-                                <p className={styles.uploadSubtext}>{t("upload.supportedTypes", "PDF, HTML, TXT, MD, JPEG, PNG, DOCX")}</p>
-                            </>
-                        )}
-                </div>
-            </div>
+            <div className={styles.content}>
 
-            <div className={styles.documentList}>
-                <h2 className={styles.listHeader}>{t("upload.uploadedFiles", "Uploaded Documents")}</h2>
-                {isLoading ? <div className={styles.spinner}><Spinner size={SpinnerSize.large}/></div> : (
-                    <table className={styles.table}>
-                        <thead>
-                        <tr>
-                            <th>{t("upload.filename", "Filename")}</th>
-                            <th>{t("upload.actions", "Actions")}</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {files.length === 0 ? (
+                <div className={`${styles.uploadArea} ${isDragActive ? styles.dragActive : ""}`}
+                     onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+                     onClick={() => fileInputRef.current?.click()}>
+                    <ParticleBackground
+                        backgroundColor="#DCFF4A"
+                        particleColor="#000000"
+                    />
+                    <div className={styles.uploadContent}>
+                        <input type="file" ref={fileInputRef} className={styles.fileInput} onChange={onFileSelect}
+                               accept={ACCEPTED_FILE_TYPES} style={{display: "none"}}/>
+                        <Icon iconName="CloudUpload" className={styles.uploadIcon}/>
+                        {isUploading ?
+                            <Spinner size={SpinnerSize.medium} label={t("upload.uploading", "Uploading...")}/> : (
+                                <>
+                                    <p className={styles.uploadText}>{isDragActive ? t("upload.dropHere", "Drop here")
+                                        : t("upload.dragDrop", "Drag & drop a file here, or click to select")}</p>
+                                    <p className={styles.uploadSubtext}>{t("upload.supportedTypes", "PDF, HTML, TXT, MD, JPEG, PNG, DOCX")}</p>
+                                </>
+                            )}
+                    </div>
+                </div>
+
+
+                <div className={styles.documentList}>
+                    <h2 className={styles.listHeader}>{t("upload.uploadedFiles", "Uploaded Documents")}</h2>
+                    {isLoading ? <div className={styles.spinner}><Spinner size={SpinnerSize.large}/></div> : (
+                        <table className={styles.table}>
+                            <thead>
                             <tr>
-                                <td colSpan={2}
-                                    className={styles.noFiles}>{t("upload.noFiles", "No files uploaded")}</td>
+                                <th>{t("upload.filename", "Filename")}</th>
+                                <th>{t("upload.actions", "Actions")}</th>
                             </tr>
-                        ) : files.map((file, i) => (
-                            <tr key={i}>
-                                <td>{file}</td>
-                                <td>
-                                    {/*                                    <button className={styles.deleteButton} onClick={() => handleDelete(file)}
+                            </thead>
+                            <tbody>
+                            {files.length === 0 ? (
+                                <tr>
+                                    <td colSpan={2}
+                                        className={styles.noFiles}>{t("upload.noFiles", "No files uploaded")}</td>
+                                </tr>
+                            ) : files.map((file, i) => (
+                                <tr key={i}>
+                                    <td>{file}</td>
+                                    <td>
+                                        {/*                                    <button className={styles.deleteButton} onClick={() => handleDelete(file)}
                                             title={t("upload.delete", "Delete")}>
                                         <Icon iconName="Delete"/></button>*/}
-                                    <IconButton
-                                        iconProps={{iconName: "Delete"}}
-                                        title={t("upload.delete")}
-                                        ariaLabel={t("delete", "Delete")}
-                                        onClick={() => handleDelete(file)}
-                                        styles={{
-                                            root: {
-                                                backgroundColor: "#DCFF4A",
-                                                color: "#000",
-                                                marginLeft: "8px",
-                                                borderRadius: "20%"
-                                            },
-                                            rootHovered: {
-                                                backgroundColor: "#000",
-                                                color: "#fff",
-                                                borderRadius: "20%"
-                                            }
-                                        }}
-                                    />
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                )}
+                                        <IconButton
+                                            iconProps={{iconName: "Delete"}}
+                                            title={t("upload.delete")}
+                                            ariaLabel={t("delete", "Delete")}
+                                            onClick={() => handleDelete(file)}
+                                            styles={{
+                                                root: {
+                                                    backgroundColor: "#DCFF4A",
+                                                    color: "#000",
+                                                    marginLeft: "8px",
+                                                    borderRadius: "20%",
+                                                    border: "1px solid #000"
+                                                },
+                                                rootHovered: {
+                                                    backgroundColor: "#000",
+                                                    color: "#fff",
+                                                    borderRadius: "20%",
+                                                    border: "1px solid #DCFF4A"
+                                                }
+                                            }}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+
             </div>
         </div>
     );

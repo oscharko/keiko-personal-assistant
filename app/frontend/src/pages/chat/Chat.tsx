@@ -20,7 +20,7 @@ import {AnalysisPanel, AnalysisPanelTabs} from "../../components/AnalysisPanel";
 import {HistoryPanel} from "../../components/HistoryPanel";
 import {HistoryProviderOptions, useHistoryManager} from "../../components/HistoryProviders";
 import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../../components/HistoryProviders/events";
-import {getToken, requireAccessControl, useLogin} from "../../authConfig";
+import {getToken, useLogin} from "../../authConfig";
 import {useMsal} from "@azure/msal-react";
 import {LoginContext} from "../../loginContext";
 import {LanguagePicker} from "../../i18n/LanguagePicker";
@@ -527,7 +527,6 @@ const Chat = () => {
     };
 
     const {t, i18n} = useTranslation();
-
 
 
     return (

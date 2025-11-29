@@ -3,14 +3,14 @@
  * Displays full details of a news item including summary, citations, and related topics.
  */
 
-import { useCallback, useEffect } from "react";
-import { Panel, PanelType, Link } from "@fluentui/react";
-import { Dismiss24Regular, Open24Regular, News24Regular } from "@fluentui/react-icons";
-import { useTranslation } from "react-i18next";
+import {useCallback, useEffect} from "react";
+import {Link, Panel, PanelType} from "@fluentui/react";
+import {News24Regular} from "@fluentui/react-icons";
+import {useTranslation} from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { NewsItem } from "../../api/models";
+import {NewsItem} from "../../api/models";
 import styles from "./NewsDetailModal.module.css";
 
 interface NewsDetailModalProps {
@@ -18,6 +18,9 @@ interface NewsDetailModalProps {
     onClose: () => void;
 }
 
+/**
+ * Format a timestamp to a readable date string.
+ */
 /**
  * Format a timestamp to a readable date string.
  */
@@ -33,8 +36,23 @@ function formatDate(timestamp: number | undefined): string {
     });
 }
 
-export function NewsDetailModal({ item, onClose }: NewsDetailModalProps) {
-    const { t } = useTranslation();
+/**
+ * Remove HTTP/HTTPS links from text while preserving the rest of the content.
+ * Removes markdown links [text](url) and plain URLs, but preserves line breaks for lists.
+ */
+function removeHttpLinks(text: string | undefined): string {
+    if (!text) return "";
+    // Remove markdown links but keep the link text: [text](url) -> text
+    let cleaned = text.replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, "$1");
+    // Remove standalone URLs (preserve newlines, only remove spaces around URLs)
+    cleaned = cleaned.replace(/[ \t]*https?:\/\/[^\s\n]+[ \t]*/g, "");
+    // Clean up multiple spaces on the same line (but not newlines)
+    cleaned = cleaned.replace(/[ \t]{2,}/g, " ");
+    return cleaned;
+}
+
+export function NewsDetailModal({item, onClose}: NewsDetailModalProps) {
+    const {t} = useTranslation();
 
     // Handle escape key to close modal
     const handleKeyDown = useCallback(
@@ -66,10 +84,10 @@ export function NewsDetailModal({ item, onClose }: NewsDetailModalProps) {
             <div className={styles.content}>
                 {/* Image */}
                 {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.title} className={styles.image} />
+                    <img src={item.imageUrl} alt={item.title} className={styles.image}/>
                 ) : (
                     <div className={styles.imagePlaceholder}>
-                        <News24Regular />
+                        <News24Regular/>
                     </div>
                 )}
 
@@ -84,19 +102,9 @@ export function NewsDetailModal({ item, onClose }: NewsDetailModalProps) {
                 <div className={styles.section}>
                     <h3 className={styles.sectionTitle}>{t("news.summary")}</h3>
                     <div className={styles.summary}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.summary}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{removeHttpLinks(item.summary)}</ReactMarkdown>
                     </div>
                 </div>
-
-                {/* Original Article Link */}
-                {item.originalUrl && (
-                    <div className={styles.section}>
-                        <Link href={item.originalUrl} target="_blank" rel="noopener noreferrer" className={styles.originalLink}>
-                            <Open24Regular />
-                            {t("news.readOriginal")}
-                        </Link>
-                    </div>
-                )}
 
                 {/* Citations */}
                 {item.citations.length > 0 && (
@@ -108,7 +116,8 @@ export function NewsDetailModal({ item, onClose }: NewsDetailModalProps) {
                                     <Link href={citation.url} target="_blank" rel="noopener noreferrer">
                                         {citation.title}
                                     </Link>
-                                    {citation.source && <span className={styles.citationSource}> - {citation.source}</span>}
+                                    {citation.source &&
+                                        <span className={styles.citationSource}> - {citation.source}</span>}
                                     {citation.snippet && <p className={styles.citationSnippet}>{citation.snippet}</p>}
                                 </li>
                             ))}

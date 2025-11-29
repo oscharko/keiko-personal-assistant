@@ -19,8 +19,8 @@
     justify-content: space-between;
     align-items: flex-start;
     padding: 32px 48px;
-    background: #000;
-    color: #DCFF4A;
+    background: #DCFF4A;
+    color: #000;
     flex-shrink: 0;
 }
 
@@ -48,11 +48,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #DCFF4A;
+    background: #000;
     border: none;
     cursor: pointer;
     font-size: 14px;
-    color: #000;
+    color: #DCFF4A;
     padding: 12px 24px;
     border-radius: 12px;
     font-weight: 600;
@@ -61,8 +61,9 @@
 
 .backButton:hover {
     background: #fff;
+    color: #000;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 255, 74, 0.3);
+    box-shadow: 0 4px 12px rgba(51, 51, 51, 0.3);
 }
 
 .content {
@@ -304,6 +305,20 @@
 
 .parameterCard :global(.ms-Toggle-background) {
     border-radius: 12px;
+}
+
+.parameterCard :global(.ms-Toggle.is-checked .ms-Toggle-background) {
+    background-color: #DCFF4A;
+    border-color: #DCFF4A;
+}
+
+.parameterCard :global(.ms-Toggle.is-checked:hover .ms-Toggle-background) {
+    background-color: #c8e842;
+    border-color: #c8e842;
+}
+
+.parameterCard :global(.ms-Toggle.is-checked .ms-Toggle-thumb) {
+    background-color: #000;
 }
 
 .parameterCard :global(.ms-Toggle-thumb) {
