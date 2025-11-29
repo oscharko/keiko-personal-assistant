@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Icon, Spinner, SpinnerSize} from "@fluentui/react";
 import {useTranslation} from "react-i18next";
 import {useMsal} from "@azure/msal-react";
+import {useNavigate} from "react-router-dom";
 
 import styles from "./Sidebar.module.css";
 import {configApi} from "../../api";
@@ -14,9 +15,6 @@ import {ClearChatButton} from "../ClearChatButton";
 import {SettingsButton} from "../SettingsButton";
 import {UploadButton} from "../UploadButton";
 
-// Custom event name for opening the upload panel
-export const OPEN_UPLOAD_PANEL_EVENT = "open-upload-panel";
-
 interface SidebarProps {
     className?: string;
 }
@@ -25,6 +23,7 @@ const HISTORY_COUNT_PER_LOAD = 20;
 
 const Sidebar: React.FC<SidebarProps> = ({className}) => {
     const {t} = useTranslation();
+    const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [historyItems, setHistoryItems] = useState<HistoryMetaData[]>([]);
@@ -132,7 +131,7 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
                     {showUserUpload && (
                         <UploadButton
                             className={styles.historyHeader}
-                            onClick={() => globalThis.dispatchEvent(new Event(OPEN_UPLOAD_PANEL_EVENT))}
+                            onClick={() => navigate("/doc-upload")}
                         />
                     )}
                 </div>

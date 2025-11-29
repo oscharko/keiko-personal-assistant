@@ -41,6 +41,7 @@ from quart import (
     request,
     send_file,
     send_from_directory,
+    redirect,
 )
 from quart_cors import cors
 
@@ -114,9 +115,17 @@ mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
 mimetypes.add_type("application/manifest+json", ".webmanifest")
 
+# Development mode configuration
+# When USE_VITE_DEV_SERVER is true, the backend redirects to the Vite dev server
+# and enables CORS for the Vite origin to support hot module replacement (HMR)
+USE_VITE_DEV_SERVER = os.getenv("USE_VITE_DEV_SERVER", "").lower() == "true"
+VITE_DEV_SERVER_URL = "http://127.0.0.1:5173"
+
 
 @bp.route("/")
 async def index():
+    if USE_VITE_DEV_SERVER:
+        return redirect(VITE_DEV_SERVER_URL)
     response = await make_response(await bp.send_static_file("index.html"))
     # No cache for index.html to ensure users always get the latest version
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -128,7 +137,7 @@ async def index():
 # Empty page is recommended for login redirect to work.
 # See https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/initialization.md#redirecturi-considerations for more information
 @bp.route("/redirect")
-async def redirect():
+async def redirect_callback():
     return ""
 
 
@@ -994,7 +1003,12 @@ def create_app():
     app.logger.setLevel(os.getenv("APP_LOG_LEVEL", app_level))
     logging.getLogger("scripts").setLevel(app_level)
 
-    if allowed_origin := os.getenv("ALLOWED_ORIGIN"):
+    # Enable CORS for development mode (Vite dev server) or custom origins
+    if USE_VITE_DEV_SERVER:
+        # In development mode, allow requests from Vite dev server
+        app.logger.info("Development mode: CORS enabled for Vite dev server at %s", VITE_DEV_SERVER_URL)
+        cors(app, allow_origin=[VITE_DEV_SERVER_URL], allow_methods=["GET", "POST", "OPTIONS"])
+    elif allowed_origin := os.getenv("ALLOWED_ORIGIN"):
         allowed_origins = allowed_origin.split(";")
         if len(allowed_origins) > 0:
             app.logger.info("CORS enabled for %s", allowed_origins)

@@ -6,6 +6,8 @@ import {fileURLToPath} from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Backend API server URL
+const BACKEND_URL = "http://localhost:50505";
 
 export default defineConfig({
     plugins: [react()],
@@ -22,24 +24,44 @@ export default defineConfig({
         emptyOutDir: true,
         sourcemap: true,
         target: "esnext",
-
-
     },
     server: {
+        // Bind to 127.0.0.1 for local development
+        host: "127.0.0.1",
+        port: 5173,
+        // Enable strict port to fail if port is already in use
+        strictPort: true,
+        // HMR configuration for reliable hot module replacement
+        hmr: {
+            // Use the same host as the dev server
+            host: "127.0.0.1",
+            port: 5173,
+            // Use WebSocket protocol for HMR
+            protocol: "ws",
+        },
+        // Watch configuration for file changes
+        watch: {
+            // Use polling for better compatibility (especially in Docker/VM environments)
+            usePolling: false,
+            // Ignore node_modules to improve performance
+            ignored: ["**/node_modules/**"],
+        },
         proxy: {
-            "/content/": "http://localhost:50505",
-            "/auth_setup": "http://localhost:50505",
-            "/.auth/me": "http://localhost:50505",
-            "/ask": "http://localhost:50505",
-            "/chat": "http://localhost:50505",
-            "/speech": "http://localhost:50505",
-            "/config": "http://localhost:50505",
-            "/upload": "http://localhost:50505",
-            "/delete_uploaded": "http://localhost:50505",
-            "/list_uploaded": "http://localhost:50505",
-            "/chat_history": "http://localhost:50505",
-            "/auth/status": "http://localhost:50505",
-            "/auth/login": "http://localhost:50505"
-        }
-    }
+            "/content/": BACKEND_URL,
+            "/auth_setup": BACKEND_URL,
+            "/.auth/me": BACKEND_URL,
+            "/ask": BACKEND_URL,
+            "/chat": BACKEND_URL,
+            "/speech": BACKEND_URL,
+            "/config": BACKEND_URL,
+            "/upload": BACKEND_URL,
+            "/delete_uploaded": BACKEND_URL,
+            "/list_uploaded": BACKEND_URL,
+            "/chat_history": BACKEND_URL,
+            "/auth/status": BACKEND_URL,
+            "/auth/login": BACKEND_URL,
+        },
+    },
+    // Enable SPA fallback for client-side routing
+    appType: "spa",
 });

@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createHashRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { I18nextProvider } from "react-i18next";
 import { HelmetProvider } from "react-helmet-async";
 import { initializeIcons } from "@fluentui/react";
@@ -9,32 +9,25 @@ import { AuthenticationResult, EventType, PublicClientApplication } from "@azure
 
 import "./index.css";
 
-import Chat from "./pages/chat/Chat";
 import LayoutWrapper from "./layoutWrapper";
 import i18next from "./i18n/config";
 import { msalConfig, useLogin } from "./authConfig";
 import BetaAuthWrapper from "./components/BetaAuthWrapper";
+import { routes } from "./router";
 
 initializeIcons();
 
-const router = createHashRouter([
+/**
+ * Application router configuration using React Router v6.
+ * Uses browser-based routing for clean URLs.
+ * The LayoutWrapper ensures header and sidebar remain persistent
+ * while only the main content area changes during navigation.
+ */
+const router = createBrowserRouter([
     {
         path: "/",
         element: <LayoutWrapper />,
-        children: [
-            {
-                index: true,
-                element: <Chat />
-            },
-            {
-                path: "qa",
-                lazy: () => import("./pages/ask/Ask")
-            },
-            {
-                path: "*",
-                lazy: () => import("./pages/NoPage")
-            }
-        ]
+        children: routes
     }
 ]);
 

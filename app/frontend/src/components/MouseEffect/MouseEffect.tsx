@@ -13,11 +13,20 @@ interface Particle {
     density: number;
 }
 
-export const MouseEffect: React.FC = () => {
+interface MouseEffectProps {
+    /** When true, the effect is contained within its parent element */
+    contained?: boolean;
+    /** Custom class name for the container */
+    className?: string;
+}
+
+export const MouseEffect: React.FC<MouseEffectProps> = ({contained = false, className}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        const container = containerRef.current;
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
@@ -28,14 +37,25 @@ export const MouseEffect: React.FC = () => {
         let mouse = {x: 0, y: 0, radius: 100};
 
         const handleResize = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            if (contained && container) {
+                canvas.width = container.offsetWidth;
+                canvas.height = container.offsetHeight;
+            } else {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
             initParticles();
         };
 
         const handleMouseMove = (e: MouseEvent) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
+            if (contained && container) {
+                const rect = container.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left;
+                mouse.y = e.clientY - rect.top;
+            } else {
+                mouse.x = e.x;
+                mouse.y = e.y;
+            }
         };
 
         const initParticles = () => {
@@ -108,6 +128,13 @@ export const MouseEffect: React.FC = () => {
         window.addEventListener('resize', handleResize);
         globalThis.addEventListener('mousemove', handleMouseMove);
 
+        // Use ResizeObserver for contained mode to detect parent size changes
+        let resizeObserver: ResizeObserver | null = null;
+        if (contained && container) {
+            resizeObserver = new ResizeObserver(handleResize);
+            resizeObserver.observe(container);
+        }
+
         handleResize();
         animate();
 
@@ -115,11 +142,18 @@ export const MouseEffect: React.FC = () => {
             window.removeEventListener('resize', handleResize);
             globalThis.removeEventListener('mousemove', handleMouseMove);
             cancelAnimationFrame(animationFrameId);
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
         };
-    }, []);
+    }, [contained]);
+
+    const containerClassName = contained
+        ? `${styles.canvasContainerContained} ${className || ''}`
+        : styles.canvasContainer;
 
     return (
-        <div className={styles.canvasContainer}>
+        <div ref={containerRef} className={containerClassName}>
             <canvas ref={canvasRef} className={styles.canvas}/>
         </div>
     );

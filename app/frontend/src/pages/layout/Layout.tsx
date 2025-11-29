@@ -1,5 +1,5 @@
 import React, {RefObject, useEffect, useRef, useState} from "react";
-import {Link, Outlet} from "react-router-dom";
+import {Link} from "react-router-dom";
 import {useTranslation} from "react-i18next";
 import styles from "./Layout.module.css";
 
@@ -10,6 +10,7 @@ import {IconButton} from "@fluentui/react";
 import {motion} from "framer-motion";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import {MouseEffect} from "../../components/MouseEffect/MouseEffect";
+import {AnimatedOutlet} from "../../router";
 
 const Layout = () => {
     const {t} = useTranslation();
@@ -145,13 +146,13 @@ const Layout = () => {
                                     styles={{
                                         root: {
                                             backgroundColor: "#DCFF4A",
-                                            color: "#252527",
+                                            color: "#000",
                                             marginLeft: "8px",
                                             borderRadius: "20%"
                                         },
                                         rootHovered: {
-                                            backgroundColor: "#ffffff",
-                                            color: "#333333",
+                                            backgroundColor: "#fff",
+                                            color: "#000",
                                             borderRadius: "20%"
                                         }
                                     }}
@@ -170,7 +171,7 @@ const Layout = () => {
                 <div className={styles.contentContainer}>
                     <Sidebar/>
                     <main className={styles.main} id="main-content">
-                        <Outlet/>
+                        <AnimatedOutlet/>
                     </main>
                 </div>
             </div>

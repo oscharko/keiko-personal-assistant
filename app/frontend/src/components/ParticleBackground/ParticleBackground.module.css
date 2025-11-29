@@ -1,15 +1,9 @@
-.canvasContainer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    pointer-events: none;
-    background: #DCFF4A;
-}
+/**
+ * Styles for ParticleBackground component.
+ * Provides absolute positioning to fill the parent container.
+ */
 
-.canvasContainerContained {
+.container {
     position: absolute;
     top: 0;
     left: 0;
@@ -17,8 +11,8 @@
     height: 100%;
     z-index: 0;
     pointer-events: none;
-    background: #DCFF4A;
     border-radius: inherit;
+    overflow: hidden;
 }
 
 .canvas {
@@ -27,3 +21,4 @@
     height: 100%;
     border-radius: inherit;
 }
+
