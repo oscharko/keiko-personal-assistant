@@ -59,6 +59,17 @@
     font-weight: 600;
 }
 
+.headerCenterTitle {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #DCFF4A;
+    white-space: nowrap;
+}
+
 .headerNavList {
     z-index: 100;
     display: none;

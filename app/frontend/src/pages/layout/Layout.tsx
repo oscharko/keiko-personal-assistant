@@ -113,6 +113,7 @@ const Layout = () => {
                         <Link to="/" className={styles.headerTitleContainer}>
                             <h3 className={styles.headerTitle}>{t("headerTitle")}</h3>
                         </Link>
+                        <h2 className={styles.headerCenterTitle}>{t("headerCenterTitle")}</h2>
                         {/*                        <nav>
                             <ul className={`${styles.headerNavList} ${menuOpen ? styles.show : ""}`}>
                                 <li>
