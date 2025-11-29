@@ -1,6 +1,6 @@
 const BACKEND_URI = "";
 
-import { ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, Config, SimpleAPIResponse, HistoryListApiResponse, HistoryApiResponse } from "./models";
+import { ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, Config, SimpleAPIResponse, HistoryListApiResponse, HistoryApiResponse, EnhancePromptResponse } from "./models";
 import { useLogin, getToken, isUsingAppServicesLogin } from "../authConfig";
 
 export async function getHeaders(idToken: string | undefined): Promise<Record<string, string>> {
@@ -196,4 +196,24 @@ export async function deleteChatHistoryApi(id: string, idToken: string): Promise
     if (!response.ok) {
         throw new Error(`Deleting chat history failed: ${response.statusText}`);
     }
+}
+
+/**
+ * Enhance a user prompt using the LLM to make it more specific and effective.
+ * This helps users learn how to write better prompts for AI assistants.
+ */
+export async function enhancePromptApi(prompt: string, idToken: string | undefined): Promise<EnhancePromptResponse> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/enhance_prompt`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Enhancing prompt failed: ${response.statusText}`);
+    }
+
+    const dataResponse: EnhancePromptResponse = await response.json();
+    return dataResponse;
 }

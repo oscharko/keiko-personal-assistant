@@ -25,6 +25,10 @@ export const routes: RouteObject[] = [
         lazy: () => import("../pages/doc-upload/DocUploadPage")
     },
     {
+        path: "playground",
+        lazy: () => import("../pages/playground/Playground")
+    },
+    {
         path: "*",
         lazy: () => import("../pages/NoPage")
     }

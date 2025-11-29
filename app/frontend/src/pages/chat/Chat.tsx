@@ -1,7 +1,6 @@
 import {useCallback, useContext, useEffect, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {Helmet} from "react-helmet-async";
-import {DefaultButton, Panel} from "@fluentui/react";
 import styles from "./Chat.module.css";
 
 import {
@@ -23,10 +22,8 @@ import {HistoryProviderOptions, useHistoryManager} from "../../components/Histor
 import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../../components/HistoryProviders/events";
 import {getToken, requireAccessControl, useLogin} from "../../authConfig";
 import {useMsal} from "@azure/msal-react";
-import {TokenClaimsDisplay} from "../../components/TokenClaimsDisplay";
 import {LoginContext} from "../../loginContext";
 import {LanguagePicker} from "../../i18n/LanguagePicker";
-import {Settings} from "../../components/Settings/Settings";
 
 async function* readNDJSONStream(reader: ReadableStream<any>) {
     const textDecoder = new TextDecoder();
@@ -57,7 +54,6 @@ async function* readNDJSONStream(reader: ReadableStream<any>) {
 }
 
 const Chat = () => {
-    const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
     const [temperature, setTemperature] = useState<number>(0.3);
@@ -532,11 +528,7 @@ const Chat = () => {
 
     const {t, i18n} = useTranslation();
 
-    useEffect(() => {
-        const openSettings = () => setIsConfigPanelOpen(true);
-        globalThis.addEventListener("open-settings-panel", openSettings);
-        return () => globalThis.removeEventListener("open-settings-panel", openSettings);
-    }, []);
+
 
     return (
         <div className={styles.container}>
@@ -691,57 +683,7 @@ const Chat = () => {
                     />
                 )}
 
-                <Panel
-                    headerText={t("labels.headerText")}
-                    isOpen={isConfigPanelOpen}
-                    isBlocking={false}
-                    onDismiss={() => setIsConfigPanelOpen(false)}
-                    closeButtonAriaLabel={t("labels.closeButton")}
-                    onRenderFooterContent={() => <DefaultButton
-                        onClick={() => setIsConfigPanelOpen(false)}>{t("labels.closeButton")}</DefaultButton>}
-                    isFooterAtBottom={true}
-                >
-                    <Settings
-                        promptTemplate={promptTemplate}
-                        temperature={temperature}
-                        retrieveCount={retrieveCount}
-                        agenticReasoningEffort={agenticReasoningEffort}
-                        seed={seed}
-                        minimumSearchScore={minimumSearchScore}
-                        minimumRerankerScore={minimumRerankerScore}
-                        useSemanticRanker={useSemanticRanker}
-                        useSemanticCaptions={useSemanticCaptions}
-                        useQueryRewriting={useQueryRewriting}
-                        reasoningEffort={reasoningEffort}
-                        excludeCategory={excludeCategory}
-                        includeCategory={includeCategory}
-                        retrievalMode={retrievalMode}
-                        showMultimodalOptions={showMultimodalOptions}
-                        sendTextSources={sendTextSources}
-                        sendImageSources={sendImageSources}
-                        searchTextEmbeddings={searchTextEmbeddings}
-                        searchImageEmbeddings={searchImageEmbeddings}
-                        showSemanticRankerOption={showSemanticRankerOption}
-                        showQueryRewritingOption={showQueryRewritingOption}
-                        showReasoningEffortOption={showReasoningEffortOption}
-                        showVectorOption={showVectorOption}
-                        useLogin={!!useLogin}
-                        loggedIn={loggedIn}
-                        requireAccessControl={requireAccessControl}
-                        shouldStream={shouldStream}
-                        streamingEnabled={streamingEnabled}
-                        useSuggestFollowupQuestions={useSuggestFollowupQuestions}
-                        showAgenticRetrievalOption={showAgenticRetrievalOption}
-                        useAgenticKnowledgeBase={useAgenticKnowledgeBase}
-                        useWebSource={webSourceEnabled}
-                        showWebSourceOption={webSourceSupported}
-                        useSharePointSource={sharePointSourceEnabled}
-                        showSharePointSourceOption={sharePointSourceSupported}
-                        hideMinimalRetrievalReasoningOption={hideMinimalRetrievalReasoningOption}
-                        onChange={handleSettingsChange}
-                    />
-                    {useLogin && <TokenClaimsDisplay/>}
-                </Panel>
+
             </div>
         </div>
     );

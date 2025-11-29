@@ -30,6 +30,17 @@ export type ChatAppRequestOverrides = {
     use_agentic_knowledgebase: boolean;
     use_web_source?: boolean;
     use_sharepoint_source?: boolean;
+    // High Priority parameters
+    max_response_tokens?: number;
+    frequency_penalty?: number;
+    presence_penalty?: number;
+    // Medium Priority parameters
+    top_p?: number;
+    vector_k?: number;
+    // Lower Priority parameters
+    max_history_messages?: number;
+    query_answer?: boolean;
+    stop_sequences?: string[];
 };
 
 export type ResponseMessage = {
@@ -159,4 +170,9 @@ export type HistoryApiResponse = {
     id: string;
     entra_oid: string;
     answers: any;
+};
+
+export type EnhancePromptResponse = {
+    original_prompt: string;
+    enhanced_prompt: string;
 };

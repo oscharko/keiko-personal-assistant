@@ -60,6 +60,7 @@ export default defineConfig({
             "/chat_history": BACKEND_URL,
             "/auth/status": BACKEND_URL,
             "/auth/login": BACKEND_URL,
+            "/enhance_prompt": BACKEND_URL,
         },
     },
     // Enable SPA fallback for client-side routing

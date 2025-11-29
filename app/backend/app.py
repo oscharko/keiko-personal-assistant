@@ -373,6 +373,59 @@ async def chat_stream(auth_claims: dict[str, Any]):
         return error_response(error, "/chat")
 
 
+@bp.route("/enhance_prompt", methods=["POST"])
+@authenticated
+async def enhance_prompt(auth_claims: dict[str, Any]):
+    """
+    Enhance a user prompt to be more specific, contextual, and effective.
+
+    This endpoint uses the same LLM as the RAG system to rewrite user prompts,
+    helping users learn how to write better prompts for AI assistants.
+    """
+    if not request.is_json:
+        return jsonify({"error": "request must be json"}), 415
+
+    request_json = await request.get_json()
+    user_prompt = request_json.get("prompt", "").strip()
+
+    if not user_prompt:
+        return jsonify({"error": "prompt is required"}), 400
+
+    try:
+        # Get the chat approach to access the OpenAI client and prompt manager
+        approach: Approach = cast(Approach, current_app.config[CONFIG_CHAT_APPROACH])
+
+        # Load and render the prompt enhancement template
+        prompt_manager = PromptyManager()
+        enhance_template = prompt_manager.load_prompt("prompt_enhance.prompty")
+        messages = prompt_manager.render_prompt(
+            enhance_template,
+            {"user_prompt": user_prompt}
+        )
+
+        # Use the same OpenAI client as the RAG system
+        openai_client = current_app.config[CONFIG_OPENAI_CLIENT]
+
+        # Create chat completion with low temperature for consistent results
+        chat_completion = await openai_client.chat.completions.create(
+            model=os.environ.get("AZURE_OPENAI_CHATGPT_MODEL", "gpt-4o-mini"),
+            messages=messages,
+            temperature=0.3,
+            max_tokens=500,
+        )
+
+        enhanced_prompt = chat_completion.choices[0].message.content.strip()
+
+        return jsonify({
+            "original_prompt": user_prompt,
+            "enhanced_prompt": enhanced_prompt
+        })
+
+    except Exception as error:
+        logging.exception("Error enhancing prompt: %s", error)
+        return error_response(error, "/enhance_prompt")
+
+
 # Send MSAL.js settings to the client UI
 @bp.route("/auth_setup", methods=["GET"])
 def auth_setup():

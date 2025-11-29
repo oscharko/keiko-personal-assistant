@@ -308,16 +308,41 @@ class Approach(ABC):
         minimum_reranker_score: Optional[float] = None,
         use_query_rewriting: Optional[bool] = None,
         access_token: Optional[str] = None,
+        use_query_answer: Optional[bool] = None,
     ) -> list[Document]:
+        """Search for documents in the search index.
+
+        Args:
+            top: Number of results to retrieve.
+            query_text: The query text to search for.
+            filter: OData filter expression.
+            vectors: List of vector queries.
+            use_text_search: Whether to use text search.
+            use_vector_search: Whether to use vector search.
+            use_semantic_ranker: Whether to use semantic ranker.
+            use_semantic_captions: Whether to use semantic captions.
+            minimum_search_score: Minimum search score threshold.
+            minimum_reranker_score: Minimum reranker score threshold.
+            use_query_rewriting: Whether to use query rewriting.
+            access_token: Access token for authorization.
+            use_query_answer: Whether to use extractive answers (requires semantic ranker).
+
+        Returns:
+            List of Document objects matching the search criteria.
+        """
         search_text = query_text if use_text_search else ""
         search_vectors = vectors if use_vector_search else []
         if use_semantic_ranker:
+            # Build query_answer parameter for extractive answers
+            query_answer_param = "extractive" if use_query_answer else None
+
             results = await self.search_client.search(
                 search_text=search_text,
                 filter=filter,
                 top=top,
                 query_caption="extractive|highlight-false" if use_semantic_captions else None,
                 query_rewrites="generative" if use_query_rewriting else None,
+                query_answer=query_answer_param,
                 vector_queries=search_vectors,
                 query_type=QueryType.SEMANTIC,
                 query_language=self.query_language,
@@ -877,7 +902,16 @@ class Approach(ABC):
             return f"data:image/png;base64,{img}"
         return None
 
-    async def compute_text_embedding(self, q: str):
+    async def compute_text_embedding(self, q: str, vector_k: int = 50):
+        """Compute text embedding for a query.
+
+        Args:
+            q: The query text to embed.
+            vector_k: Number of nearest neighbors to retrieve (default: 50).
+
+        Returns:
+            VectorizedQuery with the computed embedding.
+        """
         SUPPORTED_DIMENSIONS_MODEL = {
             "text-embedding-ada-002": False,
             "text-embedding-3-small": True,
@@ -897,15 +931,23 @@ class Approach(ABC):
             **dimensions_args,
         )
         query_vector = embedding.data[0].embedding
-        # This performs an oversampling due to how the search index was setup,
-        # so we do not need to explicitly pass in an oversampling parameter here
-        return VectorizedQuery(vector=query_vector, k=50, fields=self.embedding_field)
+        # Use the provided vector_k parameter for k-nearest neighbors
+        return VectorizedQuery(vector=query_vector, k=vector_k, fields=self.embedding_field)
 
-    async def compute_multimodal_embedding(self, q: str):
+    async def compute_multimodal_embedding(self, q: str, vector_k: int = 50):
+        """Compute multimodal embedding for a query.
+
+        Args:
+            q: The query text to embed.
+            vector_k: Number of nearest neighbors to retrieve (default: 50).
+
+        Returns:
+            VectorizedQuery with the computed embedding.
+        """
         if not self.image_embeddings_client:
             raise ValueError("Approach is missing an image embeddings client for multimodal queries")
         multimodal_query_vector = await self.image_embeddings_client.create_embedding_for_text(q)
-        return VectorizedQuery(vector=multimodal_query_vector, k=50, fields="images/embedding")
+        return VectorizedQuery(vector=multimodal_query_vector, k=vector_k, fields="images/embedding")
 
     def get_system_prompt_variables(self, override_prompt: Optional[str]) -> dict[str, str]:
         # Allows client to replace the entire prompt, or to inject into the existing prompt using >>>
@@ -945,10 +987,13 @@ class Approach(ABC):
         n: Optional[int] = None,
         reasoning_effort: Optional[ChatCompletionReasoningEffort] = None,
     ) -> Awaitable[ChatCompletion] | Awaitable[AsyncStream[ChatCompletionChunk]]:
+        # Get max_response_tokens override if provided, otherwise use default
+        max_tokens = overrides.get("max_response_tokens", response_token_limit)
+
         if chatgpt_model in self.GPT_REASONING_MODELS:
             params: dict[str, Any] = {
-                # max_tokens is not supported
-                "max_completion_tokens": response_token_limit
+                # max_tokens is not supported for reasoning models
+                "max_completion_tokens": max_tokens
             }
 
             # Adjust parameters for reasoning models
@@ -961,9 +1006,30 @@ class Approach(ABC):
         else:
             # Include parameters that may not be supported for reasoning models
             params = {
-                "max_tokens": response_token_limit,
+                "max_tokens": max_tokens,
                 "temperature": temperature or overrides.get("temperature", 0.3),
             }
+
+            # Add frequency_penalty if provided (reduces repetition based on frequency)
+            frequency_penalty = overrides.get("frequency_penalty")
+            if frequency_penalty is not None:
+                params["frequency_penalty"] = frequency_penalty
+
+            # Add presence_penalty if provided (encourages new topics)
+            presence_penalty = overrides.get("presence_penalty")
+            if presence_penalty is not None:
+                params["presence_penalty"] = presence_penalty
+
+            # Add top_p if provided (nucleus sampling)
+            top_p = overrides.get("top_p")
+            if top_p is not None:
+                params["top_p"] = top_p
+
+            # Add stop sequences if provided
+            stop_sequences = overrides.get("stop_sequences")
+            if stop_sequences and len(stop_sequences) > 0:
+                params["stop"] = stop_sequences[:4]  # OpenAI allows up to 4 stop sequences
+
         if should_stream:
             params["stream"] = True
             params["stream_options"] = {"include_usage": True}

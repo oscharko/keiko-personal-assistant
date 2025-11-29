@@ -48,6 +48,82 @@
     },
     "developerSettings": "Developer settings",
 
+    "playground": {
+        "navButton": "Playground",
+        "title": "RAG Playground",
+        "subtitle": "Experiment with Retrieval-Augmented Generation parameters to optimize your AI assistant",
+        "backToChat": "Back to Chat",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "sections": {
+            "response": "Response Settings",
+            "responseDescription": "Configure how the AI generates and delivers responses to your questions.",
+            "search": "Search & Retrieval",
+            "searchDescription": "Fine-tune how the system searches and retrieves relevant information from your knowledge base.",
+            "llm": "Language Model",
+            "llmDescription": "Adjust the behavior and creativity of the underlying language model."
+        },
+        "explanations": {
+            "streaming": "When enabled, responses appear word-by-word as they are generated, providing a more interactive experience. Disable for complete responses delivered all at once.",
+            "followupQuestions": "The AI will suggest relevant follow-up questions based on your conversation, helping you explore topics more deeply.",
+            "agenticRetrieval": "Uses an intelligent agent to plan and execute multiple search queries, improving the quality of retrieved information for complex questions.",
+            "agenticReasoningEffort": "Controls how much reasoning the retrieval agent uses when planning searches. Higher effort can find more relevant information but takes longer.",
+            "webSource": "Augments your knowledge base with real-time web search results, useful for current events or topics not in your documents.",
+            "sharePointSource": "Includes content from your connected SharePoint sites alongside your indexed documents.",
+            "searchScore": "Sets the minimum relevance score for search results. Higher values return only the most relevant matches, while lower values include more results.",
+            "retrieveCount": "The number of document chunks to retrieve from the knowledge base. More chunks provide more context but may slow down responses.",
+            "rerankerScore": "Minimum score from the semantic reranker (0-4 scale). Higher values ensure only the most semantically relevant results are used.",
+            "semanticRanker": "Uses AI to re-rank search results based on semantic meaning, improving relevance beyond keyword matching.",
+            "semanticCaptions": "Extracts the most relevant sentences from documents instead of using full chunks, providing more focused context to the AI.",
+            "queryRewriting": "Automatically rewrites your question to improve search results, especially helpful for conversational or ambiguous queries.",
+            "queryAnswer": "Extracts direct answers from documents using semantic understanding. Requires semantic ranker to be enabled.",
+            "retrievalMode": "Choose how documents are searched: Hybrid combines keyword and semantic search, Vectors uses only semantic similarity, Text uses only keyword matching.",
+            "vectorK": "Number of nearest neighbors to retrieve during vector search. Higher values cast a wider net but may include less relevant results.",
+            "includeCategory": "Filter search results to only include documents from specific categories.",
+            "excludeCategory": "Filter out documents from specific categories in search results.",
+            "temperature": "Controls response creativity. Lower values (0.0-0.3) produce focused, consistent answers. Higher values (0.7-1.0) generate more creative, varied responses.",
+            "seed": "Set a specific seed number for reproducible responses. Using the same seed with identical inputs will produce similar outputs.",
+            "maxResponseTokens": "Maximum number of tokens in the AI's response. Higher values allow longer responses but increase cost and latency.",
+            "topP": "Nucleus sampling parameter. Lower values (0.1-0.5) make responses more focused, higher values (0.9-1.0) allow more diverse word choices.",
+            "frequencyPenalty": "Reduces repetition by penalizing tokens based on how often they appear. Positive values discourage repetition, negative values encourage it.",
+            "presencePenalty": "Encourages the model to explore new topics. Positive values promote topic diversity, negative values keep responses focused on existing topics.",
+            "maxHistoryMessages": "Number of previous messages to include as context. More history provides better context but increases token usage.",
+            "stopSequences": "Comma-separated sequences that will stop the AI's response when encountered. Useful for controlling response format.",
+            "reasoningEffort": "Controls how much the model 'thinks' before responding. Higher effort produces more thorough answers but takes longer.",
+            "promptTemplate": "Customize the instructions given to the AI. Use '>>>' at the start to append to the default prompt instead of replacing it.",
+            "promptTemplatePrefix": "Text to prepend before the main prompt. Useful for adding consistent context or instructions.",
+            "promptTemplateSuffix": "Text to append after the main prompt. Useful for adding consistent closing instructions or format requirements.",
+            "textSources": "Include text content from retrieved documents as context for the AI's response.",
+            "imageSources": "Include images from retrieved documents as visual context for the AI's response."
+        },
+        "placeholders": {
+            "excludeCategory": "Enter category to exclude...",
+            "seed": "Enter a number for reproducibility...",
+            "promptTemplate": "Enter custom instructions for the AI...",
+            "promptTemplatePrefix": "Enter text to prepend to the prompt...",
+            "promptTemplateSuffix": "Enter text to append to the prompt...",
+            "stopSequences": "Enter comma-separated stop sequences..."
+        },
+        "temperatureLabels": {
+            "precise": "Precise",
+            "creative": "Creative"
+        },
+        "topPLabels": {
+            "focused": "Focused",
+            "diverse": "Diverse"
+        },
+        "penaltyLabels": {
+            "allowRepetition": "Allow Repetition",
+            "reduceRepetition": "Reduce Repetition",
+            "stayOnTopic": "Stay on Topic",
+            "exploreTopics": "Explore Topics"
+        },
+        "info": {
+            "title": "About RAG Technology",
+            "description": "Retrieval-Augmented Generation (RAG) combines the power of large language models with your organization's knowledge base. When you ask a question, the system first searches for relevant information in your documents, then uses that context to generate accurate, grounded responses. The settings above let you fine-tune this process for your specific needs."
+        }
+    },
+
     "chatEmptyStateTitle": "Keiko",
     "chatEmptyStateSubtitle": "Ask anything or try an example",
     "defaultExamples": {
@@ -69,6 +145,7 @@
 
     "tooltips": {
         "submitQuestion": "Submit question",
+        "enhancePrompt": "Enhance prompt - Rewrite to improve clarity and context",
         "askWithVoice": "Ask question with voice",
         "stopRecording": "Stop recording question",
         "showThoughtProcess": "Show thought process",
@@ -145,7 +222,17 @@
         },
         "useOidSecurityFilter": "Use oid security filter",
         "useGroupsSecurityFilter": "Use groups security filter",
-        "shouldStream": "Stream chat completion responses"
+        "shouldStream": "Stream chat completion responses",
+        "maxResponseTokens": "Maximum response tokens",
+        "topP": "Top P (Nucleus Sampling)",
+        "frequencyPenalty": "Frequency penalty",
+        "presencePenalty": "Presence penalty",
+        "maxHistoryMessages": "Maximum history messages",
+        "stopSequences": "Stop sequences",
+        "promptTemplatePrefix": "Prompt prefix",
+        "promptTemplateSuffix": "Prompt suffix",
+        "vectorK": "Vector K (Nearest Neighbors)",
+        "useQueryAnswer": "Use extractive answers"
     },
 
     "helpTexts": {

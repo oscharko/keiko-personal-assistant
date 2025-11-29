@@ -15,7 +15,7 @@ export const SettingsButton = ({className, disabled, onClick}: Props) => {
         <button type="button" className={`${styles.container} ${className ?? ""}`} disabled={disabled}
                 onClick={onClick}>
             <Settings24Regular className={styles.icon}/>
-            <span className={styles.label}>{t("developerSettings")}</span>
+            <span className={styles.label}>{t("playground.navButton")}</span>
         </button>
     );
 };

@@ -127,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
                     <ClearChatButton className={styles.historyHeader}
                                      onClick={() => globalThis.dispatchEvent(new Event(CLEAR_CHAT_EVENT))}/>
                     <SettingsButton className={styles.historyHeader}
-                                    onClick={() => globalThis.dispatchEvent(new Event("open-settings-panel"))}/>
+                                    onClick={() => navigate("/playground")}/>
                     {showUserUpload && (
                         <UploadButton
                             className={styles.historyHeader}

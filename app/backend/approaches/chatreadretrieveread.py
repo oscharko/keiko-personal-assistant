@@ -341,9 +341,11 @@ class ChatReadRetrieveReadApproach(Approach):
         use_semantic_ranker = True if overrides.get("semantic_ranker") else False
         use_semantic_captions = True if overrides.get("semantic_captions") else False
         use_query_rewriting = True if overrides.get("query_rewriting") else False
+        use_query_answer = True if overrides.get("query_answer") else False
         top = overrides.get("top", 3)
         minimum_search_score = overrides.get("minimum_search_score", 0.0)
         minimum_reranker_score = overrides.get("minimum_reranker_score", 0.0)
+        vector_k = overrides.get("vector_k", 50)
         search_index_filter = self.build_filter(overrides)
         access_token = auth_claims.get("access_token")
         send_text_sources = overrides.get("send_text_sources", True)
@@ -381,9 +383,9 @@ class ChatReadRetrieveReadApproach(Approach):
         vectors: list[VectorQuery] = []
         if use_vector_search:
             if search_text_embeddings:
-                vectors.append(await self.compute_text_embedding(query_text))
+                vectors.append(await self.compute_text_embedding(query_text, vector_k))
             if search_image_embeddings:
-                vectors.append(await self.compute_multimodal_embedding(query_text))
+                vectors.append(await self.compute_multimodal_embedding(query_text, vector_k))
 
         results = await self.search(
             top,
@@ -398,6 +400,7 @@ class ChatReadRetrieveReadApproach(Approach):
             minimum_reranker_score,
             use_query_rewriting,
             access_token,
+            use_query_answer,
         )
 
         # STEP 3: Generate a contextual and content specific answer using the search results and chat history

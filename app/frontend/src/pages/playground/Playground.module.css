@@ -1,0 +1,326 @@
+/**
+ * Styles for the Playground page.
+ * Modern, sophisticated UI design for RAG parameter experimentation.
+ */
+
+.container {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    overflow-y: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 32px 48px;
+    background: #000;
+    color: #DCFF4A;
+    flex-shrink: 0;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+.backButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #DCFF4A;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.backButton:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 255, 74, 0.3);
+}
+
+.content {
+    flex: 1;
+    padding: 32px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Section Styles */
+.section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.sectionIcon {
+    font-size: 24px;
+    color: #000;
+    background: #DCFF4A;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #000;
+}
+
+.sectionDescription {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+/* Parameter Grid */
+.parameterGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* Parameter Card */
+.parameterCard {
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #eee;
+    transition: all 0.2s ease;
+}
+
+.parameterCard:hover {
+    border-color: #DCFF4A;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.parameterHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.parameterIcon {
+    font-size: 18px;
+    color: #000;
+    background: #DCFF4A;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+.parameterTitle {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #000;
+    flex: 1;
+}
+
+.infoIcon {
+    color: #888;
+    cursor: help;
+    transition: color 0.2s;
+}
+
+.infoIcon:hover {
+    color: #000;
+}
+
+.parameterDescription {
+    color: #666;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.parameterControl {
+    margin-top: auto;
+}
+
+/* Form Controls */
+.dropdown {
+    width: 100%;
+}
+
+.textArea {
+    width: 100%;
+}
+
+.textArea textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Slider Labels */
+.sliderLabels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: #888;
+}
+
+/* Info Banner */
+.infoBanner {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+    color: #fff;
+    padding: 24px;
+    border-radius: 16px;
+    margin-top: auto;
+}
+
+.infoBannerIcon {
+    font-size: 24px;
+    color: #DCFF4A;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.infoBannerContent h3 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #DCFF4A;
+}
+
+.infoBannerContent p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 20px;
+        padding: 24px;
+    }
+
+    .backButton {
+        align-self: flex-start;
+    }
+
+    .content {
+        padding: 24px;
+    }
+
+    .parameterGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .section {
+        padding: 20px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .parameterGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Fluent UI Overrides */
+.parameterCard :global(.ms-Toggle) {
+    margin: 0;
+}
+
+.parameterCard :global(.ms-Slider) {
+    margin: 0;
+}
+
+.parameterCard :global(.ms-Dropdown) {
+    margin: 0;
+}
+
+.parameterCard :global(.ms-TextField) {
+    margin: 0;
+}
+
+.parameterCard :global(.ms-TextField-fieldGroup) {
+    border-radius: 8px;
+    border-color: #ddd;
+}
+
+.parameterCard :global(.ms-TextField-fieldGroup:hover) {
+    border-color: #DCFF4A;
+}
+
+.parameterCard :global(.ms-TextField-fieldGroup:focus-within) {
+    border-color: #000;
+}
+
+.parameterCard :global(.ms-Dropdown-title) {
+    border-radius: 8px;
+    border-color: #ddd;
+}
+
+.parameterCard :global(.ms-Dropdown-title:hover) {
+    border-color: #DCFF4A;
+}
+
+.parameterCard :global(.ms-Toggle-background) {
+    border-radius: 12px;
+}
+
+.parameterCard :global(.ms-Toggle-thumb) {
+    border-radius: 50%;
+}
+
+.parameterCard :global(.ms-Slider-slideBox) {
+    background: #e0e0e0;
+    border-radius: 4px;
+}
+
+.parameterCard :global(.ms-Slider-active) {
+    background: #DCFF4A;
+}
+
+.parameterCard :global(.ms-Slider-thumb) {
+    background: #000;
+    border: 2px solid #DCFF4A;
+}
+
