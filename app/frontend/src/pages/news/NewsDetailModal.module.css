@@ -1,0 +1,200 @@
+/**
+ * Styles for the News Detail Modal.
+ */
+
+.panel {
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 8px 0;
+}
+
+.image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.imagePlaceholder {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #DCFF4A;
+    font-size: 64px;
+    border-radius: 12px;
+}
+
+.metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.searchTerm {
+    display: inline-block;
+    background: #DCFF4A;
+    color: #000;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.source {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.date {
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000;
+}
+
+.summary {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.7;
+}
+
+/* Markdown content styling within summary */
+.summary p {
+    margin: 0 0 12px 0;
+}
+
+.summary p:last-child {
+    margin-bottom: 0;
+}
+
+.summary a {
+    color: #000;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: #DCFF4A;
+    text-underline-offset: 3px;
+    transition: all 0.2s ease;
+}
+
+.summary a:hover {
+    color: #333;
+    text-decoration-color: #000;
+}
+
+.summary strong {
+    font-weight: 700;
+}
+
+.summary ul,
+.summary ol {
+    margin: 8px 0;
+    padding-left: 24px;
+}
+
+.summary li {
+    margin-bottom: 8px;
+}
+
+.summary li:last-child {
+    margin-bottom: 0;
+}
+
+.originalLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #000;
+    color: #DCFF4A;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.originalLink:hover {
+    background: #1a1a1a;
+    text-decoration: none;
+}
+
+.citationsList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.citationItem {
+    padding: 16px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    border-left: 3px solid #DCFF4A;
+}
+
+.citationItem a {
+    font-weight: 600;
+    color: #000;
+}
+
+.citationItem a:hover {
+    color: #333;
+}
+
+.citationSource {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.citationSnippet {
+    margin: 8px 0 0 0;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.topicsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.topicTag {
+    display: inline-block;
+    background: #f0f0f0;
+    color: #333;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
+}
+
+.topicTag:hover {
+    background: #DCFF4A;
+    border-color: #DCFF4A;
+    color: #000;
+}
+

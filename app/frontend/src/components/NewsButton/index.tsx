@@ -1,0 +1,2 @@
+export { NewsButton } from "./NewsButton";
+

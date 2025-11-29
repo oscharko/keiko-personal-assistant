@@ -29,6 +29,10 @@ export const routes: RouteObject[] = [
         lazy: () => import("../pages/playground/Playground")
     },
     {
+        path: "news",
+        lazy: () => import("../pages/news/NewsDashboard")
+    },
+    {
         path: "*",
         lazy: () => import("../pages/NoPage")
     }

@@ -278,5 +278,37 @@
 
     "overallSettings": "Overall settings",
     "searchSettings": "Search settings",
-    "llmSettings": "LLM settings"
+    "llmSettings": "LLM settings",
+
+    "news": {
+        "navButton": "News",
+        "title": "Personalized News",
+        "subtitle": "Stay informed with AI-curated news based on your interests",
+        "loading": "Loading your personalized news...",
+        "backToChat": "Back to Chat",
+        "refresh": "Refresh News",
+        "refreshing": "Refreshing...",
+        "refreshNow": "Refresh Now",
+        "settings": "Topics",
+        "close": "Close",
+        "retry": "Try Again",
+        "emptyTitle": "No Topics Configured",
+        "emptyDescription": "Add topics you want to follow to see personalized news updates.",
+        "configureTopics": "Configure Topics",
+        "noNewsTitle": "No News Available",
+        "noNewsDescription": "Click refresh to fetch the latest news for your topics.",
+        "errorTitle": "Unable to Load News",
+        "summary": "Summary",
+        "readOriginal": "Read Original Article",
+        "citations": "Sources",
+        "relatedTopics": "Related Topics",
+        "preferencesTitle": "News Topics",
+        "preferencesDescription": "Add up to 5 topics you want to follow. We will search for the latest news and provide AI-generated summaries.",
+        "addTermPlaceholder": "Enter a topic (e.g., Artificial Intelligence)",
+        "add": "Add",
+        "termsCount": "{{current}} of {{max}} topics configured",
+        "noTermsConfigured": "No topics configured yet. Add your first topic above.",
+        "deleteTerm": "Delete {{term}}",
+        "preferencesInfo": "News is refreshed automatically and cached for 1 hour to optimize performance and reduce costs."
+    }
 }

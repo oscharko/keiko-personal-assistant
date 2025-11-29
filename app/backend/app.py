@@ -96,6 +96,7 @@ from core.authentication import AuthenticationHelper
 from core.sessionhelper import create_session_id
 from decorators import authenticated, authenticated_path
 from error import error_dict, error_response
+from news import news_bp
 from prepdocs import (
     OpenAIHost,
     setup_embeddings_service,
@@ -203,6 +204,28 @@ async def assets(path):
     response = await make_response(await send_from_directory(Path(__file__).resolve().parent / "static" / "assets", path))
     # Assets have hashed filenames, so cache them for 1 year
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
+
+
+# SPA catch-all route for client-side routing (React Router)
+# This must be placed before other routes to catch all non-API paths
+@bp.route("/news")
+@bp.route("/news/")
+@bp.route("/playground")
+@bp.route("/playground/")
+@bp.route("/chat")
+@bp.route("/chat/")
+async def spa_routes():
+    """
+    Serve index.html for all SPA routes.
+    This enables client-side routing with React Router.
+    """
+    if USE_VITE_DEV_SERVER:
+        return redirect(VITE_DEV_SERVER_URL)
+    response = await make_response(await bp.send_static_file("index.html"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return response
 
 
@@ -392,9 +415,6 @@ async def enhance_prompt(auth_claims: dict[str, Any]):
         return jsonify({"error": "prompt is required"}), 400
 
     try:
-        # Get the chat approach to access the OpenAI client and prompt manager
-        approach: Approach = cast(Approach, current_app.config[CONFIG_CHAT_APPROACH])
-
         # Load and render the prompt enhancement template
         prompt_manager = PromptyManager()
         enhance_template = prompt_manager.load_prompt("prompt_enhance.prompty")
@@ -1029,6 +1049,7 @@ def create_app():
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = None
     app.register_blueprint(bp)
     app.register_blueprint(chat_history_cosmosdb_bp)
+    app.register_blueprint(news_bp)
 
     if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
         app.logger.info("APPLICATIONINSIGHTS_CONNECTION_STRING is set, enabling Azure Monitor")

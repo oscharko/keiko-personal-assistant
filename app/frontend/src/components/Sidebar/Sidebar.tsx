@@ -12,6 +12,7 @@ import {useHistoryManager} from "../HistoryProviders";
 import {HistoryMetaData, HistoryProviderOptions} from "../HistoryProviders/IProvider";
 import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../HistoryProviders/events";
 import {ClearChatButton} from "../ClearChatButton";
+import {NewsButton} from "../NewsButton";
 import {SettingsButton} from "../SettingsButton";
 import {UploadButton} from "../UploadButton";
 
@@ -128,6 +129,8 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
                                      onClick={() => globalThis.dispatchEvent(new Event(CLEAR_CHAT_EVENT))}/>
                     <SettingsButton className={styles.historyHeader}
                                     onClick={() => navigate("/playground")}/>
+                    <NewsButton className={styles.historyHeader}
+                                onClick={() => navigate("/news")}/>
                     {showUserUpload && (
                         <UploadButton
                             className={styles.historyHeader}

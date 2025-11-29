@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 
 import jwt
-from quart import Request
 
 logger = logging.getLogger(__name__)
 

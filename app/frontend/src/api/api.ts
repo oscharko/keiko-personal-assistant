@@ -1,6 +1,17 @@
 const BACKEND_URI = "";
 
-import { ChatAppResponse, ChatAppResponseOrError, ChatAppRequest, Config, SimpleAPIResponse, HistoryListApiResponse, HistoryApiResponse, EnhancePromptResponse } from "./models";
+import {
+    ChatAppResponse,
+    ChatAppResponseOrError,
+    ChatAppRequest,
+    Config,
+    SimpleAPIResponse,
+    HistoryListApiResponse,
+    HistoryApiResponse,
+    EnhancePromptResponse,
+    NewsPreferencesResponse,
+    NewsSearchResult
+} from "./models";
 import { useLogin, getToken, isUsingAppServicesLogin } from "../authConfig";
 
 export async function getHeaders(idToken: string | undefined): Promise<Record<string, string>> {
@@ -216,4 +227,118 @@ export async function enhancePromptApi(prompt: string, idToken: string | undefin
 
     const dataResponse: EnhancePromptResponse = await response.json();
     return dataResponse;
+}
+
+// News Dashboard API Functions
+
+/**
+ * Get the current user's news preferences (search terms).
+ */
+export async function getNewsPreferencesApi(idToken: string | undefined): Promise<NewsPreferencesResponse> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/user/news-preferences`, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Getting news preferences failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Add a new search term to the user's news preferences.
+ */
+export async function addNewsSearchTermApi(term: string, idToken: string | undefined): Promise<NewsPreferencesResponse> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/user/news-preferences`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ addTerm: term })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Adding search term failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Update all search terms for the user's news preferences.
+ */
+export async function updateNewsPreferencesApi(
+    searchTerms: string[],
+    idToken: string | undefined
+): Promise<NewsPreferencesResponse> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/user/news-preferences`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ searchTerms })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Updating news preferences failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Delete a search term from the user's news preferences.
+ */
+export async function deleteNewsSearchTermApi(term: string, idToken: string | undefined): Promise<NewsPreferencesResponse> {
+    const headers = await getHeaders(idToken);
+    const encodedTerm = encodeURIComponent(term);
+    const response = await fetch(`${BACKEND_URI}/api/user/news-preferences/${encodedTerm}`, {
+        method: "DELETE",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Deleting search term failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Refresh news for all of the user's search terms.
+ */
+export async function refreshNewsApi(forceRefresh: boolean, idToken: string | undefined): Promise<NewsSearchResult> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/user/news/refresh`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ forceRefresh })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Refreshing news failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Get cached news for the user's search terms without triggering a refresh.
+ */
+export async function getCachedNewsApi(idToken: string | undefined): Promise<NewsSearchResult> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/user/news`, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Getting cached news failed: ${response.statusText}`);
+    }
+
+    return await response.json();
 }

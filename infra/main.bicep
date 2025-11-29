@@ -143,6 +143,13 @@ param chatHistoryDatabaseName string = 'chat-database'
 param chatHistoryContainerName string = 'chat-history-v2'
 param chatHistoryVersion string = 'cosmosdb-v2'
 
+// News Dashboard configuration
+param useNewsDashboard bool = false
+param newsPreferencesContainerName string = 'news-preferences'
+param newsCacheContainerName string = 'news-cache'
+@secure()
+param gnewsApiKey string = ''
+
 // https://learn.microsoft.com/azure/ai-services/openai/concepts/models?tabs=global-standard%2Cstandard-chat-completions#models-by-deployment-type
 @description('Location for the OpenAI resource group')
 @allowed([
@@ -502,6 +509,13 @@ var appEnvVariables = {
   AZURE_CHAT_HISTORY_DATABASE: chatHistoryDatabaseName
   AZURE_CHAT_HISTORY_CONTAINER: chatHistoryContainerName
   AZURE_CHAT_HISTORY_VERSION: chatHistoryVersion
+  // News Dashboard settings
+  USE_NEWS_DASHBOARD: useNewsDashboard
+  ENABLE_NEWS_SCHEDULER: useNewsDashboard // Enable background scheduler in production
+  AZURE_NEWS_DATABASE: chatHistoryDatabaseName // Reuse same database
+  AZURE_NEWS_PREFERENCES_CONTAINER: newsPreferencesContainerName
+  AZURE_NEWS_CACHE_CONTAINER: newsCacheContainerName
+  GNEWS_API_KEY: gnewsApiKey
   // Shared by all OpenAI deployments
   OPENAI_HOST: openAiHost
   AZURE_OPENAI_EMB_MODEL_NAME: embedding.modelName
@@ -633,10 +647,13 @@ module acaBackend 'core/host/container-app-upsert.bicep' = if (deploymentTarget 
     containerAppsEnvironmentName: (deploymentTarget == 'containerapps') ? containerApps.outputs.environmentName : ''
     tags: union(tags, { 'azd-service-name': 'backend' })
     targetPort: 8000
-    containerCpuCoreCount: '1.0'
-    containerMemory: '2Gi'
-    // Keep at least 1 replica running to avoid cold starts
-    containerMinReplicas: 1
+    // Optimized for production performance
+    containerCpuCoreCount: '2.0'
+    containerMemory: '4Gi'
+    // Keep at least 2 replicas for high availability and fault tolerance
+    containerMinReplicas: 2
+    // Allow scaling up to 10 replicas for handling load spikes
+    containerMaxReplicas: 10
     allowedOrigins: allowedOrigins
     env: union(appEnvVariables, {
       // For using managed identity to access Azure resources. See https://github.com/microsoft/azure-container-apps/issues/442
@@ -998,7 +1015,7 @@ module cosmosDb 'br/public:avm/res/document-db/database-account:0.6.1' = if (use
       {
         name: chatHistoryDatabaseName
         throughput: (cosmosDbSkuName == 'serverless') ? null : cosmosDbThroughput
-        containers: [
+        containers: concat([
           {
             name: chatHistoryContainerName
             kind: 'MultiHash'
@@ -1030,7 +1047,57 @@ module cosmosDb 'br/public:avm/res/document-db/database-account:0.6.1' = if (use
               ]
             }
           }
-        ]
+        ], useNewsDashboard ? [
+          {
+            name: newsPreferencesContainerName
+            kind: 'Hash'
+            paths: [
+              '/user_oid'
+            ]
+            indexingPolicy: {
+              indexingMode: 'consistent'
+              automatic: true
+              includedPaths: [
+                {
+                  path: '/user_oid/?'
+                }
+                {
+                  path: '/updated_at/?'
+                }
+              ]
+              excludedPaths: [
+                {
+                  path: '/*'
+                }
+              ]
+            }
+          }
+          {
+            name: newsCacheContainerName
+            kind: 'Hash'
+            paths: [
+              '/search_term'
+            ]
+            defaultTtl: 172800 // 48 hours TTL - gives buffer beyond 24h cache validation
+            indexingPolicy: {
+              indexingMode: 'consistent'
+              automatic: true
+              includedPaths: [
+                {
+                  path: '/search_term/?'
+                }
+                {
+                  path: '/cached_at/?'
+                }
+              ]
+              excludedPaths: [
+                {
+                  path: '/*'
+                }
+              ]
+            }
+          }
+        ] : [])
       }
     ]
   }
@@ -1503,6 +1570,12 @@ output AZURE_COSMOSDB_ACCOUNT string = (useAuthentication && useChatHistoryCosmo
 output AZURE_CHAT_HISTORY_DATABASE string = chatHistoryDatabaseName
 output AZURE_CHAT_HISTORY_CONTAINER string = chatHistoryContainerName
 output AZURE_CHAT_HISTORY_VERSION string = chatHistoryVersion
+
+// News Dashboard outputs
+output USE_NEWS_DASHBOARD bool = useNewsDashboard
+output AZURE_NEWS_DATABASE string = chatHistoryDatabaseName
+output AZURE_NEWS_PREFERENCES_CONTAINER string = newsPreferencesContainerName
+output AZURE_NEWS_CACHE_CONTAINER string = newsCacheContainerName
 
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = storageContainerName

@@ -176,3 +176,37 @@ export type EnhancePromptResponse = {
     original_prompt: string;
     enhanced_prompt: string;
 };
+
+// News Dashboard Types
+export type NewsCitation = {
+    title: string;
+    url: string;
+    source?: string;
+    snippet?: string;
+};
+
+export type NewsItem = {
+    id: string;
+    searchTerm: string;
+    title: string;
+    summary: string;
+    imageUrl?: string;
+    originalUrl?: string;
+    source?: string;
+    publishedAt?: number;
+    citations: NewsCitation[];
+    relatedTopics: string[];
+};
+
+export type NewsPreferencesResponse = {
+    searchTerms: string[];
+    updatedAt: number;
+    maxTerms: number;
+};
+
+export type NewsSearchResult = {
+    userOid: string;
+    items: NewsItem[];
+    searchedAt?: number;
+    error?: string;
+};
