@@ -17,7 +17,7 @@ export const HistoryButton = ({className, disabled, isOpen = false, label, onCli
         <button type="button" className={`${styles.container} ${className ?? ""}`} disabled={disabled}
                 onClick={onClick}>
             <History24Regular className={styles.icon}/>
-            <span className={styles.label}>{label ?? t("history.openChatHistory")}</span>
+            <span className={styles.label}>{label ?? t("history.chatHistory")}</span>
             <span className={styles.chevron}>{isOpen ? <ChevronDown24Regular/> : <ChevronRight24Regular/>}</span>
         </button>
     );

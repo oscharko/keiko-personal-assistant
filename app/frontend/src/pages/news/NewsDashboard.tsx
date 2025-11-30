@@ -10,6 +10,7 @@ import {Spinner, SpinnerSize} from "@fluentui/react";
 import {
     ArrowLeft24Regular,
     ArrowSync24Regular,
+    Info24Regular,
     News24Regular,
     Settings24Regular,
     Warning24Regular
@@ -22,6 +23,7 @@ import {NewsItem, NewsPreferencesResponse, NewsSearchResult} from "../../api/mod
 import {getToken, useLogin} from "../../authConfig";
 import styles from "./NewsDashboard.module.css";
 import {NewsDetailModal} from "./NewsDetailModal";
+import {NewsInfoDialog} from "./NewsInfoDialog";
 import {NewsPreferencesModal} from "./NewsPreferencesModal";
 
 /**
@@ -120,6 +122,7 @@ export function Component() {
     const [error, setError] = useState<string | null>(null);
     const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
     const [showPreferences, setShowPreferences] = useState(false);
+    const [showInfoDialog, setShowInfoDialog] = useState(false);
 
     /**
      * Load initial data: preferences and cached news.
@@ -209,6 +212,14 @@ export function Component() {
                         <p className={styles.subtitle}>{t("news.subtitle")}</p>
                     </div>
                     <div className={styles.headerActions}>
+                        <button
+                            className={styles.infoButton}
+                            onClick={() => setShowInfoDialog(true)}
+                            title={t("news.explainFunction")}
+                        >
+                            <Info24Regular/>
+                            {t("news.explainFunction")}
+                        </button>
                         <button className={styles.backButton} onClick={() => navigate("/")}>
                             <ArrowLeft24Regular/>
                             {t("news.backToChat")}
@@ -233,6 +244,9 @@ export function Component() {
                         onUpdate={handlePreferencesUpdate}
                     />
                 )}
+                {showInfoDialog && (
+                    <NewsInfoDialog onClose={() => setShowInfoDialog(false)}/>
+                )}
             </div>
         );
     }
@@ -246,6 +260,14 @@ export function Component() {
                     <p className={styles.subtitle}>{t("news.subtitle")}</p>
                 </div>
                 <div className={styles.headerActions}>
+                    <button
+                        className={styles.infoButton}
+                        onClick={() => setShowInfoDialog(true)}
+                        title={t("news.explainFunction")}
+                    >
+                        <Info24Regular/>
+                        {t("news.explainFunction")}
+                    </button>
                     <button className={styles.settingsButton} onClick={() => setShowPreferences(true)}>
                         <Settings24Regular/>
                         {t("news.settings")}
@@ -283,6 +305,11 @@ export function Component() {
                     onClose={() => setShowPreferences(false)}
                     onUpdate={handlePreferencesUpdate}
                 />
+            )}
+
+            {/* Info Dialog */}
+            {showInfoDialog && (
+                <NewsInfoDialog onClose={() => setShowInfoDialog(false)}/>
             )}
         </div>
     );

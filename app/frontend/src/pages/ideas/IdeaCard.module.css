@@ -1,0 +1,287 @@
+/**
+ * Styles for the Idea Card component.
+ * Color scheme: #fff (white), #000 (black), #DCFF4A (accent)
+ */
+
+.ideaCard {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.ideaCard:hover {
+    border-color: #DCFF4A;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+/* Card Header with Status */
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px 0 20px;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.statusDraft {
+    background: #e0e0e0;
+    color: #666;
+}
+
+.statusSubmitted {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.statusUnderReview {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.statusApproved {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.statusRejected {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.statusImplemented {
+    background: #DCFF4A;
+    color: #000;
+}
+
+.statusArchived {
+    background: #f5f5f5;
+    color: #9e9e9e;
+}
+
+/* Card Content */
+.cardContent {
+    padding: 16px 20px 20px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.cardTitle {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #000;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.cardSummary {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+}
+
+/* Tags */
+.cardTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #f5f5f5;
+    color: #666;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.tagMore {
+    background: #DCFF4A;
+    color: #000;
+}
+
+/* Card Footer */
+.cardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.cardMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cardSubmitter {
+    font-size: 0.8rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.cardDate {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.cardDepartment {
+    font-size: 0.75rem;
+    color: #888;
+    background: #f5f5f5;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+/* Score Indicators */
+.cardScores {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.scoreIndicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.scoreLabel {
+    font-weight: 500;
+}
+
+.scoreValue {
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f5f5f5;
+}
+
+.scoreHigh {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.scoreMedium {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.scoreLow {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+/* Recommendation Badge */
+.recommendationBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-top: 8px;
+}
+
+.recommendationQuickWin {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.recommendationHighLeverage {
+    background: #DCFF4A;
+    color: #000;
+}
+
+.recommendationStrategic {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.recommendationEvaluate {
+    background: #f5f5f5;
+    color: #666;
+}
+
+/* Icon placeholder */
+.cardIcon {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #DCFF4A;
+    font-size: 48px;
+}
+
+/* Engagement Metrics */
+.cardEngagement {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.engagementItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #666;
+}
+
+.engagementIcon {
+    width: 18px;
+    height: 18px;
+    color: #888;
+}
+
+.engagementIconLiked {
+    width: 18px;
+    height: 18px;
+    color: #e91e63;
+}
+
+.engagementCount {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #666;
+}

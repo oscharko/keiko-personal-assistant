@@ -12,9 +12,11 @@ import {useHistoryManager} from "../HistoryProviders";
 import {HistoryMetaData, HistoryProviderOptions} from "../HistoryProviders/IProvider";
 import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../HistoryProviders/events";
 import {ClearChatButton} from "../ClearChatButton";
+import {IdeasButton} from "../IdeasButton";
 import {NewsButton} from "../NewsButton";
 import {SettingsButton} from "../SettingsButton";
 import {UploadButton} from "../UploadButton";
+import {YoursButton} from "../YoursButton";
 
 interface SidebarProps {
     className?: string;
@@ -27,6 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
     const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [isYoursOpen, setIsYoursOpen] = useState(false);
     const [historyItems, setHistoryItems] = useState<HistoryMetaData[]>([]);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
     const [hasMoreHistory, setHasMoreHistory] = useState(false);
@@ -127,45 +130,54 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
                 <div className={styles.historySection}>
                     <ClearChatButton className={styles.historyHeader}
                                      onClick={() => globalThis.dispatchEvent(new Event(CLEAR_CHAT_EVENT))}/>
-                    <SettingsButton className={styles.historyHeader}
-                                    onClick={() => navigate("/playground")}/>
-                    <NewsButton className={styles.historyHeader}
-                                onClick={() => navigate("/news")}/>
-                    {showUserUpload && (
-                        <UploadButton
-                            className={styles.historyHeader}
-                            onClick={() => navigate("/doc-upload")}
-                        />
+                </div>
+
+                <div className={styles.divider}/>
+
+                <div className={styles.historySection}>
+                    <YoursButton label={'Yours'} className={styles.historyHeader} isOpen={isYoursOpen}
+                                 onClick={() => setIsYoursOpen(prev => !prev)}/>
+                    {isYoursOpen && !isCollapsed && (
+                        <div className={styles.historyList}>
+                            <SettingsButton className={styles.historyHeader}
+                                            onClick={() => navigate("/playground")}/>
+                            <NewsButton className={styles.historyHeader}
+                                        onClick={() => navigate("/news")}/>
+                            <IdeasButton className={styles.historyHeader}
+                                         onClick={() => navigate("/ideas")}/>
+                            <UploadButton
+                                className={styles.historyHeader}
+                                onClick={() => navigate("/doc-upload")}
+                            />
+                        </div>
                     )}
                 </div>
 
                 <div className={styles.divider}/>
 
-                {historySupported && (
-                    <div className={styles.historySection}>
-                        <HistoryButton className={styles.historyHeader} isOpen={isHistoryOpen}
-                                       onClick={() => setIsHistoryOpen(prev => !prev)}/>
-                        {isHistoryOpen && !isCollapsed && (
-                            <div className={styles.historyList} ref={historyListRef} onScroll={handleHistoryScroll}>
-                                {historyItems.map(item => (
-                                    <button
-                                        key={item.id}
-                                        className={styles.historyItem}
-                                        onClick={() => handleHistorySelect(item.id)}
-                                        title={item.title}
-                                        type="button"
-                                    >
-                                        {item.title}
-                                    </button>
-                                ))}
-                                {isHistoryLoading && <Spinner size={SpinnerSize.xSmall} className={styles.spinner}/>}
-                                {!isHistoryLoading && historyItems.length === 0 && (
-                                    <div className={styles.noHistory}>{t("history.noHistory")}</div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                <div className={styles.historySection}>
+                    <HistoryButton className={styles.historyHeader} isOpen={isHistoryOpen}
+                                   onClick={() => setIsHistoryOpen(prev => !prev)}/>
+                    {isHistoryOpen && !isCollapsed && (
+                        <div className={styles.historyList} ref={historyListRef} onScroll={handleHistoryScroll}>
+                            {historyItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    className={styles.historyItem}
+                                    onClick={() => handleHistorySelect(item.id)}
+                                    title={item.title}
+                                    type="button"
+                                >
+                                    {item.title}
+                                </button>
+                            ))}
+                            {isHistoryLoading && <Spinner size={SpinnerSize.xSmall} className={styles.spinner}/>}
+                            {!isHistoryLoading && historyItems.length === 0 && (
+                                <div className={styles.noHistory}>{t("history.noHistory")}</div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className={styles.footer}>

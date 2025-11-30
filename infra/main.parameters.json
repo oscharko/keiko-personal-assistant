@@ -373,6 +373,18 @@
     },
     "gnewsApiKey": {
       "value": "${GNEWS_API_KEY=}"
+    },
+    "useIdeasHub": {
+      "value": "${USE_IDEAS_HUB=true}"
+    },
+    "ideasSearchIndexName": {
+      "value": "${AZURE_IDEAS_SEARCH_INDEX=ideas-index}"
+    },
+    "ideasSimilarityThreshold": {
+      "value": "${IDEAS_SIMILARITY_THRESHOLD=0.75}"
+    },
+    "ideasMaxSimilarResults": {
+      "value": "${IDEAS_MAX_SIMILAR_RESULTS=5}"
     }
   }
 }

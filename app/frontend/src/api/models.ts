@@ -210,3 +210,187 @@ export type NewsSearchResult = {
     searchedAt?: number;
     error?: string;
 };
+
+// Ideas Hub Types
+
+/**
+ * Status of an idea in the workflow.
+ */
+export const enum IdeaStatus {
+    Draft = "draft",
+    Submitted = "submitted",
+    UnderReview = "under_review",
+    Approved = "approved",
+    Rejected = "rejected",
+    Implemented = "implemented",
+    Archived = "archived"
+}
+
+/**
+ * Recommendation classification based on impact and feasibility scores.
+ */
+export const enum RecommendationClass {
+    QuickWin = "quick_win",
+    HighLeverage = "high_leverage",
+    Strategic = "strategic",
+    Evaluate = "evaluate",
+    Unclassified = "unclassified"
+}
+
+/**
+ * KPI estimates extracted from an idea.
+ */
+export type IdeaKPIEstimates = {
+    timeSavingsHours?: number;
+    costReductionEur?: number;
+    qualityImprovementPercent?: number;
+    employeeSatisfactionImpact?: number;
+    scalabilityPotential?: number;
+};
+
+/**
+ * Complete idea data model.
+ */
+export type Idea = {
+    ideaId: string;
+    title: string;
+    description: string;
+    problemDescription?: string;
+    expectedBenefit?: string;
+    affectedProcesses?: string[];
+    targetUsers?: string[];
+    submitterId: string;
+    submitterName?: string;
+    department?: string;
+    status: IdeaStatus;
+    createdAt: number;
+    updatedAt: number;
+    // LLM-generated fields
+    summary?: string;
+    tags?: string[];
+    embedding?: number[];
+    analyzedAt?: number;
+    analysisVersion?: string;
+    // Scoring fields
+    impactScore?: number;
+    feasibilityScore?: number;
+    recommendationClass?: RecommendationClass;
+    kpiEstimates?: IdeaKPIEstimates;
+    // Clustering
+    clusterLabel?: string;
+};
+
+/**
+ * Request payload for creating a new idea.
+ */
+export type IdeaSubmission = {
+    title: string;
+    description: string;
+    problemDescription?: string;
+    expectedBenefit?: string;
+    affectedProcesses?: string[];
+    targetUsers?: string[];
+    department?: string;
+    status?: IdeaStatus;
+};
+
+/**
+ * Request payload for updating an existing idea.
+ */
+export type IdeaUpdate = {
+    title?: string;
+    description?: string;
+    problemDescription?: string;
+    expectedBenefit?: string;
+    affectedProcesses?: string[];
+    targetUsers?: string[];
+    department?: string;
+    status?: IdeaStatus;
+};
+
+/**
+ * Response for listing ideas with pagination.
+ */
+export type IdeaListResponse = {
+    ideas: Idea[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    hasMore: boolean;
+};
+
+/**
+ * Similar idea with similarity score.
+ */
+export type SimilarIdea = {
+    ideaId: string;
+    title: string;
+    summary?: string;
+    similarityScore: number;
+    status: string;
+};
+
+/**
+ * Response for similar ideas search.
+ */
+export type SimilarIdeasResponse = {
+    similarIdeas: SimilarIdea[];
+    threshold: number;
+};
+
+/**
+ * Represents a like on an idea.
+ */
+export type IdeaLike = {
+    likeId: string;
+    ideaId: string;
+    userId: string;
+    createdAt: number;
+};
+
+/**
+ * Represents a comment on an idea.
+ */
+export type IdeaComment = {
+    commentId: string;
+    ideaId: string;
+    userId: string;
+    content: string;
+    createdAt: number;
+    updatedAt: number;
+};
+
+/**
+ * Response for paginated comment list.
+ */
+export type IdeaCommentsResponse = {
+    comments: IdeaComment[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    hasMore: boolean;
+};
+
+/**
+ * Aggregated engagement metrics for an idea.
+ */
+export type IdeaEngagement = {
+    ideaId: string;
+    likeCount: number;
+    commentCount: number;
+    userHasLiked: boolean;
+};
+
+/**
+ * Request payload for creating a comment.
+ */
+export type CommentSubmission = {
+    content: string;
+};
+
+/**
+ * Request payload for updating a comment.
+ */
+export type CommentUpdate = {
+    content: string;
+};

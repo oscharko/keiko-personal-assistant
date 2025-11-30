@@ -44,23 +44,51 @@
     font-weight: 400;
 }
 
+.headerActions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.infoButton,
 .backButton {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    background: #000;
-    border: none;
+    height: 44px;
+    min-width: 160px;
+    padding: 0 24px;
     cursor: pointer;
-    font-size: 14px;
-    color: #DCFF4A;
-    padding: 12px 24px;
     border-radius: 12px;
     font-weight: 600;
+    font-size: 14px;
     transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.infoButton {
+    background: transparent;
+    border: 2px solid #000;
+    color: #000;
+}
+
+.infoButton:hover {
+    background: #000;
+    color: #DCFF4A;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(51, 51, 51, 0.3);
+}
+
+.backButton {
+    background: #000;
+    border: 2px solid #000;
+    color: #DCFF4A;
 }
 
 .backButton:hover {
     background: #fff;
+    border-color: #fff;
     color: #000;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(51, 51, 51, 0.3);

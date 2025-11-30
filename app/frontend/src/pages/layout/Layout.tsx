@@ -13,10 +13,21 @@ import {MouseEffect} from "../../components/MouseEffect/MouseEffect";
 import {AnimatedOutlet} from "../../router";
 
 const Layout = () => {
-    const {t} = useTranslation();
+    const {t, i18n} = useTranslation();
     const [menuOpen, setMenuOpen] = useState(false);
     const [isBetaAuth, setIsBetaAuth] = useState(false);
     const menuRef: RefObject<HTMLDivElement> = useRef(null);
+
+    // Toggle between English and German
+    const toggleLanguage = () => {
+        const newLang = i18n.language === "de" ? "en" : "de";
+        i18n.changeLanguage(newLang);
+    };
+
+    // Get current language display text
+    const getCurrentLanguageLabel = () => {
+        return i18n.language === "de" ? "DE" : "EN";
+    };
 
     const FloatingPaths = ({position}: { position: number }) => {
         const paths = Array.from({length: 30}, (_, i) => ({
@@ -114,30 +125,16 @@ const Layout = () => {
                             <h3 className={styles.headerTitle}>{t("headerTitle")}</h3>
                         </Link>
                         <h2 className={styles.headerCenterTitle}>{t("headerCenterTitle")}</h2>
-                        {/*                        <nav>
-                            <ul className={`${styles.headerNavList} ${menuOpen ? styles.show : ""}`}>
-                                <li>
-                                    <NavLink
-                                        to="/"
-                                        className={({isActive}) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
-                                        onClick={() => setMenuOpen(false)}
-                                    >
-                                        {t("chat")}
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink
-                                        to="/qa"
-                                        className={({isActive}) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
-                                        onClick={() => setMenuOpen(false)}
-                                    >
-                                        {t("qa")}
-                                    </NavLink>
-                                </li>
-                            </ul>
-                        </nav>*/}
                         <div className={styles.loginMenuContainer}>
                             {useLogin && <LoginButton/>}
+                            <button
+                                className={styles.languageButton}
+                                onClick={toggleLanguage}
+                                title={t("labels.languagePicker")}
+                                aria-label={t("labels.languagePicker")}
+                            >
+                                {getCurrentLanguageLabel()}
+                            </button>
                             {isBetaAuth && (
                                 <IconButton
                                     iconProps={{iconName: "SignOut"}}

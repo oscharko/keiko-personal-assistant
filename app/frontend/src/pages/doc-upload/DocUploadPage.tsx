@@ -8,9 +8,11 @@ import {Icon, IconButton, Spinner, SpinnerSize} from "@fluentui/react";
 import {useTranslation} from "react-i18next";
 import {Helmet} from "react-helmet-async";
 import {useMsal} from "@azure/msal-react";
+import {Info24Regular} from "@fluentui/react-icons";
 import styles from "./DocUploadPage.module.css";
 import {deleteUploadedFileApi, listUploadedFilesApi, uploadFileApi} from "../../api";
 import {getToken, useLogin} from "../../authConfig";
+import {DocUploadInfoDialog} from "./DocUploadInfoDialog";
 import {ParticleBackground} from "../../components/ParticleBackground";
 
 const ACCEPTED_FILE_TYPES = ".pdf,.html,.txt,.md,.jpeg,.jpg,.png,.docx,.xlsx,.pptx,.json,.bmp,.heic,.tiff";
@@ -32,6 +34,7 @@ export function Component(): JSX.Element {
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isDragActive, setIsDragActive] = useState(false);
+    const [showInfoDialog, setShowInfoDialog] = useState(false);
     const useBetaAuth = isBetaAuthEnabled();
     const client = useLogin && !useBetaAuth ? useMsal().instance : undefined;
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,10 +130,20 @@ export function Component(): JSX.Element {
                     <h1 className={styles.title}>{t("upload.title")}</h1>
                     <p className={styles.subtitle}>{t("upload.subtitle")}</p>
                 </div>
-                <button className={styles.backButton} onClick={() => navigate("/")}>
-                    <Icon iconName="Back"/>
-                    {t("upload.backToChat")}
-                </button>
+                <div className={styles.headerActions}>
+                    <button
+                        className={styles.infoButton}
+                        onClick={() => setShowInfoDialog(true)}
+                        title={t("upload.explainFunction")}
+                    >
+                        <Info24Regular/>
+                        {t("upload.explainFunction")}
+                    </button>
+                    <button className={styles.backButton} onClick={() => navigate("/")}>
+                        <Icon iconName="Back"/>
+                        {t("upload.backToChat")}
+                    </button>
+                </div>
             </div>
 
 
@@ -214,6 +227,11 @@ export function Component(): JSX.Element {
                 </div>
 
             </div>
+
+            {/* Info Dialog */}
+            {showInfoDialog && (
+                <DocUploadInfoDialog onClose={() => setShowInfoDialog(false)}/>
+            )}
         </div>
     );
 }

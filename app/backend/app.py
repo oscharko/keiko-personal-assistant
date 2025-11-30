@@ -96,6 +96,7 @@ from core.authentication import AuthenticationHelper
 from core.sessionhelper import create_session_id
 from decorators import authenticated, authenticated_path
 from error import error_dict, error_response
+from ideas import ideas_bp
 from news import news_bp
 from prepdocs import (
     OpenAIHost,
@@ -215,10 +216,14 @@ async def assets(path):
 @bp.route("/playground/")
 @bp.route("/chat")
 @bp.route("/chat/")
+@bp.route("/ideas")
+@bp.route("/ideas/")
 async def spa_routes():
-    """
-    Serve index.html for all SPA routes.
-    This enables client-side routing with React Router.
+    """Serve index.html for all SPA routes used by the single-page application.
+
+    This enables client-side routing with React Router for paths like /news,
+    /playground, /chat, and /ideas so that direct navigation and reloads work
+    correctly in production.
     """
     if USE_VITE_DEV_SERVER:
         return redirect(VITE_DEV_SERVER_URL)
@@ -484,10 +489,16 @@ async def beta_auth_login():
 
         # Generate JWT token
         token = beta_auth.generate_token(username)
+        # Get the user's unique OID for frontend use
+        user_oid = beta_auth.get_user_oid(username)
+        # Check if user is admin
+        is_admin = beta_auth.is_admin(username)
 
         return jsonify({
             "token": token,
-            "username": username
+            "username": username,
+            "userId": user_oid,
+            "isAdmin": is_admin
         })
 
     except Exception as e:
@@ -1049,6 +1060,7 @@ def create_app():
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = None
     app.register_blueprint(bp)
     app.register_blueprint(chat_history_cosmosdb_bp)
+    app.register_blueprint(ideas_bp)
     app.register_blueprint(news_bp)
 
     if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):

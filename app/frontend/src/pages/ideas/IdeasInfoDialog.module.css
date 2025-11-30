@@ -1,0 +1,345 @@
+/**
+ * Styles for the Ideas Info Dialog component.
+ * Color scheme: #fff (white), #000 (black), #DCFF4A (accent)
+ */
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.dialog {
+    background-color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+    max-width: 720px;
+    width: 100%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 28px;
+    background: #DCFF4A;
+    border-bottom: 2px solid #000;
+    flex-shrink: 0;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000;
+    letter-spacing: -0.02em;
+}
+
+.closeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #000;
+    color: #DCFF4A;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+    background: #fff;
+    color: #000;
+    transform: scale(1.05);
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px;
+}
+
+.section {
+    margin-bottom: 28px;
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+.sectionTitle {
+    margin: 0 0 12px 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #000;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #DCFF4A;
+}
+
+.paragraph {
+    margin: 0 0 12px 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+.paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.list {
+    margin: 0;
+    padding-left: 20px;
+    list-style-type: none;
+}
+
+.list li {
+    position: relative;
+    margin-bottom: 8px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: #333;
+    padding-left: 16px;
+}
+
+.list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    background: #DCFF4A;
+    border-radius: 50%;
+}
+
+.subList {
+    margin: 8px 0 0 0;
+    padding-left: 16px;
+    list-style-type: none;
+}
+
+.subList li {
+    position: relative;
+    margin-bottom: 6px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #555;
+    padding-left: 14px;
+}
+
+.subList li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50%;
+}
+
+/* Steps */
+.step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.step:last-child {
+    margin-bottom: 0;
+}
+
+.stepNumber {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #000;
+    color: #DCFF4A;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.stepContent {
+    flex: 1;
+}
+
+.stepTitle {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000;
+}
+
+/* Score boxes */
+.scoreBox {
+    background: #f8f8f8;
+    border-left: 4px solid #DCFF4A;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border-radius: 0 8px 8px 0;
+}
+
+.scoreBox:last-child {
+    margin-bottom: 0;
+}
+
+.scoreTitle {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000;
+}
+
+/* Classification grid */
+.classificationGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.classificationCard {
+    padding: 16px;
+    border-radius: 12px;
+    border: 2px solid;
+}
+
+.classificationName {
+    margin: 0 0 6px 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.classificationDesc {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    opacity: 0.9;
+}
+
+.highLeverage {
+    background: rgba(220, 255, 74, 0.2);
+    border-color: #DCFF4A;
+}
+
+.highLeverage .classificationName {
+    color: #000;
+}
+
+.quickWin {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: #4CAF50;
+}
+
+.quickWin .classificationName {
+    color: #2E7D32;
+}
+
+.strategic {
+    background: rgba(33, 150, 243, 0.1);
+    border-color: #2196F3;
+}
+
+.strategic .classificationName {
+    color: #1565C0;
+}
+
+.evaluate {
+    background: rgba(158, 158, 158, 0.1);
+    border-color: #9E9E9E;
+}
+
+.evaluate .classificationName {
+    color: #616161;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    justify-content: center;
+    padding: 20px 28px;
+    background: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.closeButtonPrimary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 48px;
+    background: #000;
+    color: #DCFF4A;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.closeButtonPrimary:hover {
+    background: #DCFF4A;
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .overlay {
+        padding: 16px;
+    }
+
+    .dialog {
+        max-height: 90vh;
+    }
+
+    .header {
+        padding: 20px;
+    }
+
+    .title {
+        font-size: 1.25rem;
+    }
+
+    .content {
+        padding: 20px;
+    }
+
+    .classificationGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .step {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .stepNumber {
+        width: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+    }
+}
+

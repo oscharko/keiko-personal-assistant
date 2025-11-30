@@ -40,6 +40,14 @@ export const BetaLogin = ({onLoginSuccess}: BetaLoginProps) => {
             const data = await response.json();
             localStorage.setItem("beta_auth_token", data.token);
             localStorage.setItem("beta_auth_username", data.username);
+            if (data.userId) {
+                localStorage.setItem("beta_auth_user_id", data.userId);
+            }
+            if (data.isAdmin) {
+                localStorage.setItem("beta_auth_is_admin", "true");
+            } else {
+                localStorage.removeItem("beta_auth_is_admin");
+            }
             onLoginSuccess(data.token, data.username);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Login fehlgeschlagen");

@@ -33,6 +33,10 @@ export const routes: RouteObject[] = [
         lazy: () => import("../pages/news/NewsDashboard")
     },
     {
+        path: "ideas",
+        lazy: () => import("../pages/ideas/IdeaHub")
+    },
+    {
         path: "*",
         lazy: () => import("../pages/NoPage")
     }

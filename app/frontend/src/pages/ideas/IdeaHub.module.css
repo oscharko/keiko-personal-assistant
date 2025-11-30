@@ -1,0 +1,503 @@
+/**
+ * Styles for the Ideas Hub page.
+ * Modern, sophisticated UI design matching the News Dashboard style.
+ * Color scheme: #fff (white), #000 (black), #DCFF4A (accent)
+ */
+
+.container {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    overflow-y: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 32px 48px;
+    background: #DCFF4A;
+    color: #000;
+    flex-shrink: 0;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+.headerActions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.viewToggle {
+    display: flex;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 4px;
+    margin-right: 8px;
+}
+
+.viewToggleButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 6px;
+    color: #000;
+    transition: all 0.2s ease;
+}
+
+.viewToggleButton:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.viewToggleActive {
+    background: #000;
+    color: #DCFF4A;
+}
+
+.viewToggleActive:hover {
+    background: #000;
+}
+
+.primaryButton,
+.secondaryButton,
+.backButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #000;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #DCFF4A;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover,
+.backButton:hover {
+    background: #fff;
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(51, 51, 51, 0.3);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.infoButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 2px solid #000;
+    cursor: pointer;
+    font-size: 14px;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.infoButton:hover {
+    background: #000;
+    color: #DCFF4A;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(51, 51, 51, 0.3);
+}
+
+/* Export dropdown */
+.exportDropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.exportButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.exportButton:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.exportMenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    min-width: 160px;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.exportDropdown:hover .exportMenu {
+    display: block;
+}
+
+.exportMenuItem {
+    display: block;
+    padding: 12px 16px;
+    color: #000;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+.exportMenuItem:hover {
+    background: #DCFF4A;
+}
+
+.content {
+    flex: 1;
+    padding: 32px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Quick Filters */
+.quickFilters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.quickFilterButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 2px solid #000;
+    border-radius: 24px;
+    background: #fff;
+    color: #000;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quickFilterButton:hover {
+    background: #f5f5f5;
+    transform: translateY(-1px);
+}
+
+.quickFilterActive {
+    background: #DCFF4A;
+    border-color: #DCFF4A;
+}
+
+.quickFilterActive:hover {
+    background: #d4f542;
+}
+
+/* Filter Bar */
+.filterBar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: #fff;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.filterGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filterLabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #666;
+}
+
+.filterSelect {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.filterSelect:hover,
+.filterSelect:focus {
+    border-color: #DCFF4A;
+    outline: none;
+}
+
+.filterToggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.filterToggle:hover {
+    border-color: #DCFF4A;
+}
+
+.filterToggleActive {
+    background: #DCFF4A;
+    border-color: #DCFF4A;
+    color: #000;
+}
+
+/* Ideas Grid */
+.ideasGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 40px;
+    text-align: center;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.emptyStateIcon {
+    font-size: 64px;
+    color: #DCFF4A;
+    margin-bottom: 24px;
+}
+
+.emptyStateTitle {
+    margin: 0 0 12px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #000;
+}
+
+.emptyStateDescription {
+    margin: 0 0 24px 0;
+    font-size: 1rem;
+    color: #666;
+    max-width: 400px;
+}
+
+.emptyStateButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #000;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #DCFF4A;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.emptyStateButton:hover {
+    background: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading State */
+.loadingState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 40px;
+    text-align: center;
+}
+
+.loadingText {
+    margin-top: 24px;
+    font-size: 1rem;
+    color: #666;
+}
+
+/* Error State */
+.errorState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 40px;
+    text-align: center;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.errorIcon {
+    font-size: 64px;
+    color: #d32f2f;
+    margin-bottom: 24px;
+}
+
+.errorTitle {
+    margin: 0 0 12px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #000;
+}
+
+.errorDescription {
+    margin: 0 0 24px 0;
+    font-size: 1rem;
+    color: #666;
+    max-width: 400px;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0;
+}
+
+.paginationButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+    border-color: #DCFF4A;
+    background: #DCFF4A;
+    color: #000;
+}
+
+.paginationButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.paginationInfo {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 20px;
+        padding: 24px;
+    }
+
+    .headerActions {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .primaryButton,
+    .secondaryButton,
+    .backButton,
+    .infoButton {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .content {
+        padding: 24px;
+    }
+
+    .filterBar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filterGroup {
+        width: 100%;
+    }
+
+    .filterSelect {
+        flex: 1;
+    }
+
+    .ideasGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 1400px) {
+    .ideasGrid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
