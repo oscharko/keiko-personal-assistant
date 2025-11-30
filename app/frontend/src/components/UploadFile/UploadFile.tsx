@@ -1,12 +1,12 @@
-import React, { useState, ChangeEvent } from "react";
-import { Callout, Label, Text } from "@fluentui/react";
-import { Button } from "@fluentui/react-components";
-import { Add24Regular, Delete24Regular } from "@fluentui/react-icons";
-import { useMsal } from "@azure/msal-react";
-import { useTranslation } from "react-i18next";
+import React, {ChangeEvent, useState} from "react";
+import {Callout, Text} from "@fluentui/react";
+import {Button} from "@fluentui/react-components";
+import {Add24Regular, Delete24Regular} from "@fluentui/react-icons";
+import {useMsal} from "@azure/msal-react";
+import {useTranslation} from "react-i18next";
 
-import { SimpleAPIResponse, uploadFileApi, deleteUploadedFileApi, listUploadedFilesApi } from "../../api";
-import { useLogin, getToken } from "../../authConfig";
+import {deleteUploadedFileApi, listUploadedFilesApi, SimpleAPIResponse, uploadFileApi} from "../../api";
+import {getToken, useLogin} from "../../authConfig";
 import styles from "./UploadFile.module.css";
 
 interface Props {
@@ -14,7 +14,7 @@ interface Props {
     disabled?: boolean;
 }
 
-export const UploadFile: React.FC<Props> = ({ className, disabled }: Props) => {
+export const UploadFile: React.FC<Props> = ({className, disabled}: Props) => {
     // State variables to manage the component behavior
     const [isCalloutVisible, setIsCalloutVisible] = useState<boolean>(false);
     const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -23,7 +23,7 @@ export const UploadFile: React.FC<Props> = ({ className, disabled }: Props) => {
     const [uploadedFile, setUploadedFile] = useState<SimpleAPIResponse>();
     const [uploadedFileError, setUploadedFileError] = useState<string>();
     const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
-    const { t } = useTranslation();
+    const {t} = useTranslation();
 
     if (!useLogin) {
         throw new Error("The UploadFile component requires useLogin to be true");
@@ -57,7 +57,7 @@ export const UploadFile: React.FC<Props> = ({ className, disabled }: Props) => {
     };
 
     const handleRemoveFile = async (filename: string) => {
-        setDeletionStatus({ ...deletionStatus, [filename]: "pending" });
+        setDeletionStatus({...deletionStatus, [filename]: "pending"});
 
         try {
             const idToken = await getToken(client);
@@ -66,10 +66,10 @@ export const UploadFile: React.FC<Props> = ({ className, disabled }: Props) => {
             }
 
             await deleteUploadedFileApi(filename, idToken);
-            setDeletionStatus({ ...deletionStatus, [filename]: "success" });
+            setDeletionStatus({...deletionStatus, [filename]: "success"});
             listUploadedFiles(idToken);
         } catch (error) {
-            setDeletionStatus({ ...deletionStatus, [filename]: "error" });
+            setDeletionStatus({...deletionStatus, [filename]: "error"});
             console.error(error);
         }
     };
@@ -105,7 +105,7 @@ export const UploadFile: React.FC<Props> = ({ className, disabled }: Props) => {
     return (
         <div className={`${styles.container} ${className ?? ""}`}>
             <div>
-                <Button id="calloutButton" icon={<Add24Regular />} disabled={disabled} onClick={handleButtonClick}>
+                <Button id="calloutButton" icon={<Add24Regular/>} disabled={disabled} onClick={handleButtonClick}>
                     {t("upload.manageFileUploads")}
                 </Button>
 
@@ -118,17 +118,7 @@ export const UploadFile: React.FC<Props> = ({ className, disabled }: Props) => {
                         onDismiss={() => setIsCalloutVisible(false)}
                         setInitialFocus
                     >
-                        <form encType="multipart/form-data">
-                            <div>
-                                <Label>{t("upload.fileLabel")}</Label>
-                                <input
-                                    accept=".txt, .md, .json, .png, .jpg, .jpeg, .bmp, .heic, .tiff, .pdf, .docx, .xlsx, .pptx, .html"
-                                    className={styles.chooseFiles}
-                                    type="file"
-                                    onChange={handleUploadFile}
-                                />
-                            </div>
-                        </form>
+
 
                         {/* Show a loading message while files are being uploaded */}
                         {isUploading && <Text>{t("upload.uploadingFiles")}</Text>}
@@ -146,7 +136,7 @@ export const UploadFile: React.FC<Props> = ({ className, disabled }: Props) => {
                                     <div className={styles.item}>{filename}</div>
                                     {/* Button to remove a file from the list */}
                                     <Button
-                                        icon={<Delete24Regular />}
+                                        icon={<Delete24Regular/>}
                                         onClick={() => handleRemoveFile(filename)}
                                         disabled={deletionStatus[filename] === "pending" || deletionStatus[filename] === "success"}
                                     >

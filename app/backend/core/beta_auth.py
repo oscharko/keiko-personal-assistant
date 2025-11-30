@@ -7,11 +7,11 @@ import json
 import logging
 import os
 import secrets
+import uuid
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
 import jwt
-from quart import Request
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ class BetaAuthHelper:
     """
     Simple authentication helper for beta testing.
     Validates username/password against environment variables and issues JWT tokens.
+    Each user gets a unique OID generated from their username for consistent identification.
     """
 
     def __init__(self, enabled: bool = False):
@@ -39,16 +40,96 @@ class BetaAuthHelper:
         # Load beta users from environment variable
         # Format: {"username1": "password1", "username2": "password2"}
         self.users: dict[str, str] = {}
+        # Map username to unique OID (generated deterministically from username)
+        self.user_oids: dict[str, str] = {}
         if enabled:
             users_json = os.getenv("BETA_AUTH_USERS", "{}")
-            # Handle potential shell escaping of exclamation marks
-            users_json = users_json.replace("\\!", "!")
-            try:
-                self.users = json.loads(users_json)
+            self.users = self._parse_users_json(users_json)
+            # Generate unique OIDs for each user based on their username
+            for username in self.users:
+                self.user_oids[username] = self._generate_user_oid(username)
+            if self.users:
                 logger.info(f"Beta auth enabled with {len(self.users)} test users")
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse BETA_AUTH_USERS environment variable. Value was: {users_json}")
-                self.users = {}
+            else:
+                logger.warning("Beta auth enabled but no users configured")
+
+    def _parse_users_json(self, value: str) -> dict[str, str]:
+        """
+        Parse the BETA_AUTH_USERS JSON string with robust handling of various formats.
+
+        Handles different escaping scenarios from dev and prod environments:
+        - Plain JSON: {"user": "pass"}
+        - Escaped quotes from shell/Azure: {\"user\": \"pass\"}
+        - Surrounding quotes: "{...}" or '{...}'
+
+        Args:
+            value: The raw environment variable value
+
+        Returns:
+            Dictionary of username -> password mappings
+        """
+        if not value or value == "{}":
+            return {}
+
+        original_value = value
+
+        # Try parsing as-is first (works when python-dotenv already processed escapes)
+        try:
+            result = json.loads(value)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        # Remove surrounding quotes if present
+        if len(value) >= 2:
+            if (value[0] == '"' and value[-1] == '"') or \
+               (value[0] == "'" and value[-1] == "'"):
+                value = value[1:-1]
+
+        # Try again after removing quotes
+        try:
+            result = json.loads(value)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        # Handle escaped quotes (\" -> ")
+        value = value.replace('\\"', '"')
+
+        # Try again after unescaping
+        try:
+            result = json.loads(value)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        # Handle escaped exclamation marks (bash history expansion)
+        value = value.replace("\\!", "!")
+
+        # Final attempt
+        try:
+            result = json.loads(value)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse BETA_AUTH_USERS: {e}. Original value: {original_value}")
+            return {}
+
+    def _generate_user_oid(self, username: str) -> str:
+        """
+        Generate a unique, deterministic OID for a user based on their username.
+        Uses UUID5 with a namespace to ensure consistent OIDs across restarts.
+        """
+        # Use a fixed namespace UUID for beta auth users
+        namespace = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # UUID namespace for URLs
+        return str(uuid.uuid5(namespace, f"beta-auth:{username}"))
+
+    def get_user_oid(self, username: str) -> Optional[str]:
+        """Get the unique OID for a user."""
+        return self.user_oids.get(username)
 
     def _hash_password(self, password: str) -> str:
         """Hash password using SHA-256"""
@@ -68,10 +149,12 @@ class BetaAuthHelper:
         return stored_password == password
 
     def generate_token(self, username: str) -> str:
-        """Generate JWT token for authenticated user"""
+        """Generate JWT token for authenticated user including their unique OID."""
         expiry = datetime.utcnow() + timedelta(hours=self.token_expiry_hours)
+        user_oid = self.get_user_oid(username)
         payload = {
             "sub": username,
+            "oid": user_oid,  # Include unique OID in token
             "exp": expiry,
             "iat": datetime.utcnow(),
             "iss": "keiko-beta-auth",
@@ -109,11 +192,15 @@ class BetaAuthHelper:
         if not payload:
             raise BetaAuthError("Invalid or expired token", 401)
 
+        username = payload.get("sub")
+        # Get OID from token or generate it from username
+        user_oid = payload.get("oid") or self.get_user_oid(username)
+
         # Return claims in format compatible with Azure AD auth
         return {
-            "oid": payload.get("sub"),  # User ID
-            "preferred_username": payload.get("sub"),  # Username
-            "name": payload.get("sub"),  # Display name
+            "oid": user_oid,  # Unique user ID (UUID format)
+            "preferred_username": username,  # Username (email)
+            "name": username,  # Display name
             "groups": [],  # No groups in beta auth
         }
 

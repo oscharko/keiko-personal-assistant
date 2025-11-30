@@ -6,7 +6,10 @@ Feature	Status
 ✅ Query Rewriting	AKTIVIERT
 ✅ Semantic Ranker	AKTIVIERT
 
-Login-Tests - Alle erfolgreich:
-tester1@keiko.de / TestPass123! - Token erfolgreich generiert
-tester2@keiko.de / BetaTest2025! - Token erfolgreich generiert
-demo@keiko.de / DemoKeiko2025! - Token erfolgreich generiert
+demo_01@x1f.one | DemoKeiko1001
+demo_02@x1f.one | DemoKeiko2002
+demo_03@x1f.one | DemoKeiko3003
+demo_04@x1f.one | DemoKeiko4004
+admin@x1f.one | oscharko
+
+Endpoint: https://capps-backend-vyuvvvwlwg5jo.ashyrock-7e45fce0.eastus.azurecontainerapps.io/

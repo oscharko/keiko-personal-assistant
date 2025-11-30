@@ -41,3 +41,8 @@ CONFIG_RAG_SEND_TEXT_SOURCES = "rag_send_text_sources"
 CONFIG_RAG_SEND_IMAGE_SOURCES = "rag_send_image_sources"
 CONFIG_WEB_SOURCE_ENABLED = "web_source_enabled"
 CONFIG_SHAREPOINT_SOURCE_ENABLED = "sharepoint_source_enabled"
+
+# News Dashboard configuration
+CONFIG_NEWS_DASHBOARD_ENABLED = "news_dashboard_enabled"
+CONFIG_NEWS_PREFERENCES_CONTAINER = "news_preferences_container"
+CONFIG_NEWS_CACHE_CONTAINER = "news_cache_container"
