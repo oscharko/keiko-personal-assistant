@@ -125,28 +125,6 @@ const Layout = () => {
                             <h3 className={styles.headerTitle}>{t("headerTitle")}</h3>
                         </Link>
                         <h2 className={styles.headerCenterTitle}>{t("headerCenterTitle")}</h2>
-                        {/*                        <nav>
-                            <ul className={`${styles.headerNavList} ${menuOpen ? styles.show : ""}`}>
-                                <li>
-                                    <NavLink
-                                        to="/"
-                                        className={({isActive}) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
-                                        onClick={() => setMenuOpen(false)}
-                                    >
-                                        {t("chat")}
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink
-                                        to="/qa"
-                                        className={({isActive}) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
-                                        onClick={() => setMenuOpen(false)}
-                                    >
-                                        {t("qa")}
-                                    </NavLink>
-                                </li>
-                            </ul>
-                        </nav>*/}
                         <div className={styles.loginMenuContainer}>
                             {useLogin && <LoginButton/>}
                             <button
