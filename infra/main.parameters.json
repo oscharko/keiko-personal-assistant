@@ -367,6 +367,12 @@
     },
     "useSharePointSource": {
       "value": "${USE_SHAREPOINT_SOURCE=false}"
+    },
+    "useNewsDashboard": {
+      "value": "${USE_NEWS_DASHBOARD=false}"
+    },
+    "gnewsApiKey": {
+      "value": "${GNEWS_API_KEY=}"
     }
   }
 }

@@ -4,21 +4,56 @@
     width: 100%;
     padding: 0.8rem;
     background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.questionInputTextAreaRow {
+    height: 80%;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .questionInputTextArea {
     width: 100%;
+    height: 100%;
     line-height: 2.5rem;
+}
+
+/* Override Fluent UI TextField internal styles to fill the container height */
+.questionInputTextArea :global(.ms-TextField-wrapper) {
+    height: 100%;
+}
+
+.questionInputTextArea :global(.ms-TextField-fieldGroup) {
+    height: 100%;
+}
+
+.questionInputTextArea :global(textarea) {
+    height: 100% !important;
+    min-height: 100% !important;
+    resize: none;
+}
+
+.questionInputControlsRow {
+    height: 20%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
 }
 
 .questionInputButtonsContainer {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 @media (min-width: 992px) {
     .questionInputContainer {
-        height: 5.625rem;
+        height: 10.625rem;
     }
 }

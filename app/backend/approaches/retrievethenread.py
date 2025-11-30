@@ -166,9 +166,11 @@ class RetrieveThenReadApproach(Approach):
         use_semantic_ranker = True if overrides.get("semantic_ranker") else False
         use_query_rewriting = True if overrides.get("query_rewriting") else False
         use_semantic_captions = True if overrides.get("semantic_captions") else False
+        use_query_answer = True if overrides.get("query_answer") else False
         top = overrides.get("top", 3)
         minimum_search_score = overrides.get("minimum_search_score", 0.0)
         minimum_reranker_score = overrides.get("minimum_reranker_score", 0.0)
+        vector_k = overrides.get("vector_k", 50)
         filter = self.build_filter(overrides)
         access_token = auth_claims.get("access_token")
         q = str(messages[-1]["content"])
@@ -182,9 +184,9 @@ class RetrieveThenReadApproach(Approach):
         vectors: list[VectorQuery] = []
         if use_vector_search:
             if search_text_embeddings:
-                vectors.append(await self.compute_text_embedding(q))
+                vectors.append(await self.compute_text_embedding(q, vector_k))
             if search_image_embeddings:
-                vectors.append(await self.compute_multimodal_embedding(q))
+                vectors.append(await self.compute_multimodal_embedding(q, vector_k))
 
         results = await self.search(
             top,
@@ -199,6 +201,7 @@ class RetrieveThenReadApproach(Approach):
             minimum_reranker_score,
             use_query_rewriting,
             access_token,
+            use_query_answer,
         )
 
         data_points = await self.get_sources_content(

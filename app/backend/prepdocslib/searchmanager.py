@@ -642,7 +642,13 @@ class SearchManager:
                     len(documents),
                     self.search_info.index_name,
                 )
-                await search_client.upload_documents(documents)
+                result = await search_client.upload_documents(documents)
+                # Log the result of the upload
+                for r in result:
+                    if not r.succeeded:
+                        logger.error("Failed to upload document %s: %s", r.key, r.error_message)
+                    else:
+                        logger.info("Successfully uploaded document %s", r.key)
 
     async def remove_content(self, path: Optional[str] = None, only_oid: Optional[str] = None):
         logger.info(

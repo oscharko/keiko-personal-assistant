@@ -1,0 +1,135 @@
+/**
+ * Styles for the News Preferences Modal.
+ */
+
+.panel {
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 8px 0;
+}
+
+.description {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #666;
+    line-height: 1.6;
+}
+
+.addSection {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.addInput {
+    flex: 1;
+}
+
+.addInput :global(.ms-TextField-fieldGroup) {
+    border-radius: 8px;
+    border-color: #ddd;
+}
+
+.addInput :global(.ms-TextField-fieldGroup:hover) {
+    border-color: #DCFF4A;
+}
+
+.addInput :global(.ms-TextField-fieldGroup:focus-within) {
+    border-color: #000;
+}
+
+.addButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #000 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0 20px !important;
+    height: 32px;
+    color: #DCFF4A !important;
+    font-weight: 600;
+}
+
+.addButton:hover {
+    background: #1a1a1a !important;
+}
+
+.addButton:disabled {
+    background: #ccc !important;
+    color: #888 !important;
+}
+
+.counter {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.termsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 100px;
+}
+
+.emptyMessage {
+    margin: 0;
+    padding: 24px;
+    text-align: center;
+    color: #888;
+    font-style: italic;
+}
+
+.termItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    transition: all 0.2s ease;
+}
+
+.termItem:hover {
+    border-color: #DCFF4A;
+    background: #fff;
+}
+
+.termText {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.deleteButton {
+    color: #888 !important;
+    transition: color 0.2s ease;
+}
+
+.deleteButton:hover {
+    color: #d32f2f !important;
+    background: transparent !important;
+}
+
+.infoBanner {
+    background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+    color: #fff;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-top: auto;
+}
+
+.infoBanner p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+

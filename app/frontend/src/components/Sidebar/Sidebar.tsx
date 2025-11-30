@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Icon, Spinner, SpinnerSize} from "@fluentui/react";
 import {useTranslation} from "react-i18next";
 import {useMsal} from "@azure/msal-react";
+import {useNavigate} from "react-router-dom";
 
 import styles from "./Sidebar.module.css";
 import {configApi} from "../../api";
@@ -11,7 +12,9 @@ import {useHistoryManager} from "../HistoryProviders";
 import {HistoryMetaData, HistoryProviderOptions} from "../HistoryProviders/IProvider";
 import {CLEAR_CHAT_EVENT, HISTORY_SELECT_EVENT} from "../HistoryProviders/events";
 import {ClearChatButton} from "../ClearChatButton";
+import {NewsButton} from "../NewsButton";
 import {SettingsButton} from "../SettingsButton";
+import {UploadButton} from "../UploadButton";
 
 interface SidebarProps {
     className?: string;
@@ -21,6 +24,7 @@ const HISTORY_COUNT_PER_LOAD = 20;
 
 const Sidebar: React.FC<SidebarProps> = ({className}) => {
     const {t} = useTranslation();
+    const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [historyItems, setHistoryItems] = useState<HistoryMetaData[]>([]);
@@ -28,6 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
     const [hasMoreHistory, setHasMoreHistory] = useState(false);
     const [showChatHistoryBrowser, setShowChatHistoryBrowser] = useState(false);
     const [showChatHistoryCosmos, setShowChatHistoryCosmos] = useState(false);
+    const [showUserUpload, setShowUserUpload] = useState(false);
     const hasMoreHistoryRef = useRef(false);
     const isHistoryLoadingRef = useRef(false);
     const historyListRef = useRef<HTMLDivElement | null>(null);
@@ -38,6 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
         configApi().then(config => {
             setShowChatHistoryBrowser(config.showChatHistoryBrowser);
             setShowChatHistoryCosmos(config.showChatHistoryCosmos);
+            setShowUserUpload(config.showUserUpload);
         });
     }, []);
 
@@ -122,7 +128,15 @@ const Sidebar: React.FC<SidebarProps> = ({className}) => {
                     <ClearChatButton className={styles.historyHeader}
                                      onClick={() => globalThis.dispatchEvent(new Event(CLEAR_CHAT_EVENT))}/>
                     <SettingsButton className={styles.historyHeader}
-                                    onClick={() => globalThis.dispatchEvent(new Event("open-settings-panel"))}/>
+                                    onClick={() => navigate("/playground")}/>
+                    <NewsButton className={styles.historyHeader}
+                                onClick={() => navigate("/news")}/>
+                    {showUserUpload && (
+                        <UploadButton
+                            className={styles.historyHeader}
+                            onClick={() => navigate("/doc-upload")}
+                        />
+                    )}
                 </div>
 
                 <div className={styles.divider}/>

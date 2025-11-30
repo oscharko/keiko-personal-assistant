@@ -41,6 +41,7 @@ from quart import (
     request,
     send_file,
     send_from_directory,
+    redirect,
 )
 from quart_cors import cors
 
@@ -95,6 +96,7 @@ from core.authentication import AuthenticationHelper
 from core.sessionhelper import create_session_id
 from decorators import authenticated, authenticated_path
 from error import error_dict, error_response
+from news import news_bp
 from prepdocs import (
     OpenAIHost,
     setup_embeddings_service,
@@ -103,7 +105,7 @@ from prepdocs import (
     setup_openai_client,
     setup_search_info,
 )
-from prepdocslib.blobmanager import AdlsBlobManager, BlobManager
+from prepdocslib.blobmanager import AdlsBlobManager, BlobManager, UserBlobManager
 from prepdocslib.embeddings import ImageEmbeddings
 from prepdocslib.filestrategy import UploadUserFileStrategy
 from prepdocslib.listfilestrategy import File
@@ -114,9 +116,17 @@ mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
 mimetypes.add_type("application/manifest+json", ".webmanifest")
 
+# Development mode configuration
+# When USE_VITE_DEV_SERVER is true, the backend redirects to the Vite dev server
+# and enables CORS for the Vite origin to support hot module replacement (HMR)
+USE_VITE_DEV_SERVER = os.getenv("USE_VITE_DEV_SERVER", "").lower() == "true"
+VITE_DEV_SERVER_URL = "http://127.0.0.1:5173"
+
 
 @bp.route("/")
 async def index():
+    if USE_VITE_DEV_SERVER:
+        return redirect(VITE_DEV_SERVER_URL)
     response = await make_response(await bp.send_static_file("index.html"))
     # No cache for index.html to ensure users always get the latest version
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -128,7 +138,7 @@ async def index():
 # Empty page is recommended for login redirect to work.
 # See https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/initialization.md#redirecturi-considerations for more information
 @bp.route("/redirect")
-async def redirect():
+async def redirect_callback():
     return ""
 
 
@@ -197,6 +207,28 @@ async def assets(path):
     return response
 
 
+# SPA catch-all route for client-side routing (React Router)
+# This must be placed before other routes to catch all non-API paths
+@bp.route("/news")
+@bp.route("/news/")
+@bp.route("/playground")
+@bp.route("/playground/")
+@bp.route("/chat")
+@bp.route("/chat/")
+async def spa_routes():
+    """
+    Serve index.html for all SPA routes.
+    This enables client-side routing with React Router.
+    """
+    if USE_VITE_DEV_SERVER:
+        return redirect(VITE_DEV_SERVER_URL)
+    response = await make_response(await bp.send_static_file("index.html"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 # Serve manifest and icon files
 @bp.route("/site.webmanifest")
 async def webmanifest():
@@ -229,12 +261,21 @@ async def content_file(path: str, auth_claims: dict[str, Any]):
 
     if result is None:
         current_app.logger.info("Path not found in general Blob container: %s", path)
-        if current_app.config[CONFIG_USER_UPLOAD_ENABLED]:
-            user_oid = auth_claims["oid"]
-            user_blob_manager: AdlsBlobManager = current_app.config[CONFIG_USER_BLOB_MANAGER]
-            result = await user_blob_manager.download_blob(path, user_oid=user_oid)
-            if result is None:
-                current_app.logger.exception("Path not found in DataLake: %s", path)
+        user_upload_enabled = current_app.config.get(CONFIG_USER_UPLOAD_ENABLED, False)
+        current_app.logger.info("CONFIG_USER_UPLOAD_ENABLED: %s, auth_claims: %s", user_upload_enabled, auth_claims)
+        if user_upload_enabled:
+            # Use 'oid' for Azure Entra ID auth, 'sub' for Beta auth
+            user_oid = auth_claims.get("oid") or auth_claims.get("sub")
+            current_app.logger.info("Trying user blob manager with user_oid: %s", user_oid)
+            if user_oid:
+                user_blob_manager = current_app.config[CONFIG_USER_BLOB_MANAGER]
+                result = await user_blob_manager.download_blob(path, user_oid=user_oid)
+                if result is None:
+                    current_app.logger.warning("Path not found in user storage: %s for user: %s", path, user_oid)
+            else:
+                current_app.logger.warning("No user_oid found in auth_claims: %s", auth_claims)
+        else:
+            current_app.logger.warning("User upload is disabled, cannot check user blob storage")
 
     if not result:
         abort(404)
@@ -353,6 +394,56 @@ async def chat_stream(auth_claims: dict[str, Any]):
         return response
     except Exception as error:
         return error_response(error, "/chat")
+
+
+@bp.route("/enhance_prompt", methods=["POST"])
+@authenticated
+async def enhance_prompt(auth_claims: dict[str, Any]):
+    """
+    Enhance a user prompt to be more specific, contextual, and effective.
+
+    This endpoint uses the same LLM as the RAG system to rewrite user prompts,
+    helping users learn how to write better prompts for AI assistants.
+    """
+    if not request.is_json:
+        return jsonify({"error": "request must be json"}), 415
+
+    request_json = await request.get_json()
+    user_prompt = request_json.get("prompt", "").strip()
+
+    if not user_prompt:
+        return jsonify({"error": "prompt is required"}), 400
+
+    try:
+        # Load and render the prompt enhancement template
+        prompt_manager = PromptyManager()
+        enhance_template = prompt_manager.load_prompt("prompt_enhance.prompty")
+        messages = prompt_manager.render_prompt(
+            enhance_template,
+            {"user_prompt": user_prompt}
+        )
+
+        # Use the same OpenAI client as the RAG system
+        openai_client = current_app.config[CONFIG_OPENAI_CLIENT]
+
+        # Create chat completion with low temperature for consistent results
+        chat_completion = await openai_client.chat.completions.create(
+            model=os.environ.get("AZURE_OPENAI_CHATGPT_MODEL", "gpt-4o-mini"),
+            messages=messages,
+            temperature=0.3,
+            max_tokens=500,
+        )
+
+        enhanced_prompt = chat_completion.choices[0].message.content.strip()
+
+        return jsonify({
+            "original_prompt": user_prompt,
+            "enhanced_prompt": enhanced_prompt
+        })
+
+    except Exception as error:
+        logging.exception("Error enhancing prompt: %s", error)
+        return error_response(error, "/enhance_prompt")
 
 
 # Send MSAL.js settings to the client UI
@@ -490,8 +581,11 @@ async def upload(auth_claims: dict[str, Any]):
         file = request_files.getlist("file")[0]
         adls_manager: AdlsBlobManager = current_app.config[CONFIG_USER_BLOB_MANAGER]
         file_url = await adls_manager.upload_blob(file, file.filename, user_oid)
+        # Reset file pointer to beginning for parsing after blob upload
+        file.seek(0)
         ingester: UploadUserFileStrategy = current_app.config[CONFIG_INGESTER]
-        await ingester.add_file(File(content=file, url=file_url, acls={"oids": [user_oid]}), user_oid=user_oid)
+        # Use empty acls for demo/beta auth since index has no oids field
+        await ingester.add_file(File(content=file, url=file_url, acls={}), user_oid=user_oid)
         return jsonify({"message": "File uploaded successfully"}), 200
     except Exception as error:
         current_app.logger.error("Error uploading file: %s", error)
@@ -723,19 +817,49 @@ async def setup_clients():
     )
 
     user_blob_manager = None
+    # Check if beta auth is enabled for user upload without Azure AD
+    beta_auth_enabled = os.getenv("BETA_AUTH_ENABLED", "").lower() == "true"
+
     if USE_USER_UPLOAD:
         current_app.logger.info("USE_USER_UPLOAD is true, setting up user upload feature")
-        if not AZURE_USERSTORAGE_ACCOUNT or not AZURE_USERSTORAGE_CONTAINER:
+
+        # Use AZURE_STORAGE_ACCOUNT as fallback if AZURE_USERSTORAGE_ACCOUNT is not set
+        effective_userstorage_account = AZURE_USERSTORAGE_ACCOUNT or AZURE_STORAGE_ACCOUNT
+        effective_userstorage_container = AZURE_USERSTORAGE_CONTAINER or "user-content"
+
+        if not effective_userstorage_account:
             raise ValueError(
-                "AZURE_USERSTORAGE_ACCOUNT and AZURE_USERSTORAGE_CONTAINER must be set when USE_USER_UPLOAD is true"
+                "AZURE_USERSTORAGE_ACCOUNT or AZURE_STORAGE_ACCOUNT must be set when USE_USER_UPLOAD is true"
             )
-        if not AZURE_ENFORCE_ACCESS_CONTROL:
-            raise ValueError("AZURE_ENFORCE_ACCESS_CONTROL must be true when USE_USER_UPLOAD is true")
-        user_blob_manager = AdlsBlobManager(
-            endpoint=f"https://{AZURE_USERSTORAGE_ACCOUNT}.dfs.core.windows.net",
-            container=AZURE_USERSTORAGE_CONTAINER,
-            credential=azure_credential,
-        )
+
+        # Only require AZURE_ENFORCE_ACCESS_CONTROL if not using beta auth
+        if not AZURE_ENFORCE_ACCESS_CONTROL and not beta_auth_enabled:
+            raise ValueError(
+                "AZURE_ENFORCE_ACCESS_CONTROL must be true when USE_USER_UPLOAD is true (or use BETA_AUTH_ENABLED=true)"
+            )
+
+        # Use UserBlobManager (standard Blob Storage) for beta auth environments
+        # Use AdlsBlobManager (ADLS Gen2) for production environments with Azure AD
+        if beta_auth_enabled:
+            current_app.logger.info(
+                f"User upload configured with UserBlobManager (Blob Storage) - "
+                f"account: {effective_userstorage_account}, container: {effective_userstorage_container}"
+            )
+            user_blob_manager = UserBlobManager(
+                endpoint=f"https://{effective_userstorage_account}.blob.core.windows.net",
+                container=effective_userstorage_container,
+                credential=azure_credential,
+            )
+        else:
+            current_app.logger.info(
+                f"User upload configured with AdlsBlobManager (ADLS Gen2) - "
+                f"account: {effective_userstorage_account}, container: {effective_userstorage_container}"
+            )
+            user_blob_manager = AdlsBlobManager(
+                endpoint=f"https://{effective_userstorage_account}.dfs.core.windows.net",
+                container=effective_userstorage_container,
+                credential=azure_credential,
+            )
         current_app.config[CONFIG_USER_BLOB_MANAGER] = user_blob_manager
 
         # Set up ingester
@@ -925,6 +1049,7 @@ def create_app():
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = None
     app.register_blueprint(bp)
     app.register_blueprint(chat_history_cosmosdb_bp)
+    app.register_blueprint(news_bp)
 
     if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
         app.logger.info("APPLICATIONINSIGHTS_CONNECTION_STRING is set, enabling Azure Monitor")
@@ -952,7 +1077,12 @@ def create_app():
     app.logger.setLevel(os.getenv("APP_LOG_LEVEL", app_level))
     logging.getLogger("scripts").setLevel(app_level)
 
-    if allowed_origin := os.getenv("ALLOWED_ORIGIN"):
+    # Enable CORS for development mode (Vite dev server) or custom origins
+    if USE_VITE_DEV_SERVER:
+        # In development mode, allow requests from Vite dev server
+        app.logger.info("Development mode: CORS enabled for Vite dev server at %s", VITE_DEV_SERVER_URL)
+        cors(app, allow_origin=[VITE_DEV_SERVER_URL], allow_methods=["GET", "POST", "OPTIONS"])
+    elif allowed_origin := os.getenv("ALLOWED_ORIGIN"):
         allowed_origins = allowed_origin.split(";")
         if len(allowed_origins) > 0:
             app.logger.info("CORS enabled for %s", allowed_origins)

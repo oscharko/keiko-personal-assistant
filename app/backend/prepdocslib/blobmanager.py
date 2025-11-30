@@ -384,6 +384,249 @@ class AdlsBlobManager(BaseBlobManager):
         return files
 
 
+class UserBlobManager(BaseBlobManager):
+    """
+    Manager for user-specific blob operations using standard Azure Blob Storage.
+    Uses blob path prefixes to organize files by user, without requiring ADLS Gen2.
+    This is suitable for demo/beta environments where ADLS is not available.
+    """
+
+    def __init__(self, endpoint: str, container: str, credential: AsyncTokenCredential | str):
+        """
+        Initializes the UserBlobManager with the necessary parameters.
+
+        Args:
+            endpoint: The Blob Storage endpoint URL (e.g., https://account.blob.core.windows.net)
+            container: The name of the container
+            credential: The credential for accessing Blob Storage
+        """
+        self.endpoint = endpoint
+        self.container = container
+        self.credential = credential
+        self.blob_service_client = BlobServiceClient(
+            account_url=self.endpoint, credential=self.credential, max_single_put_size=4 * 1024 * 1024
+        )
+
+    async def close_clients(self):
+        """Closes the blob service client."""
+        await self.blob_service_client.close()
+
+    def _get_user_blob_path(self, filename: str, user_oid: str) -> str:
+        """
+        Constructs the blob path for a user's file.
+
+        Args:
+            filename: The name of the file
+            user_oid: The user's object ID
+
+        Returns:
+            str: The full blob path (user_oid/filename)
+        """
+        return f"{user_oid}/{filename}"
+
+    def _get_user_image_path(self, document_filename: str, image_filename: str, page_num: int, user_oid: str) -> str:
+        """
+        Constructs the blob path for a user's document image.
+
+        Args:
+            document_filename: The name of the source document
+            image_filename: The name of the image file
+            page_num: The page number the image is from
+            user_oid: The user's object ID
+
+        Returns:
+            str: The full blob path for the image
+        """
+        doc_base = self.blob_name_from_file_name(document_filename)
+        return f"{user_oid}/images/{doc_base}/page{page_num}/{image_filename}"
+
+    async def upload_blob(self, file: File | IO, filename: str, user_oid: str) -> str:
+        """
+        Uploads a file to the user's directory in Blob Storage.
+
+        Args:
+            file: Either a File object or an IO object to upload
+            filename: The name of the file to upload
+            user_oid: The user's object ID
+
+        Returns:
+            str: The URL of the uploaded file
+        """
+        container_client = self.blob_service_client.get_container_client(self.container)
+        if not await container_client.exists():
+            await container_client.create_container()
+
+        blob_path = self._get_user_blob_path(filename, user_oid)
+
+        # Handle both File and IO objects
+        if isinstance(file, File):
+            file_io = file.content
+        else:
+            file_io = file
+
+        # Ensure the file is at the beginning
+        file_io.seek(0)
+
+        logger.info("Uploading blob for user '%s': '%s'", user_oid, blob_path)
+        blob_client = await container_client.upload_blob(blob_path, file_io, overwrite=True)
+        return unquote(blob_client.url)
+
+    async def upload_document_image(
+        self,
+        document_filename: str,
+        image_bytes: bytes,
+        image_filename: str,
+        image_page_num: int,
+        user_oid: str,
+    ) -> Optional[str]:
+        """
+        Uploads a document image to the user's images directory.
+
+        Args:
+            document_filename: The name of the source document
+            image_bytes: The image content as bytes
+            image_filename: The name of the image file
+            image_page_num: The page number the image is from
+            user_oid: The user's object ID
+
+        Returns:
+            Optional[str]: The URL of the uploaded image, or None if upload fails
+        """
+        container_client = self.blob_service_client.get_container_client(self.container)
+        if not await container_client.exists():
+            await container_client.create_container()
+
+        image_bytes = self.add_image_citation(image_bytes, document_filename, image_filename, image_page_num)
+        blob_path = self._get_user_image_path(document_filename, image_filename, image_page_num, user_oid)
+
+        logger.info("Uploading document image for user '%s': '%s'", user_oid, blob_path)
+        blob_client = await container_client.upload_blob(blob_path, image_bytes, overwrite=True)
+        return blob_client.url
+
+    async def download_blob(
+        self, blob_path: str, user_oid: Optional[str] = None
+    ) -> Optional[tuple[bytes, BlobProperties]]:
+        """
+        Downloads a blob from the user's directory.
+
+        Args:
+            blob_path: The path to the blob (filename only, user prefix will be added)
+            user_oid: The user's object ID
+
+        Returns:
+            Optional[tuple[bytes, BlobProperties]]:
+                - A tuple containing the blob content as bytes and the blob properties
+                - None if blob not found
+        """
+        container_client = self.blob_service_client.get_container_client(self.container)
+        if not await container_client.exists():
+            return None
+
+        # Construct full path with user prefix
+        full_path = self._get_user_blob_path(blob_path, user_oid) if user_oid else blob_path
+
+        blob_client = container_client.get_blob_client(full_path)
+        try:
+            download_response = await blob_client.download_blob()
+            if not download_response.properties:
+                logger.warning("No blob exists for %s", full_path)
+                return None
+
+            content = await download_response.readall()
+            properties: BlobProperties = {
+                "content_settings": {
+                    "content_type": (
+                        download_response.properties.content_settings.content_type
+                        if (
+                            hasattr(download_response.properties, "content_settings")
+                            and download_response.properties.content_settings
+                            and hasattr(download_response.properties.content_settings, "content_type")
+                        )
+                        else "application/octet-stream"
+                    )
+                }
+            }
+            return content, properties
+        except ResourceNotFoundError:
+            logger.warning("Blob not found: %s", full_path)
+            return None
+
+    async def remove_blob(self, filename: str, user_oid: str) -> None:
+        """
+        Removes a blob and its associated images from the user's directory.
+
+        Args:
+            filename: The name of the file to remove
+            user_oid: The user's object ID
+        """
+        container_client = self.blob_service_client.get_container_client(self.container)
+        if not await container_client.exists():
+            return
+
+        # Remove the main file
+        blob_path = self._get_user_blob_path(filename, user_oid)
+        try:
+            await container_client.delete_blob(blob_path)
+            logger.info("Removed blob: %s", blob_path)
+        except ResourceNotFoundError:
+            logger.warning("Blob not found for deletion: %s", blob_path)
+
+        # Remove associated images
+        doc_base = self.blob_name_from_file_name(filename)
+        image_prefix = f"{user_oid}/images/{doc_base}/"
+        async for blob in container_client.list_blobs(name_starts_with=image_prefix):
+            try:
+                await container_client.delete_blob(blob.name)
+                logger.info("Removed image blob: %s", blob.name)
+            except ResourceNotFoundError:
+                pass
+
+    async def list_uploaded_files(self, user_oid: str) -> list[str]:
+        """
+        Lists all files uploaded by a specific user.
+        Only returns files directly in the user's directory, not in subdirectories.
+
+        Args:
+            user_oid: The user's object ID
+
+        Returns:
+            list[str]: List of filenames (without the user prefix)
+        """
+        files: list[str] = []
+        container_client = self.blob_service_client.get_container_client(self.container)
+
+        if not await container_client.exists():
+            return files
+
+        user_prefix = f"{user_oid}/"
+        try:
+            async for blob in container_client.list_blobs(name_starts_with=user_prefix):
+                # Get the relative path after the user prefix
+                relative_path = blob.name[len(user_prefix):]
+                # Only include files directly in the user directory (no subdirectories)
+                if "/" not in relative_path:
+                    # Exclude image files
+                    if not relative_path.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".heic")):
+                        files.append(relative_path)
+        except ResourceNotFoundError:
+            # Return empty list if container doesn't exist
+            pass
+
+        return files
+
+    async def list_blobs(self, user_oid: str) -> list[str]:
+        """
+        Alias for list_uploaded_files for API compatibility with AdlsBlobManager.
+
+        Args:
+            user_oid: The user's object ID
+
+        Returns:
+            list[str]: List of filenames (without the user prefix)
+        """
+        return await self.list_uploaded_files(user_oid)
+
+
 class BlobManager(BaseBlobManager):
     """
     Class to manage uploading and deleting blobs containing citation information from a blob storage account
