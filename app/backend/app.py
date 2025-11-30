@@ -96,6 +96,7 @@ from core.authentication import AuthenticationHelper
 from core.sessionhelper import create_session_id
 from decorators import authenticated, authenticated_path
 from error import error_dict, error_response
+from ideas import ideas_bp
 from news import news_bp
 from prepdocs import (
     OpenAIHost,
@@ -1049,6 +1050,7 @@ def create_app():
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = None
     app.register_blueprint(bp)
     app.register_blueprint(chat_history_cosmosdb_bp)
+    app.register_blueprint(ideas_bp)
     app.register_blueprint(news_bp)
 
     if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):

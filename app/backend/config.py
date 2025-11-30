@@ -46,3 +46,16 @@ CONFIG_SHAREPOINT_SOURCE_ENABLED = "sharepoint_source_enabled"
 CONFIG_NEWS_DASHBOARD_ENABLED = "news_dashboard_enabled"
 CONFIG_NEWS_PREFERENCES_CONTAINER = "news_preferences_container"
 CONFIG_NEWS_CACHE_CONTAINER = "news_cache_container"
+
+# Ideas Hub configuration
+CONFIG_IDEAS_HUB_ENABLED = "ideas_hub_enabled"
+CONFIG_IDEAS_CONTAINER = "ideas_container"
+CONFIG_IDEAS_SEARCH_INDEX = "ideas_search_index"
+CONFIG_IDEAS_SERVICE = "ideas_service"
+CONFIG_IDEAS_SCHEDULER = "ideas_scheduler"
+CONFIG_IDEAS_SIMILARITY_THRESHOLD = "ideas_similarity_threshold"
+CONFIG_IDEAS_MAX_SIMILAR_RESULTS = "ideas_max_similar_results"
+
+# Ideas scoring weights (Phase 2)
+CONFIG_IDEAS_IMPACT_WEIGHTS = "ideas_impact_weights"
+CONFIG_IDEAS_FEASIBILITY_WEIGHTS = "ideas_feasibility_weights"

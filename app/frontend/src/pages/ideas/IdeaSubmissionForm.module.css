@@ -1,0 +1,294 @@
+/**
+ * Styles for the Idea Submission Form Modal.
+ * Color scheme: #fff (white), #000 (black), #DCFF4A (accent)
+ */
+
+.panel {
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 8px 0;
+}
+
+.description {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #666;
+    line-height: 1.6;
+}
+
+/* Form Fields */
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.formLabel {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.formLabelRequired::after {
+    content: " *";
+    color: #d32f2f;
+}
+
+.formHint {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 4px;
+}
+
+.formInput {
+    width: 100%;
+}
+
+.formInput :global(.ms-TextField-fieldGroup) {
+    border-radius: 8px;
+    border-color: #ddd;
+}
+
+.formInput :global(.ms-TextField-fieldGroup:hover) {
+    border-color: #DCFF4A;
+}
+
+.formInput :global(.ms-TextField-fieldGroup:focus-within) {
+    border-color: #000;
+}
+
+.formTextarea :global(.ms-TextField-fieldGroup) {
+    min-height: 100px;
+}
+
+.formError {
+    font-size: 0.8rem;
+    color: #d32f2f;
+    margin-top: 4px;
+}
+
+/* Tags Input */
+.tagsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-height: 40px;
+    background: #fff;
+}
+
+.tagsContainer:focus-within {
+    border-color: #000;
+}
+
+.tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    background: #DCFF4A;
+    color: #000;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.tagRemove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    color: #000;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.tagRemove:hover {
+    opacity: 1;
+}
+
+.tagInput {
+    flex: 1;
+    min-width: 120px;
+    border: none;
+    outline: none;
+    font-size: 0.9rem;
+    padding: 4px;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.submitButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #000 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0 24px !important;
+    height: 40px;
+    color: #DCFF4A !important;
+    font-weight: 600;
+}
+
+.submitButton:hover {
+    background: #1a1a1a !important;
+}
+
+.submitButton:disabled {
+    background: #ccc !important;
+    color: #888 !important;
+}
+
+.cancelButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    padding: 0 24px !important;
+    height: 40px;
+    color: #333 !important;
+    font-weight: 500;
+}
+
+.cancelButton:hover {
+    border-color: #000 !important;
+    background: #f8f8f8 !important;
+}
+
+/* Similar Ideas Warning */
+.warningSection {
+    background: #fff8e1;
+    border: 1px solid #ffcc02;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.warningTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f57c00;
+}
+
+.warningList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.warningItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #eee;
+}
+
+.warningItemTitle {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.warningItemScore {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.warningActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.warningButton {
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.warningButtonPrimary {
+    background: #000;
+    color: #DCFF4A;
+    border: none;
+}
+
+.warningButtonPrimary:hover {
+    background: #1a1a1a;
+}
+
+.warningButtonSecondary {
+    background: #fff;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.warningButtonSecondary:hover {
+    border-color: #000;
+}
+
+/* Loading Overlay */
+.loadingOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 10;
+}
+
+.loadingText {
+    font-size: 0.95rem;
+    color: #666;
+}
+
+/* Info Banner */
+.infoBanner {
+    background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+    color: #fff;
+    padding: 16px 20px;
+    border-radius: 12px;
+}
+
+.infoBanner p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+

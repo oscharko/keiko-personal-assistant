@@ -62,6 +62,8 @@ export default defineConfig({
             "/auth/login": BACKEND_URL,
             "/enhance_prompt": BACKEND_URL,
             "/api/user/": BACKEND_URL,
+            "/api/ideas": BACKEND_URL,
+            "/api/news": BACKEND_URL,
         },
     },
     // Enable SPA fallback for client-side routing

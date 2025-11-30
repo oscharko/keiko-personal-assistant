@@ -10,7 +10,18 @@ import {
     HistoryApiResponse,
     EnhancePromptResponse,
     NewsPreferencesResponse,
-    NewsSearchResult
+    NewsSearchResult,
+    Idea,
+    IdeaSubmission,
+    IdeaUpdate,
+    IdeaListResponse,
+    SimilarIdeasResponse,
+    IdeaLike,
+    IdeaComment,
+    IdeaCommentsResponse,
+    IdeaEngagement,
+    CommentSubmission,
+    CommentUpdate
 } from "./models";
 import { useLogin, getToken, isUsingAppServicesLogin } from "../authConfig";
 
@@ -338,6 +349,364 @@ export async function getCachedNewsApi(idToken: string | undefined): Promise<New
 
     if (!response.ok) {
         throw new Error(`Getting cached news failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+// Ideas Hub API Functions
+
+/**
+ * Create a new idea.
+ */
+export async function createIdeaApi(idea: IdeaSubmission, idToken: string | undefined): Promise<Idea> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(idea)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Creating idea failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Get a list of ideas with pagination and optional filtering.
+ */
+export async function getIdeasApi(
+    idToken: string | undefined,
+    options?: {
+        page?: number;
+        pageSize?: number;
+        status?: string;
+        department?: string;
+        sortBy?: string;
+        sortOrder?: "asc" | "desc";
+        myIdeas?: boolean;
+    }
+): Promise<IdeaListResponse> {
+    const headers = await getHeaders(idToken);
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (options?.page !== undefined) params.append("page", options.page.toString());
+    if (options?.pageSize !== undefined) params.append("pageSize", options.pageSize.toString());
+    if (options?.status) params.append("status", options.status);
+    if (options?.department) params.append("department", options.department);
+    if (options?.sortBy) params.append("sortBy", options.sortBy);
+    if (options?.sortOrder) params.append("sortOrder", options.sortOrder);
+    if (options?.myIdeas) params.append("myIdeas", "true");
+
+    const queryString = params.toString();
+    const url = `${BACKEND_URI}/api/ideas${queryString ? `?${queryString}` : ""}`;
+
+    const response = await fetch(url, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Getting ideas failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Get a single idea by ID.
+ */
+export async function getIdeaApi(ideaId: string, idToken: string | undefined): Promise<Idea> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}`, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Getting idea failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Update an existing idea.
+ */
+export async function updateIdeaApi(ideaId: string, updates: IdeaUpdate, idToken: string | undefined): Promise<Idea> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}`, {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Updating idea failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Delete an idea.
+ */
+export async function deleteIdeaApi(ideaId: string, idToken: string | undefined): Promise<void> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}`, {
+        method: "DELETE",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Deleting idea failed: ${response.statusText}`);
+    }
+}
+
+/**
+ * Find similar ideas based on text content.
+ * Used for duplicate detection before submission.
+ */
+export async function getSimilarIdeasApi(
+    text: string,
+    idToken: string | undefined,
+    options?: {
+        threshold?: number;
+        limit?: number;
+        excludeId?: string;
+    }
+): Promise<SimilarIdeasResponse> {
+    const headers = await getHeaders(idToken);
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    params.append("text", text);
+    if (options?.threshold !== undefined) params.append("threshold", options.threshold.toString());
+    if (options?.limit !== undefined) params.append("limit", options.limit.toString());
+    if (options?.excludeId) params.append("excludeId", options.excludeId);
+
+    const response = await fetch(`${BACKEND_URI}/api/ideas/similar?${params.toString()}`, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Finding similar ideas failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+// Ideas Hub - Like API Functions
+
+/**
+ * Add a like to an idea.
+ */
+export async function addIdeaLikeApi(ideaId: string, idToken: string | undefined): Promise<{ success: boolean; like: IdeaLike }> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/likes`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Adding like failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Remove a like from an idea.
+ */
+export async function removeIdeaLikeApi(ideaId: string, idToken: string | undefined): Promise<{ success: boolean; message: string }> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/likes`, {
+        method: "DELETE",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Removing like failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Get like count and user's like status for an idea.
+ */
+export async function getIdeaLikesApi(
+    ideaId: string,
+    idToken: string | undefined
+): Promise<{ ideaId: string; likeCount: number; userHasLiked: boolean }> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/likes`, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Getting likes failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Get aggregated engagement metrics for an idea.
+ */
+export async function getIdeaEngagementApi(ideaId: string, idToken: string | undefined): Promise<IdeaEngagement> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/engagement`, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Getting engagement failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+// Ideas Hub - Comment API Functions
+
+/**
+ * Create a new comment on an idea.
+ */
+export async function createIdeaCommentApi(
+    ideaId: string,
+    comment: CommentSubmission,
+    idToken: string | undefined
+): Promise<{ success: boolean; comment: IdeaComment }> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/comments`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(comment)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Creating comment failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Get comments for an idea with pagination.
+ */
+export async function getIdeaCommentsApi(
+    ideaId: string,
+    idToken: string | undefined,
+    options?: {
+        page?: number;
+        pageSize?: number;
+        sortOrder?: "asc" | "desc";
+    }
+): Promise<IdeaCommentsResponse> {
+    const headers = await getHeaders(idToken);
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (options?.page !== undefined) params.append("page", options.page.toString());
+    if (options?.pageSize !== undefined) params.append("pageSize", options.pageSize.toString());
+    if (options?.sortOrder) params.append("sortOrder", options.sortOrder);
+
+    const queryString = params.toString();
+    const url = `${BACKEND_URI}/api/ideas/${ideaId}/comments${queryString ? `?${queryString}` : ""}`;
+
+    const response = await fetch(url, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Getting comments failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Get a single comment by ID.
+ */
+export async function getIdeaCommentApi(
+    ideaId: string,
+    commentId: string,
+    idToken: string | undefined
+): Promise<IdeaComment> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/comments/${commentId}`, {
+        method: "GET",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Getting comment failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Update an existing comment.
+ */
+export async function updateIdeaCommentApi(
+    ideaId: string,
+    commentId: string,
+    update: CommentUpdate,
+    idToken: string | undefined
+): Promise<{ success: boolean; comment: IdeaComment }> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/comments/${commentId}`, {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(update)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Updating comment failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Delete a comment.
+ */
+export async function deleteIdeaCommentApi(
+    ideaId: string,
+    commentId: string,
+    idToken: string | undefined
+): Promise<{ success: boolean; message: string }> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/comments/${commentId}`, {
+        method: "DELETE",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Deleting comment failed: ${response.statusText}`);
     }
 
     return await response.json();
