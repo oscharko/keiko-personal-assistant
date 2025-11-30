@@ -8,11 +8,12 @@ import { useNavigate } from "react-router-dom";
 import { Icon, Slider, Toggle, Dropdown, IDropdownOption, TextField, TooltipHost } from "@fluentui/react";
 import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
-import { Info16Regular } from "@fluentui/react-icons";
+import { Info16Regular, Info24Regular } from "@fluentui/react-icons";
 
 import styles from "./Playground.module.css";
 import { configApi, RetrievalMode } from "../../api";
 import { VectorSettings } from "../../components/VectorSettings";
+import { PlaygroundInfoDialog } from "./PlaygroundInfoDialog";
 
 /**
  * Parameter card component for displaying individual settings with explanations.
@@ -45,6 +46,9 @@ const ParameterCard: React.FC<ParameterCardProps> = ({ title, description, child
 export function Component(): JSX.Element {
     const { t } = useTranslation();
     const navigate = useNavigate();
+
+    // Info dialog state
+    const [showInfoDialog, setShowInfoDialog] = useState<boolean>(false);
 
     // Configuration state
     const [showMultimodalOptions, setShowMultimodalOptions] = useState<boolean>(false);
@@ -159,10 +163,20 @@ export function Component(): JSX.Element {
                     <h1 className={styles.title}>{t("playground.title")}</h1>
                     <p className={styles.subtitle}>{t("playground.subtitle")}</p>
                 </div>
-                <button className={styles.backButton} onClick={() => navigate("/")}>
-                    <Icon iconName="Back" />
-                    {t("playground.backToChat")}
-                </button>
+                <div className={styles.headerActions}>
+                    <button
+                        className={styles.infoButton}
+                        onClick={() => setShowInfoDialog(true)}
+                        title={t("playground.explainFunction")}
+                    >
+                        <Info24Regular />
+                        {t("playground.explainFunction")}
+                    </button>
+                    <button className={styles.backButton} onClick={() => navigate("/")}>
+                        <Icon iconName="Back" />
+                        {t("playground.backToChat")}
+                    </button>
+                </div>
             </div>
 
             <div className={styles.content}>
@@ -701,6 +715,11 @@ export function Component(): JSX.Element {
                     </div>
                 </div>
             </div>
+
+            {/* Info Dialog */}
+            {showInfoDialog && (
+                <PlaygroundInfoDialog onClose={() => setShowInfoDialog(false)} />
+            )}
         </div>
     );
 }

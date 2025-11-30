@@ -14,7 +14,8 @@ import {
     Grid24Regular,
     Lightbulb24Regular,
     DataScatter24Regular,
-    Warning24Regular
+    Warning24Regular,
+    Info24Regular
 } from "@fluentui/react-icons";
 import { useMsal } from "@azure/msal-react";
 import { useTranslation } from "react-i18next";
@@ -27,6 +28,7 @@ import { IdeaCard } from "./IdeaCard";
 import { IdeaDetailModal } from "./IdeaDetailModal";
 import { IdeaSubmissionForm } from "./IdeaSubmissionForm";
 import { PortfolioMatrix } from "./PortfolioMatrix";
+import { IdeasInfoDialog } from "./IdeasInfoDialog";
 
 /**
  * Main Ideas Hub component.
@@ -43,6 +45,7 @@ export function Component() {
     const [error, setError] = useState<string | null>(null);
     const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
     const [showSubmissionForm, setShowSubmissionForm] = useState(false);
+    const [showInfoDialog, setShowInfoDialog] = useState(false);
 
     // Pagination state
     const [page, setPage] = useState(1);
@@ -292,6 +295,14 @@ export function Component() {
                         </button>
                     </div>
                     <button
+                        className={styles.infoButton}
+                        onClick={() => setShowInfoDialog(true)}
+                        title={t("ideas.explainFunction")}
+                    >
+                        <Info24Regular />
+                        {t("ideas.explainFunction")}
+                    </button>
+                    <button
                         className={styles.primaryButton}
                         onClick={() => setShowSubmissionForm(true)}
                     >
@@ -488,6 +499,11 @@ export function Component() {
                     currentUserId={currentUserId}
                     isAdmin={isAdmin}
                 />
+            )}
+
+            {/* Info Dialog */}
+            {showInfoDialog && (
+                <IdeasInfoDialog onClose={() => setShowInfoDialog(false)} />
             )}
         </div>
     );
