@@ -386,6 +386,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "confirmDelete": "Delete",
+    "deleting": "Deleting...",
     "deleteConfirmTitle": "Delete Idea",
     "deleteConfirmMessage": "Are you sure you want to delete this idea? This action cannot be undone.",
     "deleteError": "Failed to delete idea. Please try again.",

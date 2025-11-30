@@ -485,10 +485,16 @@ async def beta_auth_login():
 
         # Generate JWT token
         token = beta_auth.generate_token(username)
+        # Get the user's unique OID for frontend use
+        user_oid = beta_auth.get_user_oid(username)
+        # Check if user is admin
+        is_admin = beta_auth.is_admin(username)
 
         return jsonify({
             "token": token,
-            "username": username
+            "username": username,
+            "userId": user_oid,
+            "isAdmin": is_admin
         })
 
     except Exception as e:
