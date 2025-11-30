@@ -74,6 +74,11 @@ export function Component() {
 
     /**
      * Load ideas from the API.
+     *
+     * In grid view we respect pagination to keep the list performant.
+     * In matrix view we deliberately load all matching ideas (up to 500)
+     * so the Portfolio Matrix can visualize the full portfolio across
+     * all quadrants instead of only the current page.
      */
     const loadIdeas = useCallback(async () => {
         setIsLoading(true);
@@ -82,9 +87,11 @@ export function Component() {
         try {
             const token = client ? await getToken(client) : undefined;
 
+            const effectivePageSize = viewMode === "matrix" ? 500 : pageSize;
+
             const response: IdeaListResponse = await getIdeasApi(token, {
                 page,
-                pageSize,
+                pageSize: effectivePageSize,
                 status: statusFilter || undefined,
                 myIdeas: myIdeasOnly,
                 sortBy,
@@ -100,7 +107,7 @@ export function Component() {
         } finally {
             setIsLoading(false);
         }
-    }, [client, page, pageSize, statusFilter, myIdeasOnly, sortBy, sortOrder]);
+    }, [client, page, pageSize, statusFilter, myIdeasOnly, sortBy, sortOrder, viewMode]);
 
     /**
      * Handle successful idea submission.
