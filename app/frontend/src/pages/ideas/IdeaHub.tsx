@@ -66,6 +66,9 @@ export function Component() {
     // Current user ID for comment ownership checks
     const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
 
+    // Admin status for delete all permission
+    const [isAdmin, setIsAdmin] = useState(false);
+
     /**
      * Load ideas from the API.
      */
@@ -159,8 +162,19 @@ export function Component() {
         loadEngagement();
     }, [client, ideas]);
 
-    // Get current user ID from MSAL
+    // Get current user ID and admin status from MSAL or Beta Auth
     useEffect(() => {
+        // First check for Beta Auth user ID
+        const betaUserId = localStorage.getItem("beta_auth_user_id");
+        const betaIsAdmin = localStorage.getItem("beta_auth_is_admin") === "true";
+
+        if (betaUserId) {
+            setCurrentUserId(betaUserId);
+            setIsAdmin(betaIsAdmin);
+            return;
+        }
+
+        // Fall back to MSAL for Azure AD users
         if (client) {
             const accounts = client.getAllAccounts();
             if (accounts.length > 0) {
@@ -472,6 +486,7 @@ export function Component() {
                     onUpdated={handleIdeaUpdated}
                     onDeleted={handleIdeaDeleted}
                     currentUserId={currentUserId}
+                    isAdmin={isAdmin}
                 />
             )}
         </div>

@@ -36,6 +36,8 @@ export const BetaAuthWrapper = ({ children }: BetaAuthWrapperProps) => {
                             // Token invalid, clear it
                             localStorage.removeItem("beta_auth_token");
                             localStorage.removeItem("beta_auth_username");
+                            localStorage.removeItem("beta_auth_user_id");
+                            localStorage.removeItem("beta_auth_is_admin");
                         }
                     }
                 } else {
@@ -65,6 +67,8 @@ export const BetaAuthWrapper = ({ children }: BetaAuthWrapperProps) => {
     const handleLogout = () => {
         localStorage.removeItem("beta_auth_token");
         localStorage.removeItem("beta_auth_username");
+        localStorage.removeItem("beta_auth_user_id");
+        localStorage.removeItem("beta_auth_is_admin");
         setIsAuthenticated(false);
     };
 

@@ -890,7 +890,8 @@ class IdeasService:
                     exclude_id=exclude_id,
                 )
             except Exception as e:
-                logger.error(f"Azure AI Search similarity search failed: {e}")
+                # Log at debug level - falling back to Cosmos DB is expected behavior
+                logger.debug(f"AI Search not available, using Cosmos DB fallback: {e}")
                 # Fall back to Cosmos DB
                 similar_ideas = await self._search_similar_with_cosmos(
                     query_embedding=query_embedding,
@@ -984,7 +985,8 @@ class IdeasService:
             return similar_ideas
 
         except Exception as e:
-            logger.error(f"AI Search similarity search error: {e}")
+            # Log at debug level since this is expected when ideas index is not configured
+            logger.debug(f"AI Search similarity search not available: {e}")
             raise
 
     async def _search_similar_with_cosmos(

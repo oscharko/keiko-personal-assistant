@@ -32,6 +32,9 @@ class BetaAuthHelper:
     Each user gets a unique OID generated from their username for consistent identification.
     """
 
+    # Admin users who have full access to Ideas Hub
+    ADMIN_USERS: set[str] = {"admin@x1f.one"}
+
     def __init__(self, enabled: bool = False):
         self.enabled = enabled
         self.secret_key = os.getenv("BETA_AUTH_SECRET_KEY", secrets.token_urlsafe(32))
@@ -161,6 +164,10 @@ class BetaAuthHelper:
         stored_password = self.users[username]
         return stored_password == password
 
+    def is_admin(self, username: str) -> bool:
+        """Check if a user has admin privileges."""
+        return username in self.ADMIN_USERS
+
     def generate_token(self, username: str) -> str:
         """Generate JWT token for authenticated user including their unique OID."""
         expiry = datetime.utcnow() + timedelta(hours=self.token_expiry_hours)
@@ -209,13 +216,19 @@ class BetaAuthHelper:
         # Get OID from token or generate it from username
         user_oid = payload.get("oid") or self.get_user_oid(username)
 
-        # Return claims in format compatible with Azure AD auth
-        return {
+        # Build claims in format compatible with Azure AD auth
+        claims = {
             "oid": user_oid,  # Unique user ID (UUID format)
             "preferred_username": username,  # Username (email)
             "name": username,  # Display name
             "groups": [],  # No groups in beta auth
         }
+
+        # Add admin role for admin users
+        if self.is_admin(username):
+            claims["ideas_role"] = "admin"
+
+        return claims
 
     async def get_auth_claims_if_enabled(self, headers: dict) -> dict[str, Any]:
         """

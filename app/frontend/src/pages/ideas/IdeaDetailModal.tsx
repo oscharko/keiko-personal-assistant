@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useEffect } from "react";
-import { Panel, PanelType, PrimaryButton, DefaultButton, Dialog, DialogType, DialogFooter, Spinner, SpinnerSize, TextField } from "@fluentui/react";
+import { Panel, PanelType, PrimaryButton, DefaultButton, Spinner, SpinnerSize, TextField } from "@fluentui/react";
 import { Edit24Regular, Delete24Regular, Lightbulb24Regular, Heart24Regular, Heart24Filled, Comment24Regular, Send24Regular } from "@fluentui/react-icons";
 import { useMsal } from "@azure/msal-react";
 import { useTranslation } from "react-i18next";
@@ -21,6 +21,7 @@ interface IdeaDetailModalProps {
     onUpdated: (idea: Idea) => void;
     onDeleted: (ideaId: string) => void;
     currentUserId?: string;
+    isAdmin?: boolean;
 }
 
 /**
@@ -85,7 +86,7 @@ function getScoreBarClass(score: number | undefined): string {
     return styles.scoreBarLow;
 }
 
-export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUserId }: IdeaDetailModalProps) {
+export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUserId, isAdmin = false }: IdeaDetailModalProps) {
     const client = useLogin ? useMsal().instance : undefined;
     const { t } = useTranslation();
 
@@ -245,24 +246,6 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
     }, [client, idea.ideaId, comments, engagement]);
 
     /**
-     * Handle idea deletion.
-     */
-    const handleDelete = useCallback(async () => {
-        setIsDeleting(true);
-        setError(null);
-
-        try {
-            const token = client ? await getToken(client) : undefined;
-            await deleteIdeaApi(idea.ideaId, token);
-            onDeleted(idea.ideaId);
-        } catch (err) {
-            console.error("Error deleting idea:", err);
-            setError(err instanceof Error ? err.message : t("ideas.deleteError"));
-            setIsDeleting(false);
-        }
-    }, [client, idea.ideaId, onDeleted, t]);
-
-    /**
      * Format comment timestamp.
      */
     const formatCommentDate = (timestamp: number): string => {
@@ -275,8 +258,17 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
         });
     };
 
-    // Check if current user can edit/delete
-    const canModify = idea.status === IdeaStatus.Draft || idea.status === IdeaStatus.Submitted;
+    // Check if current user is the owner of the idea
+    const isOwner = currentUserId && idea.submitterId === currentUserId;
+
+    // Check if idea is in editable status
+    const isEditableStatus = idea.status === IdeaStatus.Draft || idea.status === IdeaStatus.Submitted;
+
+    // Check if current user can edit (must be owner and idea in editable status)
+    const canEdit = isOwner && isEditableStatus;
+
+    // Check if current user can delete (owner with editable status OR admin can delete any idea)
+    const canDelete = (isOwner && isEditableStatus) || isAdmin;
 
     return (
         <>
@@ -605,23 +597,27 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
                     </div>
 
                     {/* Actions */}
-                    {canModify && (
+                    {(canEdit || canDelete) && (
                         <div className={styles.actions}>
-                            <PrimaryButton
-                                className={styles.editButton}
-                                disabled={isDeleting}
-                            >
-                                <Edit24Regular />
-                                {t("ideas.edit")}
-                            </PrimaryButton>
-                            <DefaultButton
-                                className={styles.deleteButton}
-                                onClick={() => setShowDeleteConfirm(true)}
-                                disabled={isDeleting}
-                            >
-                                <Delete24Regular />
-                                {t("ideas.delete")}
-                            </DefaultButton>
+                            {canEdit && (
+                                <PrimaryButton
+                                    className={styles.editButton}
+                                    disabled={isDeleting}
+                                >
+                                    <Edit24Regular />
+                                    {t("ideas.edit")}
+                                </PrimaryButton>
+                            )}
+                            {canDelete && (
+                                <DefaultButton
+                                    className={styles.deleteButton}
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    disabled={isDeleting}
+                                >
+                                    <Delete24Regular />
+                                    {t("ideas.delete")}
+                                </DefaultButton>
+                            )}
                         </div>
                     )}
                 </div>
@@ -631,23 +627,47 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
                         <Spinner size={SpinnerSize.large} />
                     </div>
                 )}
-            </Panel>
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog
-                hidden={!showDeleteConfirm}
-                onDismiss={() => setShowDeleteConfirm(false)}
-                dialogContentProps={{
-                    type: DialogType.normal,
-                    title: t("ideas.deleteConfirmTitle"),
-                    subText: t("ideas.deleteConfirmMessage")
-                }}
-            >
-                <DialogFooter>
-                    <DefaultButton onClick={() => setShowDeleteConfirm(false)} text={t("ideas.cancel")} />
-                    <PrimaryButton onClick={handleDelete} text={t("ideas.confirmDelete")} />
-                </DialogFooter>
-            </Dialog>
+                {showDeleteConfirm && (
+                    <div className={styles.confirmOverlay} role="dialog" aria-modal="true">
+                        <div className={styles.confirmDialog}>
+                            <h3 className={styles.confirmTitle}>{t("ideas.deleteConfirmTitle")}</h3>
+                            <p className={styles.confirmMessage}>{t("ideas.deleteConfirmMessage")}</p>
+                            {error && <div className={styles.errorMessage}>{error}</div>}
+                            <div className={styles.confirmActions}>
+                                <DefaultButton
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    text={t("ideas.cancel")}
+                                    disabled={isDeleting}
+                                />
+                                <PrimaryButton
+                                    onClick={async () => {
+                                        setIsDeleting(true);
+                                        setError(null);
+                                        try {
+                                            const token = client ? await getToken(client) : undefined;
+                                            await deleteIdeaApi(idea.ideaId, token);
+                                            setShowDeleteConfirm(false);
+                                            onDeleted(idea.ideaId);
+                                        } catch (err) {
+                                            console.error("Error deleting idea:", err);
+                                            setError(err instanceof Error ? err.message : t("ideas.deleteError"));
+                                            setIsDeleting(false);
+                                        }
+                                    }}
+                                    text={isDeleting ? t("ideas.deleting") : t("ideas.confirmDelete")}
+                                    disabled={isDeleting}
+                                    styles={{
+                                        root: { backgroundColor: "#d13438", borderColor: "#d13438" },
+                                        rootHovered: { backgroundColor: "#a4262c", borderColor: "#a4262c" },
+                                        rootPressed: { backgroundColor: "#8a2121", borderColor: "#8a2121" }
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Panel>
         </>
     );
 }

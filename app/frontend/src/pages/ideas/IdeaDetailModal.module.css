@@ -267,12 +267,29 @@
     cursor: not-allowed;
 }
 
+
+.confirmOverlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+
 /* Confirmation Dialog */
 .confirmDialog {
     background: #fff;
     padding: 24px;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-width: 420px;
+    width: 100%;
+    margin: 0 16px;
 }
 
 .confirmTitle {
@@ -292,6 +309,15 @@
     display: flex;
     gap: 12px;
     justify-content: flex-end;
+}
+
+.errorMessage {
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #ffebee;
+    color: #b71c1c;
+    font-size: 0.85rem;
 }
 
 /* Analysis Info */
