@@ -216,10 +216,14 @@ async def assets(path):
 @bp.route("/playground/")
 @bp.route("/chat")
 @bp.route("/chat/")
+@bp.route("/ideas")
+@bp.route("/ideas/")
 async def spa_routes():
-    """
-    Serve index.html for all SPA routes.
-    This enables client-side routing with React Router.
+    """Serve index.html for all SPA routes used by the single-page application.
+
+    This enables client-side routing with React Router for paths like /news,
+    /playground, /chat, and /ideas so that direct navigation and reloads work
+    correctly in production.
     """
     if USE_VITE_DEV_SERVER:
         return redirect(VITE_DEV_SERVER_URL)
