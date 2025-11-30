@@ -61,6 +61,7 @@ class BetaAuthHelper:
         - Plain JSON: {"user": "pass"}
         - Escaped quotes from shell/Azure: {\"user\": \"pass\"}
         - Surrounding quotes: "{...}" or '{...}'
+        - Base64 encoded JSON (for Azure deployment compatibility)
 
         Args:
             value: The raw environment variable value
@@ -68,6 +69,8 @@ class BetaAuthHelper:
         Returns:
             Dictionary of username -> password mappings
         """
+        import base64
+
         if not value or value == "{}":
             return {}
 
@@ -79,6 +82,16 @@ class BetaAuthHelper:
             if isinstance(result, dict):
                 return result
         except json.JSONDecodeError:
+            pass
+
+        # Try base64 decoding (used for Azure deployment to avoid escaping issues)
+        try:
+            decoded = base64.b64decode(value).decode("utf-8")
+            result = json.loads(decoded)
+            if isinstance(result, dict):
+                logger.info("Successfully parsed BETA_AUTH_USERS from base64 encoding")
+                return result
+        except Exception:
             pass
 
         # Remove surrounding quotes if present

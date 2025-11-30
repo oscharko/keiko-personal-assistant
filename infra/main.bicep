@@ -150,6 +150,15 @@ param newsCacheContainerName string = 'news-cache'
 @secure()
 param gnewsApiKey string = ''
 
+// Ideas Hub configuration
+param useIdeasHub bool = true
+param ideasContainerName string = 'ideas'
+param ideasAuditContainerName string = 'ideas-audit'
+param ideasConfigContainerName string = 'ideas-config'
+param ideasSearchIndexName string = 'ideas-index'
+param ideasSimilarityThreshold string = '0.75'
+param ideasMaxSimilarResults string = '5'
+
 // https://learn.microsoft.com/azure/ai-services/openai/concepts/models?tabs=global-standard%2Cstandard-chat-completions#models-by-deployment-type
 @description('Location for the OpenAI resource group')
 @allowed([
@@ -505,7 +514,7 @@ var appEnvVariables = {
   // Chat history settings
   USE_CHAT_HISTORY_BROWSER: useChatHistoryBrowser
   USE_CHAT_HISTORY_COSMOS: useChatHistoryCosmos
-  AZURE_COSMOSDB_ACCOUNT: (useAuthentication && useChatHistoryCosmos) ? cosmosDb.outputs.name : ''
+  AZURE_COSMOSDB_ACCOUNT: useChatHistoryCosmos ? cosmosDb.outputs.name : ''
   AZURE_CHAT_HISTORY_DATABASE: chatHistoryDatabaseName
   AZURE_CHAT_HISTORY_CONTAINER: chatHistoryContainerName
   AZURE_CHAT_HISTORY_VERSION: chatHistoryVersion
@@ -516,6 +525,16 @@ var appEnvVariables = {
   AZURE_NEWS_PREFERENCES_CONTAINER: newsPreferencesContainerName
   AZURE_NEWS_CACHE_CONTAINER: newsCacheContainerName
   GNEWS_API_KEY: gnewsApiKey
+  // Ideas Hub settings
+  USE_IDEAS_HUB: useIdeasHub
+  ENABLE_IDEAS_SCHEDULER: useIdeasHub // Enable background scheduler in production
+  AZURE_IDEAS_DATABASE: chatHistoryDatabaseName // Reuse same database
+  AZURE_IDEAS_CONTAINER: ideasContainerName
+  AZURE_IDEAS_AUDIT_CONTAINER: ideasAuditContainerName
+  AZURE_IDEAS_CONFIG_CONTAINER: ideasConfigContainerName
+  AZURE_IDEAS_SEARCH_INDEX: ideasSearchIndexName
+  IDEAS_SIMILARITY_THRESHOLD: ideasSimilarityThreshold
+  IDEAS_MAX_SIMILAR_RESULTS: ideasMaxSimilarResults
   // Shared by all OpenAI deployments
   OPENAI_HOST: openAiHost
   AZURE_OPENAI_EMB_MODEL_NAME: embedding.modelName
@@ -990,7 +1009,7 @@ module userStorage 'core/storage/storage-account.bicep' = if (useUserUpload) {
   }
 }
 
-module cosmosDb 'br/public:avm/res/document-db/database-account:0.6.1' = if (useAuthentication && useChatHistoryCosmos) {
+module cosmosDb 'br/public:avm/res/document-db/database-account:0.6.1' = if (useChatHistoryCosmos) {
   name: 'cosmosdb'
   scope: cosmosDbResourceGroup
   params: {
@@ -1088,6 +1107,109 @@ module cosmosDb 'br/public:avm/res/document-db/database-account:0.6.1' = if (use
                 }
                 {
                   path: '/cached_at/?'
+                }
+              ]
+              excludedPaths: [
+                {
+                  path: '/*'
+                }
+              ]
+            }
+          }
+        ] : [], useIdeasHub ? [
+          {
+            name: ideasContainerName
+            kind: 'Hash'
+            paths: [
+              '/ideaId'
+            ]
+            indexingPolicy: {
+              indexingMode: 'consistent'
+              automatic: true
+              includedPaths: [
+                {
+                  path: '/ideaId/?'
+                }
+                {
+                  path: '/submitterId/?'
+                }
+                {
+                  path: '/status/?'
+                }
+                {
+                  path: '/department/?'
+                }
+                {
+                  path: '/createdAt/?'
+                }
+                {
+                  path: '/updatedAt/?'
+                }
+                {
+                  path: '/impactScore/?'
+                }
+                {
+                  path: '/feasibilityScore/?'
+                }
+                {
+                  path: '/recommendationClass/?'
+                }
+                {
+                  path: '/clusterLabel/?'
+                }
+              ]
+              excludedPaths: [
+                {
+                  path: '/*'
+                }
+              ]
+            }
+          }
+          {
+            name: ideasAuditContainerName
+            kind: 'Hash'
+            paths: [
+              '/ideaId'
+            ]
+            indexingPolicy: {
+              indexingMode: 'consistent'
+              automatic: true
+              includedPaths: [
+                {
+                  path: '/ideaId/?'
+                }
+                {
+                  path: '/userId/?'
+                }
+                {
+                  path: '/action/?'
+                }
+                {
+                  path: '/timestamp/?'
+                }
+              ]
+              excludedPaths: [
+                {
+                  path: '/*'
+                }
+              ]
+            }
+          }
+          {
+            name: ideasConfigContainerName
+            kind: 'Hash'
+            paths: [
+              '/configType'
+            ]
+            indexingPolicy: {
+              indexingMode: 'consistent'
+              automatic: true
+              includedPaths: [
+                {
+                  path: '/configType/?'
+                }
+                {
+                  path: '/type/?'
                 }
               ]
               excludedPaths: [
@@ -1212,7 +1334,7 @@ module searchSvcContribRoleUser 'core/security/role.bicep' = {
   }
 }
 
-module cosmosDbAccountContribRoleUser 'core/security/role.bicep' = if (useAuthentication && useChatHistoryCosmos) {
+module cosmosDbAccountContribRoleUser 'core/security/role.bicep' = if (useChatHistoryCosmos) {
   scope: cosmosDbResourceGroup
   name: 'cosmosdb-account-contrib-role-user'
   params: {
@@ -1224,14 +1346,14 @@ module cosmosDbAccountContribRoleUser 'core/security/role.bicep' = if (useAuthen
 
 // RBAC for Cosmos DB
 // https://learn.microsoft.com/azure/cosmos-db/nosql/security/how-to-grant-data-plane-role-based-access
-module cosmosDbDataContribRoleUser 'core/security/documentdb-sql-role.bicep' = if (useAuthentication && useChatHistoryCosmos) {
+module cosmosDbDataContribRoleUser 'core/security/documentdb-sql-role.bicep' = if (useChatHistoryCosmos) {
   scope: cosmosDbResourceGroup
   name: 'cosmosdb-data-contrib-role-user'
   params: {
-    databaseAccountName: (useAuthentication && useChatHistoryCosmos) ? cosmosDb.outputs.name : ''
+    databaseAccountName: useChatHistoryCosmos ? cosmosDb.outputs.name : ''
     principalId: principalId
     // Cosmos DB Built-in Data Contributor role
-    roleDefinitionId: (useAuthentication && useChatHistoryCosmos)
+    roleDefinitionId: useChatHistoryCosmos
       ? '/${subscription().id}/resourceGroups/${cosmosDb.outputs.resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosDb.outputs.name}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002'
       : ''
   }
@@ -1354,16 +1476,16 @@ module speechRoleBackend 'core/security/role.bicep' = {
 
 // RBAC for Cosmos DB
 // https://learn.microsoft.com/azure/cosmos-db/nosql/security/how-to-grant-data-plane-role-based-access
-module cosmosDbRoleBackend 'core/security/documentdb-sql-role.bicep' = if (useAuthentication && useChatHistoryCosmos) {
+module cosmosDbRoleBackend 'core/security/documentdb-sql-role.bicep' = if (useChatHistoryCosmos) {
   scope: cosmosDbResourceGroup
   name: 'cosmosdb-role-backend'
   params: {
-    databaseAccountName: (useAuthentication && useChatHistoryCosmos) ? cosmosDb.outputs.name : ''
+    databaseAccountName: useChatHistoryCosmos ? cosmosDb.outputs.name : ''
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
       : acaBackend.outputs.identityPrincipalId
     // Cosmos DB Built-in Data Contributor role
-    roleDefinitionId: (useAuthentication && useChatHistoryCosmos)
+    roleDefinitionId: useChatHistoryCosmos
       ? '/${subscription().id}/resourceGroups/${cosmosDb.outputs.resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosDb.outputs.name}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002'
       : ''
   }
@@ -1445,7 +1567,7 @@ var otherPrivateEndpointConnections = (usePrivateEndpoint)
       {
         groupId: 'sql'
         dnsZoneName: 'privatelink.documents.azure.com'
-        resourceIds: (useAuthentication && useChatHistoryCosmos) ? [cosmosDb.outputs.resourceId] : []
+        resourceIds: useChatHistoryCosmos ? [cosmosDb.outputs.resourceId] : []
       }
     ]
   : []
@@ -1566,7 +1688,7 @@ output AZURE_SEARCH_SEMANTIC_RANKER string = actualSearchServiceSemanticRankerLe
 output AZURE_SEARCH_FIELD_NAME_EMBEDDING string = searchFieldNameEmbedding
 output AZURE_SEARCH_USER_ASSIGNED_IDENTITY_RESOURCE_ID string = searchService.outputs.userAssignedIdentityResourceId
 
-output AZURE_COSMOSDB_ACCOUNT string = (useAuthentication && useChatHistoryCosmos) ? cosmosDb.outputs.name : ''
+output AZURE_COSMOSDB_ACCOUNT string = useChatHistoryCosmos ? cosmosDb.outputs.name : ''
 output AZURE_CHAT_HISTORY_DATABASE string = chatHistoryDatabaseName
 output AZURE_CHAT_HISTORY_CONTAINER string = chatHistoryContainerName
 output AZURE_CHAT_HISTORY_VERSION string = chatHistoryVersion
@@ -1576,6 +1698,8 @@ output USE_NEWS_DASHBOARD bool = useNewsDashboard
 output AZURE_NEWS_DATABASE string = chatHistoryDatabaseName
 output AZURE_NEWS_PREFERENCES_CONTAINER string = newsPreferencesContainerName
 output AZURE_NEWS_CACHE_CONTAINER string = newsCacheContainerName
+
+// Ideas Hub configuration is passed via environment variables (USE_IDEAS_HUB, AZURE_IDEAS_*)
 
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = storageContainerName

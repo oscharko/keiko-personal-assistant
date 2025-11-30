@@ -1,0 +1,522 @@
+/**
+ * Styles for the Idea Detail Modal.
+ * Color scheme: #fff (white), #000 (black), #DCFF4A (accent)
+ */
+
+.panel {
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 8px 0;
+}
+
+/* Header with Status */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.statusDraft { background: #e0e0e0; color: #666; }
+.statusSubmitted { background: #e3f2fd; color: #1976d2; }
+.statusUnderReview { background: #fff3e0; color: #f57c00; }
+.statusApproved { background: #e8f5e9; color: #388e3c; }
+.statusRejected { background: #ffebee; color: #d32f2f; }
+.statusImplemented { background: #DCFF4A; color: #000; }
+.statusArchived { background: #f5f5f5; color: #9e9e9e; }
+
+/* Metadata */
+.metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px;
+    background: #f8f8f8;
+    border-radius: 12px;
+}
+
+.metaItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.metaLabel {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.metaValue {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 500;
+}
+
+/* Sections */
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sectionContent {
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.7;
+}
+
+/* Tags */
+.tagsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    display: inline-block;
+    background: #DCFF4A;
+    color: #000;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Scores Section */
+.scoresGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.scoreCard {
+    padding: 16px;
+    background: #f8f8f8;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scoreLabel {
+    font-size: 0.8rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.scoreValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000;
+}
+
+.scoreHigh { color: #388e3c; }
+.scoreMedium { color: #f57c00; }
+.scoreLow { color: #d32f2f; }
+
+.scoreBar {
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.scoreBarFill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.scoreBarHigh { background: #388e3c; }
+.scoreBarMedium { background: #f57c00; }
+.scoreBarLow { background: #d32f2f; }
+
+/* Recommendation Badge */
+.recommendationBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.recommendationQuickWin { background: #e8f5e9; color: #388e3c; }
+.recommendationHighLeverage { background: #DCFF4A; color: #000; }
+.recommendationStrategic { background: #e3f2fd; color: #1976d2; }
+.recommendationEvaluate { background: #f5f5f5; color: #666; }
+
+/* KPI Estimates */
+.kpiGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.kpiItem {
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.kpiLabel {
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.kpiValue {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000;
+}
+
+/* Processes and Users Lists */
+.itemsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.listItem {
+    display: inline-block;
+    background: #f0f0f0;
+    color: #333;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    border: 1px solid #e0e0e0;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.editButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #000 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0 24px !important;
+    height: 40px;
+    color: #DCFF4A !important;
+    font-weight: 600;
+}
+
+.editButton:hover {
+    background: #1a1a1a !important;
+}
+
+.deleteButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff !important;
+    border: 1px solid #d32f2f !important;
+    border-radius: 8px !important;
+    padding: 0 24px !important;
+    height: 40px;
+    color: #d32f2f !important;
+    font-weight: 500;
+}
+
+.deleteButton:hover {
+    background: #ffebee !important;
+}
+
+.deleteButton:disabled,
+.editButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Confirmation Dialog */
+.confirmDialog {
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.confirmTitle {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #000;
+}
+
+.confirmMessage {
+    margin: 0 0 24px 0;
+    font-size: 0.95rem;
+    color: #666;
+}
+
+.confirmActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* Analysis Info */
+.analysisInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.analysisInfo span {
+    opacity: 0.9;
+}
+
+/* Loading Overlay */
+.loadingOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* Engagement Section */
+.engagementSection {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px;
+    background: #f8f8f8;
+    border-radius: 12px;
+}
+
+.likeButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.likeButton:hover {
+    border-color: #e91e63;
+    background: #fce4ec;
+}
+
+.likeButton.liked {
+    background: #fce4ec;
+    border-color: #e91e63;
+}
+
+.likeButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.likeIcon {
+    width: 20px;
+    height: 20px;
+    color: #666;
+}
+
+.likeIconFilled {
+    width: 20px;
+    height: 20px;
+    color: #e91e63;
+}
+
+.likeCount {
+    font-weight: 600;
+    color: #333;
+}
+
+.likeLabel {
+    color: #666;
+}
+
+.commentCount {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.commentIcon {
+    width: 20px;
+    height: 20px;
+}
+
+.commentLabel {
+    color: #888;
+}
+
+/* Comments Section */
+.commentsSection {
+    border-top: 1px solid #eee;
+    padding-top: 24px;
+}
+
+.commentsLoading {
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+}
+
+.noComments {
+    color: #888;
+    font-style: italic;
+    text-align: center;
+    padding: 24px;
+}
+
+.commentsList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.commentItem {
+    padding: 16px;
+    background: #f8f8f8;
+    border-radius: 12px;
+}
+
+.commentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.commentAuthor {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.commentDate {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.commentContent {
+    margin: 0;
+    color: #444;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.commentActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.commentActionButton {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.commentActionButton:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.commentActionButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.commentEditForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.commentEditInput {
+    width: 100%;
+}
+
+.commentEditActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* New Comment Form */
+.newCommentForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f8f8;
+    border-radius: 12px;
+}
+
+.newCommentInput {
+    width: 100%;
+}
+
+.submitCommentButton {
+    align-self: flex-end;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
