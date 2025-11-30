@@ -13,10 +13,21 @@ import {MouseEffect} from "../../components/MouseEffect/MouseEffect";
 import {AnimatedOutlet} from "../../router";
 
 const Layout = () => {
-    const {t} = useTranslation();
+    const {t, i18n} = useTranslation();
     const [menuOpen, setMenuOpen] = useState(false);
     const [isBetaAuth, setIsBetaAuth] = useState(false);
     const menuRef: RefObject<HTMLDivElement> = useRef(null);
+
+    // Toggle between English and German
+    const toggleLanguage = () => {
+        const newLang = i18n.language === "de" ? "en" : "de";
+        i18n.changeLanguage(newLang);
+    };
+
+    // Get current language display text
+    const getCurrentLanguageLabel = () => {
+        return i18n.language === "de" ? "DE" : "EN";
+    };
 
     const FloatingPaths = ({position}: { position: number }) => {
         const paths = Array.from({length: 30}, (_, i) => ({
@@ -138,6 +149,14 @@ const Layout = () => {
                         </nav>*/}
                         <div className={styles.loginMenuContainer}>
                             {useLogin && <LoginButton/>}
+                            <button
+                                className={styles.languageButton}
+                                onClick={toggleLanguage}
+                                title={t("labels.languagePicker")}
+                                aria-label={t("labels.languagePicker")}
+                            >
+                                {getCurrentLanguageLabel()}
+                            </button>
                             {isBetaAuth && (
                                 <IconButton
                                     iconProps={{iconName: "SignOut"}}

@@ -131,7 +131,32 @@
 .loginMenuContainer {
     display: flex;
     align-items: center;
-    gap: 0;
+    gap: 8px;
+}
+
+.languageButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #DCFF4A;
+    color: #000;
+    border: none;
+    border-radius: 20%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: background-color 0.2s ease;
+}
+
+.languageButton:hover {
+    background-color: #fff;
+}
+
+.languageButton:focus {
+    outline: 2px solid #DCFF4A;
+    outline-offset: 2px;
 }
 
 .floatingPaths {
