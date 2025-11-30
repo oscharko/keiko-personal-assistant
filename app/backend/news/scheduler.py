@@ -1,6 +1,6 @@
 """
 Background scheduler for automated news refresh.
-Runs daily at midnight to pre-fetch news for all user topics.
+Runs daily at noon to pre-fetch news for all user topics.
 """
 
 import asyncio
@@ -24,7 +24,7 @@ _scheduler: Optional[AsyncIOScheduler] = None
 class NewsScheduler:
     """
     Manages background news refresh jobs.
-    Runs daily at midnight to refresh news for all user topics.
+    Runs daily at noon to refresh news for all user topics.
     """
 
     def __init__(
@@ -174,7 +174,7 @@ class NewsScheduler:
         """
         Start the background scheduler.
         Schedules:
-        1. Daily refresh at midnight (00:00)
+        1. Daily refresh at noon (12:00)
         2. Immediate startup refresh for all expired topics
         """
         if self._scheduler is not None:
@@ -183,17 +183,17 @@ class NewsScheduler:
 
         self._scheduler = AsyncIOScheduler()
 
-        # Schedule daily refresh at midnight (00:00)
+        # Schedule daily refresh at noon (12:00)
         self._scheduler.add_job(
             self.run_scheduled_refresh,
-            trigger=CronTrigger(hour=0, minute=0),
+            trigger=CronTrigger(hour=12, minute=0),
             id="daily_news_refresh",
             name="Daily News Refresh",
             replace_existing=True,
         )
 
         self._scheduler.start()
-        logger.info("News scheduler started - daily refresh scheduled at 00:00")
+        logger.info("News scheduler started - daily refresh scheduled at 12:00")
 
         # Trigger immediate refresh on startup (for new deployments)
         # This runs asynchronously in the background
