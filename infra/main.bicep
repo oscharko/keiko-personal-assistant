@@ -1366,7 +1366,7 @@ module openAiRoleBackend 'core/security/role.bicep' = if (isAzureOpenAiHost && d
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
     principalType: 'ServicePrincipal'
   }
@@ -1398,7 +1398,7 @@ module storageRoleBackend 'core/security/role.bicep' = {
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     roleDefinitionId: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1' // Storage Blob Data Reader
     principalType: 'ServicePrincipal'
   }
@@ -1410,7 +1410,7 @@ module storageOwnerRoleBackend 'core/security/role.bicep' = if (useUserUpload) {
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     roleDefinitionId: 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b' // Storage Blob Data Owner
     principalType: 'ServicePrincipal'
   }
@@ -1442,7 +1442,7 @@ module storageRoleContributorBackend 'core/security/role.bicep' = if (deployment
   scope: storageResourceGroup
   name: 'storage-role-contributor-aca-backend'
   params: {
-    principalId: acaBackend.outputs.identityPrincipalId
+    principalId: acaIdentity.outputs.principalId
     roleDefinitionId: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe' // Storage Blob Data Contributor
     principalType: 'ServicePrincipal'
   }
@@ -1456,8 +1456,8 @@ module searchRoleBackend 'core/security/role.bicep' = {
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
-    roleDefinitionId: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
+      : acaIdentity.outputs.principalId
+    roleDefinitionId: '8ebe5a00-799e-43f5-93ac-243d3dce84a7' // Search Index Data Contributor
     principalType: 'ServicePrincipal'
   }
 }
@@ -1468,7 +1468,7 @@ module speechRoleBackend 'core/security/role.bicep' = {
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     roleDefinitionId: 'f2dc8367-1007-4938-bd23-fe263f013447'
     principalType: 'ServicePrincipal'
   }
@@ -1483,7 +1483,7 @@ module cosmosDbRoleBackend 'core/security/documentdb-sql-role.bicep' = if (useCh
     databaseAccountName: useChatHistoryCosmos ? cosmosDb.outputs.name : ''
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     // Cosmos DB Built-in Data Contributor role
     roleDefinitionId: useChatHistoryCosmos
       ? '/${subscription().id}/resourceGroups/${cosmosDb.outputs.resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosDb.outputs.name}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002'
@@ -1597,7 +1597,7 @@ module searchReaderRoleBackend 'core/security/role.bicep' = if (useAuthenticatio
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     roleDefinitionId: 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
     principalType: 'ServicePrincipal'
   }
@@ -1610,7 +1610,7 @@ module searchContribRoleBackend 'core/security/role.bicep' = if (useUserUpload) 
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     roleDefinitionId: '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
     principalType: 'ServicePrincipal'
   }
@@ -1623,7 +1623,7 @@ module visionRoleBackend 'core/security/role.bicep' = if (useMultimodal) {
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908'
     principalType: 'ServicePrincipal'
   }
@@ -1636,7 +1636,7 @@ module documentIntelligenceRoleBackend 'core/security/role.bicep' = if (useUserU
   params: {
     principalId: (deploymentTarget == 'appservice')
       ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
+      : acaIdentity.outputs.principalId
     roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908'
     principalType: 'ServicePrincipal'
   }
