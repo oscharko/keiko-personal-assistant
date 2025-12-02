@@ -81,6 +81,16 @@ CJK_SENTENCE_ENDINGS = ["。", "！", "？", "‼", "⁇", "⁈", "⁉"]
 # NB: text-embedding-3-XX is the same BPE as text-embedding-ada-002
 bpe = tiktoken.encoding_for_model(ENCODING_MODEL)
 
+
+def _encode_tokens(text: str) -> list[int]:
+    """Encode text to tokens, allowing special token-like strings to be treated as normal text.
+
+    Some documents (especially PDFs) may contain text that looks like special tokens
+    (e.g., '<|fim_suffix|>'). This wrapper disables the special token check to prevent
+    ValueError exceptions during encoding.
+    """
+    return bpe.encode(text, disallowed_special=())
+
 DEFAULT_OVERLAP_PERCENT = 10  # See semantic search article for 10% overlap performance
 DEFAULT_SECTION_LENGTH = 1000  # Roughly 400-500 tokens for English
 
@@ -252,7 +262,7 @@ class SentenceTextSplitter(TextSplitter):
         2. Word-break character near midpoint (space/punctuation) to avoid mid-word cuts.
         3. Midpoint split with symmetric overlap (DEFAULT_OVERLAP_PERCENT).
         """
-        tokens = bpe.encode(text)
+        tokens = _encode_tokens(text)
         if len(tokens) <= self.max_tokens_per_section:
             yield Chunk(page_num=page_num, text=text)
             return
@@ -357,12 +367,12 @@ class SentenceTextSplitter(TextSplitter):
 
         candidate = prev_chunk.text + prefix
         max_chars = int(self.max_section_length * 1.2)
-        if len(candidate) > max_chars or len(bpe.encode(candidate)) > self.max_tokens_per_section:
+        if len(candidate) > max_chars or len(_encode_tokens(candidate)) > self.max_tokens_per_section:
             # Attempt to shrink prefix at word / sentence boundaries from its start
             shrink = prefix
             while shrink and (
                 len(prev_chunk.text + shrink) > max_chars
-                or len(bpe.encode(prev_chunk.text + shrink)) > self.max_tokens_per_section
+                or len(_encode_tokens(prev_chunk.text + shrink)) > self.max_tokens_per_section
             ):
                 cut_index = 1
                 for i, ch in enumerate(shrink):
@@ -373,7 +383,7 @@ class SentenceTextSplitter(TextSplitter):
             if not shrink:
                 return prev_chunk
             candidate = prev_chunk.text + shrink
-            if len(candidate) > max_chars or len(bpe.encode(candidate)) > self.max_tokens_per_section:
+            if len(candidate) > max_chars or len(_encode_tokens(candidate)) > self.max_tokens_per_section:
                 return prev_chunk
         return Chunk(page_num=prev_chunk.page_num, text=candidate)
 
@@ -440,7 +450,7 @@ class SentenceTextSplitter(TextSplitter):
                     spans.append("".join(current_chars))
 
                 for span in spans:
-                    span_tokens = len(bpe.encode(span))
+                    span_tokens = len(_encode_tokens(span))
                     # If a single span itself exceeds token limit (rare, very long sentence), split it directly
                     if span_tokens > self.max_tokens_per_section:
                         builder.flush_into(page_chunks)
@@ -472,7 +482,7 @@ class SentenceTextSplitter(TextSplitter):
                 ):
                     combined_text = _safe_concat(previous_chunk.text, first_new.text)
                     # Only merge if token limit respected (figures already handled earlier)
-                    if len(bpe.encode(combined_text)) <= self.max_tokens_per_section and len(combined_text) <= int(
+                    if len(_encode_tokens(combined_text)) <= self.max_tokens_per_section and len(combined_text) <= int(
                         self.max_section_length * 1.2
                     ):
                         previous_chunk = Chunk(page_num=previous_chunk.page_num, text=combined_text)
@@ -496,7 +506,7 @@ class SentenceTextSplitter(TextSplitter):
                                 combined = candidate + first_new_text
                                 if len(combined) > max_chars:
                                     return False
-                                if len(bpe.encode(combined)) > self.max_tokens_per_section:
+                                if len(_encode_tokens(combined)) > self.max_tokens_per_section:
                                     return False
                                 return True
 
@@ -509,7 +519,7 @@ class SentenceTextSplitter(TextSplitter):
                                 move_fragment = move_fragment[:remaining_chars]
                                 while (
                                     move_fragment
-                                    and len(bpe.encode(move_fragment + first_new_text)) > self.max_tokens_per_section
+                                    and len(_encode_tokens(move_fragment + first_new_text)) > self.max_tokens_per_section
                                 ):
                                     move_fragment = (
                                         move_fragment[:-50] if len(move_fragment) > 50 else move_fragment[:-1]

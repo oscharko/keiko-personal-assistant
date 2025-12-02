@@ -595,8 +595,11 @@ async def upload(auth_claims: dict[str, Any]):
         # Reset file pointer to beginning for parsing after blob upload
         file.seek(0)
         ingester: UploadUserFileStrategy = current_app.config[CONFIG_INGESTER]
-        # Use empty acls for demo/beta auth since index has no oids field
-        await ingester.add_file(File(content=file, url=file_url, acls={}), user_oid=user_oid)
+        # Persist user-level ACLs so future uploads are restricted to the uploader
+        await ingester.add_file(
+            File(content=file, url=file_url, acls={"oids": [user_oid], "groups": []}),
+            user_oid=user_oid,
+        )
         return jsonify({"message": "File uploaded successfully"}), 200
     except Exception as error:
         current_app.logger.error("Error uploading file: %s", error)

@@ -285,6 +285,7 @@ class Approach(ABC):
         self.user_blob_manager = user_blob_manager
 
     def build_filter(self, overrides: dict[str, Any]) -> Optional[str]:
+        """Build OData filter for category-based filtering."""
         include_category = overrides.get("include_category")
         exclude_category = overrides.get("exclude_category")
         filters = []
@@ -293,6 +294,53 @@ class Approach(ABC):
         if exclude_category:
             filters.append("category ne '{}'".format(exclude_category.replace("'", "''")))
         return None if not filters else " and ".join(filters)
+
+    def build_oid_filter(
+        self, base_filter: Optional[str], auth_claims: dict[str, Any]
+    ) -> Optional[str]:
+        """
+        Build OData filter for user-based access control when no Azure AD access token is available.
+
+        This is used for Beta Auth where Azure Search RBAC cannot be used.
+        The filter ensures users can only see:
+        - Documents with their own OID in the oids field
+        - Documents with 'all' in the oids field (global documents from batch upload)
+        - Documents without oids field (legacy documents uploaded before access control)
+
+        Args:
+            base_filter: Existing OData filter (e.g., category filter)
+            auth_claims: Authentication claims containing user OID
+
+        Returns:
+            Combined OData filter string or None if no filtering needed
+        """
+        access_token = auth_claims.get("access_token")
+        user_oid = auth_claims.get("oid")
+
+        # If we have an Azure AD access token, Azure Search handles RBAC automatically
+        if access_token:
+            return base_filter
+
+        # If no user OID, cannot apply user-based filtering
+        if not user_oid:
+            return base_filter
+
+        # Escape single quotes in user_oid for OData filter
+        escaped_oid = user_oid.replace("'", "''")
+
+        # Build OID filter:
+        # - oids/any(o: o eq '{user_oid}'): Documents owned by this user
+        # - oids/any(o: o eq 'all'): Global documents (batch upload with AZURE_ENABLE_GLOBAL_DOCUMENT_ACCESS)
+        # - (not oids/any(o: o ne null)): Legacy documents without oids field (empty array)
+        oid_filter = (
+            f"(oids/any(o: o eq '{escaped_oid}') or "
+            f"oids/any(o: o eq 'all') or "
+            f"(not oids/any(o: o ne null)))"
+        )
+
+        if base_filter:
+            return f"({base_filter}) and {oid_filter}"
+        return oid_filter
 
     async def search(
         self,

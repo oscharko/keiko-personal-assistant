@@ -69,7 +69,8 @@ class OpenAIEmbeddings(ABC):
 
     def calculate_token_length(self, text: str):
         encoding = tiktoken.encoding_for_model(self.open_ai_model_name)
-        return len(encoding.encode(text))
+        # Use disallowed_special=() to allow special token-like strings in documents
+        return len(encoding.encode(text, disallowed_special=()))
 
     def split_text_into_batches(self, texts: list[str]) -> list[EmbeddingBatch]:
         batch_info = OpenAIEmbeddings.SUPPORTED_BATCH_MODEL.get(self.open_ai_model_name)
