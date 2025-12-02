@@ -22,8 +22,6 @@ import { LanguagePicker } from "../../i18n/LanguagePicker";
 export function Component(): JSX.Element {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
-    const [promptTemplatePrefix, setPromptTemplatePrefix] = useState<string>("");
-    const [promptTemplateSuffix, setPromptTemplateSuffix] = useState<string>("");
     const [temperature, setTemperature] = useState<number>(0.3);
     const [seed, setSeed] = useState<number | null>(null);
     const [minimumRerankerScore, setMinimumRerankerScore] = useState<number>(1.9);
@@ -152,8 +150,6 @@ export function Component(): JSX.Element {
                 context: {
                     overrides: {
                         prompt_template: promptTemplate.length === 0 ? undefined : promptTemplate,
-                        prompt_template_prefix: promptTemplatePrefix.length === 0 ? undefined : promptTemplatePrefix,
-                        prompt_template_suffix: promptTemplateSuffix.length === 0 ? undefined : promptTemplateSuffix,
                         include_category: includeCategory.length === 0 ? undefined : includeCategory,
                         exclude_category: excludeCategory.length === 0 ? undefined : excludeCategory,
                         top: retrieveCount,
@@ -194,12 +190,6 @@ export function Component(): JSX.Element {
         switch (field) {
             case "promptTemplate":
                 setPromptTemplate(value);
-                break;
-            case "promptTemplatePrefix":
-                setPromptTemplatePrefix(value);
-                break;
-            case "promptTemplateSuffix":
-                setPromptTemplateSuffix(value);
                 break;
             case "temperature":
                 setTemperature(value);
@@ -377,8 +367,6 @@ export function Component(): JSX.Element {
             >
                 <Settings
                     promptTemplate={promptTemplate}
-                    promptTemplatePrefix={promptTemplatePrefix}
-                    promptTemplateSuffix={promptTemplateSuffix}
                     temperature={temperature}
                     retrieveCount={retrieveCount}
                     agenticReasoningEffort={agenticReasoningEffort}

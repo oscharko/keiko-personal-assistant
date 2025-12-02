@@ -91,7 +91,9 @@
       "search": "Suche & Abruf",
       "searchDescription": "Optimieren Sie, wie das System relevante Informationen aus Ihrer Wissensdatenbank sucht und abruft.",
       "llm": "Sprachmodell",
-      "llmDescription": "Passen Sie das Verhalten und die Kreativität des zugrunde liegenden Sprachmodells an."
+      "llmDescription": "Passen Sie das Verhalten und die Kreativität des zugrunde liegenden Sprachmodells an.",
+      "testInterface": "Test-Schnittstelle",
+      "testInterfaceDescription": "Testen Sie Ihre Parameterkonfiguration, indem Sie eine Frage an das RAG-System senden. Die Antwort wird unten zusammen mit Debug-Informationen angezeigt."
     },
     "explanations": {
       "streaming": "Wenn aktiviert, erscheinen Antworten Wort für Wort während der Generierung, was ein interaktiveres Erlebnis bietet. Deaktivieren Sie dies für vollständige Antworten auf einmal.",
@@ -117,12 +119,9 @@
       "topP": "Nucleus-Sampling-Parameter. Niedrigere Werte (0,1-0,5) machen Antworten fokussierter, höhere Werte (0,9-1,0) ermöglichen vielfältigere Wortwahl.",
       "frequencyPenalty": "Reduziert Wiederholungen, indem Tokens basierend auf ihrer Häufigkeit bestraft werden. Positive Werte verhindern Wiederholungen, negative fördern sie.",
       "presencePenalty": "Ermutigt das Modell, neü Themen zu erkunden. Positive Werte fördern Themenvielfalt, negative halten Antworten auf bestehende Themen fokussiert.",
-      "maxHistoryMessages": "Anzahl der vorherigen Nachrichten, die als Kontext einbezogen werden. Mehr Verlauf bietet besseren Kontext, erhöht aber den Token-Verbrauch.",
       "stopSequences": "Kommagetrennte Sequenzen, die die KI-Antwort stoppen, wenn sie auftreten. Nützlich zur Steuerung des Antwortformats.",
       "reasoningEffort": "Steuert, wie viel das Modell 'nachdenkt', bevor es antwortet. Höherer Aufwand erzeugt gründlichere Antworten, dauert aber länger.",
       "promptTemplate": "Passen Sie die Anweisungen an die KI an. Verwenden Sie '>>>' am Anfang, um an den Standard-Prompt anzuhängen, anstatt ihn zu ersetzen.",
-      "promptTemplatePrefix": "Text, der vor dem Haupt-Prompt eingefügt wird. Nützlich zum Hinzufügen von konsistentem Kontext oder Anweisungen.",
-      "promptTemplateSuffix": "Text, der nach dem Haupt-Prompt angehängt wird. Nützlich zum Hinzufügen von konsistenten Schlussanweisungen oder Formatanforderungen.",
       "textSources": "Schliesst Textinhalte aus abgerufenen Dokumenten als Kontext für die KI-Antwort ein.",
       "imageSources": "Schliesst Bilder aus abgerufenen Dokumenten als visuellen Kontext für die KI-Antwort ein."
     },
@@ -130,8 +129,6 @@
       "excludeCategory": "Kategorie zum Ausschliessen eingeben...",
       "seed": "Zahl für Reproduzierbarkeit eingeben...",
       "promptTemplate": "Benutzerdefinierte Anweisungen für die KI eingeben...",
-      "promptTemplatePrefix": "Text zum Voranstellen eingeben...",
-      "promptTemplateSuffix": "Text zum Anhängen eingeben...",
       "stopSequences": "Kommagetrennte Stoppsequenzen eingeben..."
     },
     "temperatureLabels": {
@@ -182,7 +179,18 @@
       "understood": "Verstanden!"
     },
     "explainFunction": "Funktion erklären",
-    "close": "Schliessen"
+    "close": "Schliessen",
+    "testPlaceholder": "Geben Sie eine Testfrage ein, um zu sehen, wie Ihre Parameter die Antwort beeinflussen...",
+    "clearAnswer": "Antwort loeschen",
+    "loading": "Ihre Frage wird verarbeitet...",
+    "error": "Ein Fehler ist aufgetreten",
+    "debugPanel": {
+      "title": "Debug-Informationen",
+      "overrides": "Request-Overrides (an Backend gesendet)",
+      "response": "Antwort-Zusammenfassung",
+      "noRequest": "Noch keine Anfrage gesendet. Geben Sie oben eine Frage ein, um Ihre Parameter zu testen.",
+      "noResponse": "Noch keine Antwort erhalten."
+    }
   },
   "chatEmptyStateTitle": "Keiko",
   "chatEmptyStateSubtitle": "Fragen Sie etwas oder probieren Sie ein Beispiel",
@@ -284,10 +292,7 @@
     "topP": "Top P (Nucleus Sampling)",
     "frequencyPenalty": "Frequenzstrafe",
     "presencePenalty": "Präsenzstrafe",
-    "maxHistoryMessages": "Maximale Verlaufsnachrichten",
     "stopSequences": "Stoppsequenzen",
-    "promptTemplatePrefix": "Prompt-Präfix",
-    "promptTemplateSuffix": "Prompt-Suffix",
     "vectorK": "Vektor K (Nächste Nachbarn)",
     "useQueryAnswer": "Extractive Antworten verwenden"
   },

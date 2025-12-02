@@ -9,6 +9,7 @@ export type ChatAppRequestOverrides = {
     semantic_ranker?: boolean;
     semantic_captions?: boolean;
     query_rewriting?: boolean;
+    query_answer?: boolean;
     reasoning_effort?: string;
     include_category?: string;
     exclude_category?: string;
@@ -19,8 +20,6 @@ export type ChatAppRequestOverrides = {
     minimum_search_score?: number;
     minimum_reranker_score?: number;
     prompt_template?: string;
-    prompt_template_prefix?: string;
-    prompt_template_suffix?: string;
     suggest_followup_questions?: boolean;
     send_text_sources: boolean;
     send_image_sources: boolean;
@@ -30,17 +29,14 @@ export type ChatAppRequestOverrides = {
     use_agentic_knowledgebase: boolean;
     use_web_source?: boolean;
     use_sharepoint_source?: boolean;
-    // High Priority parameters
+    // LLM parameters
     max_response_tokens?: number;
     frequency_penalty?: number;
     presence_penalty?: number;
-    // Medium Priority parameters
     top_p?: number;
-    vector_k?: number;
-    // Lower Priority parameters
-    max_history_messages?: number;
-    query_answer?: boolean;
     stop_sequences?: string[];
+    // Retrieval parameters
+    vector_k?: number;
 };
 
 export type ResponseMessage = {

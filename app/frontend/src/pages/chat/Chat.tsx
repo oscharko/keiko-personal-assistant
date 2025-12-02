@@ -79,6 +79,17 @@ const Chat = () => {
     const [sendTextSources, setSendTextSources] = useState<boolean>(true);
     const [sendImageSources, setSendImageSources] = useState<boolean>(false);
 
+    // Additional LLM parameters
+    const [maxResponseTokens, setMaxResponseTokens] = useState<number>(1024);
+    const [frequencyPenalty, setFrequencyPenalty] = useState<number>(0);
+    const [presencePenalty, setPresencePenalty] = useState<number>(0);
+    const [topP, setTopP] = useState<number>(1.0);
+
+    // Additional retrieval parameters
+    const [vectorK, setVectorK] = useState<number>(50);
+    const [useQueryAnswer, setUseQueryAnswer] = useState<boolean>(false);
+    const [stopSequences, setStopSequences] = useState<string>("");
+
     const lastQuestionRef = useRef<string>("");
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
 
@@ -284,6 +295,7 @@ const Chat = () => {
                         semantic_ranker: useSemanticRanker,
                         semantic_captions: useSemanticCaptions,
                         query_rewriting: useQueryRewriting,
+                        query_answer: useQueryAnswer,
                         reasoning_effort: reasoningEffort,
                         suggest_followup_questions: useSuggestFollowupQuestions,
                         search_text_embeddings: searchTextEmbeddings,
@@ -294,6 +306,14 @@ const Chat = () => {
                         use_agentic_knowledgebase: useAgenticKnowledgeBase,
                         use_web_source: webSourceSupported ? webSourceEnabled : false,
                         use_sharepoint_source: sharePointSourceSupported ? sharePointSourceEnabled : false,
+                        // Additional LLM parameters
+                        max_response_tokens: maxResponseTokens,
+                        frequency_penalty: frequencyPenalty,
+                        presence_penalty: presencePenalty,
+                        top_p: topP,
+                        // Additional retrieval parameters
+                        vector_k: vectorK,
+                        ...(stopSequences.length > 0 ? {stop_sequences: stopSequences.split(",").map(s => s.trim())} : {}),
                         ...(seed !== null ? {seed: seed} : {})
                     }
                 },

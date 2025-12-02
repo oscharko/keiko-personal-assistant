@@ -367,3 +367,118 @@
     border: 2px solid #DCFF4A;
 }
 
+/* Test Interface Styles */
+.testInputContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.clearButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    transition: all 0.2s ease;
+    align-self: flex-start;
+}
+
+.clearButton:hover:not(:disabled) {
+    border-color: #000;
+    color: #000;
+}
+
+.clearButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.answerContainer {
+    min-height: 100px;
+    margin-bottom: 24px;
+}
+
+.loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 48px;
+}
+
+/* Debug Panel Styles */
+.debugPanel {
+    border-top: 1px solid #eee;
+    padding-top: 16px;
+}
+
+.debugToggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.debugToggle:hover {
+    background: #eee;
+    border-color: #ccc;
+}
+
+.debugContent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.debugSection {
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.debugSection h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.debugJson {
+    background: #1a1a1a;
+    color: #DCFF4A;
+    padding: 16px;
+    border-radius: 8px;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-x: auto;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    .debugContent {
+        grid-template-columns: 1fr;
+    }
+}
+

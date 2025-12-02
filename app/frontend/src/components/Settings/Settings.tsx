@@ -41,8 +41,6 @@ export interface SettingsProps {
     streamingEnabled?: boolean; // Only used in chat
     shouldStream?: boolean; // Only used in Chat
     useSuggestFollowupQuestions?: boolean; // Only used in Chat
-    promptTemplatePrefix?: string;
-    promptTemplateSuffix?: string;
     showAgenticRetrievalOption?: boolean;
     useAgenticKnowledgeBase?: boolean;
     hideMinimalRetrievalReasoningOption?: boolean;
@@ -84,8 +82,6 @@ export const Settings = ({
     streamingEnabled,
     shouldStream,
     useSuggestFollowupQuestions,
-    promptTemplatePrefix,
-    promptTemplateSuffix,
     showAgenticRetrievalOption,
     useAgenticKnowledgeBase = false,
     hideMinimalRetrievalReasoningOption = false,

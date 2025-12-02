@@ -2,18 +2,24 @@
  * Playground page component for RAG system parameter experimentation.
  * Provides a standalone, user-friendly interface for configuring and
  * understanding RAG (Retrieval-Augmented Generation) system parameters.
+ * Now includes full API integration for testing parameters in real-time.
  */
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Icon, Slider, Toggle, Dropdown, IDropdownOption, TextField, TooltipHost } from "@fluentui/react";
+import { Icon, Slider, Toggle, Dropdown, IDropdownOption, TextField, TooltipHost, Spinner, SpinnerSize, MessageBar, MessageBarType } from "@fluentui/react";
 import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
-import { Info16Regular, Info24Regular } from "@fluentui/react-icons";
+import { Info16Regular, Info24Regular, ChevronDown24Regular, ChevronUp24Regular } from "@fluentui/react-icons";
+import { useMsal } from "@azure/msal-react";
 
 import styles from "./Playground.module.css";
-import { configApi, RetrievalMode } from "../../api";
+import { chatApi, ChatAppRequest, ChatAppRequestOverrides, ChatAppResponse, ChatAppResponseOrError, configApi, ResponseMessage, RetrievalMode } from "../../api";
 import { VectorSettings } from "../../components/VectorSettings";
 import { PlaygroundInfoDialog } from "./PlaygroundInfoDialog";
+import { QuestionInput } from "../../components/QuestionInput";
+import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
+import { getToken, useLogin } from "../../authConfig";
+import { LoginContext } from "../../loginContext";
 
 /**
  * Parameter card component for displaying individual settings with explanations.
@@ -43,9 +49,44 @@ const ParameterCard: React.FC<ParameterCardProps> = ({ title, description, child
     );
 };
 
+/**
+ * Helper function to read NDJSON stream from the API response.
+ */
+async function* readNDJSONStream(reader: ReadableStream<any>) {
+    const textDecoder = new TextDecoder();
+    const streamReader = reader.getReader();
+    let buffer = "";
+
+    try {
+        while (true) {
+            const { done, value } = await streamReader.read();
+            if (done) break;
+
+            buffer += textDecoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+                if (line.trim()) {
+                    yield JSON.parse(line);
+                }
+            }
+        }
+        if (buffer.trim()) {
+            yield JSON.parse(buffer);
+        }
+    } finally {
+        streamReader.releaseLock();
+    }
+}
+
 export function Component(): JSX.Element {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
+
+    // Authentication
+    const client = useLogin ? useMsal().instance : undefined;
+    const { loggedIn } = useContext(LoginContext);
 
     // Info dialog state
     const [showInfoDialog, setShowInfoDialog] = useState<boolean>(false);
@@ -63,8 +104,6 @@ export function Component(): JSX.Element {
 
     // Parameter state
     const [promptTemplate, setPromptTemplate] = useState<string>("");
-    const [promptTemplatePrefix, setPromptTemplatePrefix] = useState<string>("");
-    const [promptTemplateSuffix, setPromptTemplateSuffix] = useState<string>("");
     const [temperature, setTemperature] = useState<number>(0.3);
     const [seed, setSeed] = useState<number | null>(null);
     const [minimumRerankerScore, setMinimumRerankerScore] = useState<number>(1.9);
@@ -98,9 +137,29 @@ export function Component(): JSX.Element {
     const [vectorK, setVectorK] = useState<number>(50);
 
     // Lower Priority parameters
-    const [maxHistoryMessages, setMaxHistoryMessages] = useState<number>(10);
     const [useQueryAnswer, setUseQueryAnswer] = useState<boolean>(false);
     const [stopSequences, setStopSequences] = useState<string>("");
+
+    // Chat state for API integration
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isStreaming, setIsStreaming] = useState<boolean>(false);
+    const [error, setError] = useState<Error | null>(null);
+    const [answer, setAnswer] = useState<ChatAppResponse | null>(null);
+    const [streamedAnswer, setStreamedAnswer] = useState<ChatAppResponse | null>(null);
+    const [lastQuestion, setLastQuestion] = useState<string>("");
+
+    // Debug panel state
+    const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
+    const [lastOverrides, setLastOverrides] = useState<ChatAppRequestOverrides | null>(null);
+
+    // Dummy speech config for Answer component (not used in playground)
+    const dummySpeechConfig = {
+        speechUrls: [],
+        setSpeechUrls: () => {},
+        audio: useRef(new Audio()).current,
+        isPlaying: false,
+        setIsPlaying: () => {}
+    };
 
     // Load configuration on mount
     useEffect(() => {
@@ -151,6 +210,153 @@ export function Component(): JSX.Element {
         { key: "medium", text: t("labels.reasoningEffortOptions.medium") },
         { key: "high", text: t("labels.reasoningEffortOptions.high") }
     ];
+
+    /**
+     * Build the overrides object from current state.
+     * This is used both for the API request and for the debug panel.
+     */
+    const buildOverrides = (): ChatAppRequestOverrides => {
+        return {
+            prompt_template: promptTemplate.length === 0 ? undefined : promptTemplate,
+            include_category: includeCategory.length === 0 ? undefined : includeCategory,
+            exclude_category: excludeCategory.length === 0 ? undefined : excludeCategory,
+            top: retrieveCount,
+            ...(useAgenticKnowledgeBase ? { retrieval_reasoning_effort: agenticReasoningEffort } : {}),
+            temperature: temperature,
+            minimum_reranker_score: minimumRerankerScore,
+            minimum_search_score: minimumSearchScore,
+            retrieval_mode: retrievalMode,
+            semantic_ranker: useSemanticRanker,
+            semantic_captions: useSemanticCaptions,
+            query_rewriting: useQueryRewriting,
+            query_answer: useQueryAnswer,
+            reasoning_effort: reasoningEffort,
+            suggest_followup_questions: useSuggestFollowupQuestions,
+            search_text_embeddings: searchTextEmbeddings,
+            search_image_embeddings: searchImageEmbeddings,
+            send_text_sources: sendTextSources,
+            send_image_sources: sendImageSources,
+            language: i18n.language,
+            use_agentic_knowledgebase: useAgenticKnowledgeBase,
+            use_web_source: webSourceSupported ? useWebSource : false,
+            use_sharepoint_source: sharePointSourceSupported ? useSharePointSource : false,
+            // Additional LLM parameters
+            max_response_tokens: maxResponseTokens,
+            frequency_penalty: frequencyPenalty,
+            presence_penalty: presencePenalty,
+            top_p: topP,
+            // Additional retrieval parameters
+            vector_k: vectorK,
+            ...(stopSequences.length > 0 ? { stop_sequences: stopSequences.split(",").map(s => s.trim()) } : {}),
+            ...(seed !== null ? { seed: seed } : {})
+        };
+    };
+
+    /**
+     * Handle streaming response from the API.
+     */
+    const handleAsyncRequest = async (question: string, responseBody: ReadableStream<any>): Promise<ChatAppResponse> => {
+        let answerContent: string = "";
+        let askResponse: ChatAppResponse = {} as ChatAppResponse;
+
+        const updateState = (newContent: string) => {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    answerContent += newContent;
+                    const latestResponse: ChatAppResponse = {
+                        ...askResponse,
+                        message: { content: answerContent, role: askResponse.message.role }
+                    };
+                    setStreamedAnswer(latestResponse);
+                    resolve(null);
+                }, 33);
+            });
+        };
+
+        try {
+            setIsStreaming(true);
+            for await (const event of readNDJSONStream(responseBody)) {
+                if (event["context"] && event["context"]["data_points"]) {
+                    event["message"] = event["delta"];
+                    askResponse = event as ChatAppResponse;
+                } else if (event["delta"] && event["delta"]["content"]) {
+                    setIsLoading(false);
+                    await updateState(event["delta"]["content"]);
+                } else if (event["context"]) {
+                    askResponse.context = { ...askResponse.context, ...event["context"] };
+                } else if (event["error"]) {
+                    throw Error(event["error"]);
+                }
+            }
+        } finally {
+            setIsStreaming(false);
+        }
+
+        return {
+            ...askResponse,
+            message: { content: answerContent, role: askResponse.message.role }
+        };
+    };
+
+    /**
+     * Make API request with current parameters.
+     */
+    const makeApiRequest = async (question: string) => {
+        setLastQuestion(question);
+        error && setError(null);
+        setIsLoading(true);
+        setAnswer(null);
+        setStreamedAnswer(null);
+
+        const token = client ? await getToken(client) : undefined;
+        const overrides = buildOverrides();
+        setLastOverrides(overrides);
+
+        try {
+            const request: ChatAppRequest = {
+                messages: [{ content: question, role: "user" }],
+                context: { overrides },
+                session_state: null
+            };
+
+            const response = await chatApi(request, shouldStream, token);
+            if (!response.body) {
+                throw Error("No response body");
+            }
+            if (response.status > 299 || !response.ok) {
+                throw Error(`Request failed with status ${response.status}`);
+            }
+
+            if (shouldStream) {
+                const parsedResponse = await handleAsyncRequest(question, response.body);
+                setAnswer(parsedResponse);
+            } else {
+                const parsedResponse: ChatAppResponseOrError = await response.json();
+                if (parsedResponse.error) {
+                    throw Error(parsedResponse.error);
+                }
+                setAnswer(parsedResponse as ChatAppResponse);
+            }
+        } catch (e) {
+            setError(e instanceof Error ? e : new Error(String(e)));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * Clear the current answer and reset state.
+     */
+    const clearAnswer = () => {
+        setAnswer(null);
+        setStreamedAnswer(null);
+        setLastQuestion("");
+        setError(null);
+        setLastOverrides(null);
+    };
+
+    // Get the current answer to display (streamed or final)
+    const displayAnswer = streamedAnswer || answer;
 
     return (
         <div className={styles.container}>
@@ -587,21 +793,6 @@ export function Component(): JSX.Element {
                             </ParameterCard>
 
                             <ParameterCard
-                                title={t("labels.maxHistoryMessages")}
-                                description={t("playground.explanations.maxHistoryMessages")}
-                                icon="History"
-                            >
-                                <Slider
-                                    min={0}
-                                    max={20}
-                                    step={1}
-                                    value={maxHistoryMessages}
-                                    onChange={setMaxHistoryMessages}
-                                    showValue
-                                />
-                            </ParameterCard>
-
-                            <ParameterCard
                                 title={t("labels.stopSequences")}
                                 description={t("playground.explanations.stopSequences")}
                                 icon="Stop"
@@ -643,36 +834,6 @@ export function Component(): JSX.Element {
                                 />
                             </ParameterCard>
 
-                            <ParameterCard
-                                title={t("labels.promptTemplatePrefix")}
-                                description={t("playground.explanations.promptTemplatePrefix")}
-                                icon="TextDocument"
-                            >
-                                <TextField
-                                    multiline
-                                    rows={3}
-                                    value={promptTemplatePrefix}
-                                    onChange={(_, val) => setPromptTemplatePrefix(val || "")}
-                                    placeholder={t("playground.placeholders.promptTemplatePrefix")}
-                                    className={styles.textArea}
-                                />
-                            </ParameterCard>
-
-                            <ParameterCard
-                                title={t("labels.promptTemplateSuffix")}
-                                description={t("playground.explanations.promptTemplateSuffix")}
-                                icon="TextDocument"
-                            >
-                                <TextField
-                                    multiline
-                                    rows={3}
-                                    value={promptTemplateSuffix}
-                                    onChange={(_, val) => setPromptTemplateSuffix(val || "")}
-                                    placeholder={t("playground.placeholders.promptTemplateSuffix")}
-                                    className={styles.textArea}
-                                />
-                            </ParameterCard>
-
                             {showMultimodalOptions && !useAgenticKnowledgeBase && (
                                 <>
                                     <ParameterCard
@@ -705,6 +866,109 @@ export function Component(): JSX.Element {
                         </div>
                     </section>
                 )}
+
+                {/* Test Interface Section */}
+                <section className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <Icon iconName="TestBeaker" className={styles.sectionIcon} />
+                        <h2 className={styles.sectionTitle}>{t("playground.sections.testInterface")}</h2>
+                    </div>
+                    <div className={styles.sectionDescription}>
+                        {t("playground.sections.testInterfaceDescription")}
+                    </div>
+
+                    {/* Question Input */}
+                    <div className={styles.testInputContainer}>
+                        <QuestionInput
+                            onSend={makeApiRequest}
+                            disabled={isLoading}
+                            placeholder={t("playground.testPlaceholder")}
+                            clearOnSend={false}
+                        />
+                        {lastQuestion && (
+                            <button
+                                className={styles.clearButton}
+                                onClick={clearAnswer}
+                                disabled={isLoading}
+                            >
+                                <Icon iconName="Clear" />
+                                {t("playground.clearAnswer")}
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Answer Display */}
+                    <div className={styles.answerContainer}>
+                        {isLoading && !streamedAnswer && (
+                            <div className={styles.loadingContainer}>
+                                <Spinner size={SpinnerSize.large} label={t("playground.loading")} />
+                            </div>
+                        )}
+
+                        {error && (
+                            <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
+                                {t("playground.error")}: {error.message}
+                            </MessageBar>
+                        )}
+
+                        {displayAnswer && (
+                            <Answer
+                                answer={displayAnswer}
+                                index={0}
+                                speechConfig={dummySpeechConfig}
+                                isSelected={false}
+                                isStreaming={isStreaming}
+                                onCitationClicked={() => {}}
+                                onThoughtProcessClicked={() => {}}
+                                onSupportingContentClicked={() => {}}
+                                showFollowupQuestions={false}
+                            />
+                        )}
+                    </div>
+
+                    {/* Debug Panel */}
+                    <div className={styles.debugPanel}>
+                        <button
+                            className={styles.debugToggle}
+                            onClick={() => setShowDebugPanel(!showDebugPanel)}
+                        >
+                            {showDebugPanel ? <ChevronUp24Regular /> : <ChevronDown24Regular />}
+                            {t("playground.debugPanel.title")}
+                        </button>
+
+                        {showDebugPanel && (
+                            <div className={styles.debugContent}>
+                                <div className={styles.debugSection}>
+                                    <h4>{t("playground.debugPanel.overrides")}</h4>
+                                    <pre className={styles.debugJson}>
+                                        {lastOverrides
+                                            ? JSON.stringify(lastOverrides, null, 2)
+                                            : t("playground.debugPanel.noRequest")}
+                                    </pre>
+                                </div>
+                                <div className={styles.debugSection}>
+                                    <h4>{t("playground.debugPanel.response")}</h4>
+                                    <pre className={styles.debugJson}>
+                                        {displayAnswer
+                                            ? JSON.stringify({
+                                                message: displayAnswer.message,
+                                                context: {
+                                                    thoughts: displayAnswer.context?.thoughts,
+                                                    data_points_count: {
+                                                        text: displayAnswer.context?.data_points?.text?.length || 0,
+                                                        images: displayAnswer.context?.data_points?.images?.length || 0,
+                                                        citations: displayAnswer.context?.data_points?.citations?.length || 0
+                                                    },
+                                                    followup_questions: displayAnswer.context?.followup_questions
+                                                }
+                                            }, null, 2)
+                                            : t("playground.debugPanel.noResponse")}
+                                    </pre>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </section>
 
                 {/* Info Banner */}
                 <div className={styles.infoBanner}>

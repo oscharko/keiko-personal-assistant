@@ -91,7 +91,9 @@
       "search": "Search & Retrieval",
       "searchDescription": "Fine-tune how the system searches and retrieves relevant information from your knowledge base.",
       "llm": "Language Model",
-      "llmDescription": "Adjust the behavior and creativity of the underlying language model."
+      "llmDescription": "Adjust the behavior and creativity of the underlying language model.",
+      "testInterface": "Test Interface",
+      "testInterfaceDescription": "Test your parameter configuration by sending a question to the RAG system. The response will be displayed below along with debug information."
     },
     "explanations": {
       "streaming": "When enabled, responses appear word-by-word as they are generated, providing a more interactive experience. Disable for complete responses delivered all at once.",
@@ -117,12 +119,9 @@
       "topP": "Nucleus sampling parameter. Lower values (0.1-0.5) make responses more focused, higher values (0.9-1.0) allow more diverse word choices.",
       "frequencyPenalty": "Reduces repetition by penalizing tokens based on how often they appear. Positive values discourage repetition, negative values encourage it.",
       "presencePenalty": "Encourages the model to explore new topics. Positive values promote topic diversity, negative values keep responses focused on existing topics.",
-      "maxHistoryMessages": "Number of previous messages to include as context. More history provides better context but increases token usage.",
       "stopSequences": "Comma-separated sequences that will stop the AI's response when encountered. Useful for controlling response format.",
       "reasoningEffort": "Controls how much the model 'thinks' before responding. Higher effort produces more thorough answers but takes longer.",
       "promptTemplate": "Customize the instructions given to the AI. Use '>>>' at the start to append to the default prompt instead of replacing it.",
-      "promptTemplatePrefix": "Text to prepend before the main prompt. Useful for adding consistent context or instructions.",
-      "promptTemplateSuffix": "Text to append after the main prompt. Useful for adding consistent closing instructions or format requirements.",
       "textSources": "Include text content from retrieved documents as context for the AI's response.",
       "imageSources": "Include images from retrieved documents as visual context for the AI's response."
     },
@@ -130,8 +129,6 @@
       "excludeCategory": "Enter category to exclude...",
       "seed": "Enter a number for reproducibility...",
       "promptTemplate": "Enter custom instructions for the AI...",
-      "promptTemplatePrefix": "Enter text to prepend to the prompt...",
-      "promptTemplateSuffix": "Enter text to append to the prompt...",
       "stopSequences": "Enter comma-separated stop sequences..."
     },
     "temperatureLabels": {
@@ -182,7 +179,18 @@
       "understood": "Got it!"
     },
     "explainFunction": "Explain the function",
-    "close": "Close"
+    "close": "Close",
+    "testPlaceholder": "Enter a test question to see how your parameters affect the response...",
+    "clearAnswer": "Clear Answer",
+    "loading": "Processing your question...",
+    "error": "An error occurred",
+    "debugPanel": {
+      "title": "Debug Information",
+      "overrides": "Request Overrides (sent to backend)",
+      "response": "Response Summary",
+      "noRequest": "No request sent yet. Enter a question above to test your parameters.",
+      "noResponse": "No response received yet."
+    }
   },
   "chatEmptyStateTitle": "Keiko",
   "chatEmptyStateSubtitle": "Ask anything or try an example",
@@ -284,10 +292,7 @@
     "topP": "Top P (Nucleus Sampling)",
     "frequencyPenalty": "Frequency penalty",
     "presencePenalty": "Presence penalty",
-    "maxHistoryMessages": "Maximum history messages",
     "stopSequences": "Stop sequences",
-    "promptTemplatePrefix": "Prompt prefix",
-    "promptTemplateSuffix": "Prompt suffix",
     "vectorK": "Vector K (Nearest Neighbors)",
     "useQueryAnswer": "Use extractive answers"
   },
