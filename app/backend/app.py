@@ -609,14 +609,48 @@ async def upload(auth_claims: dict[str, Any]):
 @bp.post("/delete_uploaded")
 @authenticated
 async def delete_uploaded(auth_claims: dict[str, Any]):
+    """Delete an uploaded document and remove it from the search index.
+
+    This endpoint removes both the blob from storage and all associated
+    index entries for the user's document.
+    """
     request_json = await request.get_json()
     filename = request_json.get("filename")
+
+    if not filename:
+        return jsonify({"message": "Filename is required", "status": "failed"}), 400
+
     user_oid = auth_claims["oid"]
-    adls_manager: AdlsBlobManager = current_app.config[CONFIG_USER_BLOB_MANAGER]
-    await adls_manager.remove_blob(filename, user_oid)
-    ingester: UploadUserFileStrategy = current_app.config[CONFIG_INGESTER]
-    await ingester.remove_file(filename, user_oid)
-    return jsonify({"message": f"File {filename} deleted successfully"}), 200
+    current_app.logger.info(
+        "Deleting file '%s' for user '%s'",
+        filename,
+        user_oid,
+    )
+
+    try:
+        # Step 1: Remove blob from storage
+        adls_manager: AdlsBlobManager = current_app.config[CONFIG_USER_BLOB_MANAGER]
+        await adls_manager.remove_blob(filename, user_oid)
+        current_app.logger.info("Blob '%s' removed from storage", filename)
+
+        # Step 2: Remove index entries
+        ingester: UploadUserFileStrategy = current_app.config[CONFIG_INGESTER]
+        await ingester.remove_file(filename, user_oid)
+        current_app.logger.info("Index entries for '%s' removed", filename)
+
+        return jsonify({"message": f"File {filename} deleted successfully"}), 200
+
+    except Exception as error:
+        current_app.logger.error(
+            "Error deleting file '%s' for user '%s': %s",
+            filename,
+            user_oid,
+            error,
+        )
+        return jsonify({
+            "message": f"Error deleting file {filename}, check server logs for details.",
+            "status": "failed",
+        }), 500
 
 
 @bp.get("/list_uploaded")

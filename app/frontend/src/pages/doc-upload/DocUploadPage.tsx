@@ -177,52 +177,51 @@ export function Component(): JSX.Element {
                 <div className={styles.documentList}>
                     <h2 className={styles.listHeader}>{t("upload.uploadedFiles", "Uploaded Documents")}</h2>
                     {isLoading ? <div className={styles.spinner}><Spinner size={SpinnerSize.large}/></div> : (
-                        <table className={styles.table}>
-                            <thead>
-                            <tr>
-                                <th>{t("upload.filename", "Filename")}</th>
-                                <th>{t("upload.actions", "Actions")}</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {files.length === 0 ? (
+                        <div className={styles.tableWrapper}>
+                            <table className={styles.table}>
+                                <thead>
                                 <tr>
-                                    <td colSpan={2}
-                                        className={styles.noFiles}>{t("upload.noFiles", "No files uploaded")}</td>
+                                    <th>{t("upload.filename", "Filename")}</th>
+                                    <th>{t("upload.actions", "Actions")}</th>
                                 </tr>
-                            ) : files.map((file, i) => (
-                                <tr key={i}>
-                                    <td>{file}</td>
-                                    <td>
-                                        {/*                                    <button className={styles.deleteButton} onClick={() => handleDelete(file)}
-                                            title={t("upload.delete", "Delete")}>
-                                        <Icon iconName="Delete"/></button>*/}
-                                        <IconButton
-                                            iconProps={{iconName: "Delete"}}
-                                            title={t("upload.delete")}
-                                            ariaLabel={t("delete", "Delete")}
-                                            onClick={() => handleDelete(file)}
-                                            styles={{
-                                                root: {
-                                                    backgroundColor: "#DCFF4A",
-                                                    color: "#000",
-                                                    marginLeft: "8px",
-                                                    borderRadius: "20%",
-                                                    border: "1px solid #000"
-                                                },
-                                                rootHovered: {
-                                                    backgroundColor: "#000",
-                                                    color: "#fff",
-                                                    borderRadius: "20%",
-                                                    border: "1px solid #DCFF4A"
-                                                }
-                                            }}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                {files.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={2}
+                                            className={styles.noFiles}>{t("upload.noFiles", "No files uploaded")}</td>
+                                    </tr>
+                                ) : files.map((file, i) => (
+                                    <tr key={i}>
+                                        <td>{file}</td>
+                                        <td>
+                                            <IconButton
+                                                iconProps={{iconName: "Delete"}}
+                                                title={t("upload.delete")}
+                                                ariaLabel={t("delete", "Delete")}
+                                                onClick={() => handleDelete(file)}
+                                                styles={{
+                                                    root: {
+                                                        backgroundColor: "#DCFF4A",
+                                                        color: "#000",
+                                                        marginLeft: "8px",
+                                                        borderRadius: "20%",
+                                                        border: "1px solid #000"
+                                                    },
+                                                    rootHovered: {
+                                                        backgroundColor: "#000",
+                                                        color: "#fff",
+                                                        borderRadius: "20%",
+                                                        border: "1px solid #DCFF4A"
+                                                    }
+                                                }}
+                                            />
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
 
@@ -237,4 +236,3 @@ export function Component(): JSX.Element {
 }
 
 Component.displayName = "DocUploadPage";
-

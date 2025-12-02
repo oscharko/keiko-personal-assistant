@@ -4,22 +4,42 @@
  * understanding RAG (Retrieval-Augmented Generation) system parameters.
  * Now includes full API integration for testing parameters in real-time.
  */
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Icon, Slider, Toggle, Dropdown, IDropdownOption, TextField, TooltipHost, Spinner, SpinnerSize, MessageBar, MessageBarType } from "@fluentui/react";
-import { useTranslation } from "react-i18next";
-import { Helmet } from "react-helmet-async";
-import { Info16Regular, Info24Regular, ChevronDown24Regular, ChevronUp24Regular } from "@fluentui/react-icons";
-import { useMsal } from "@azure/msal-react";
+import React, {useContext, useEffect, useRef, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {
+    Dropdown,
+    Icon,
+    IDropdownOption,
+    MessageBar,
+    MessageBarType,
+    Slider,
+    Spinner,
+    SpinnerSize,
+    TextField,
+    Toggle,
+    TooltipHost
+} from "@fluentui/react";
+import {useTranslation} from "react-i18next";
+import {Helmet} from "react-helmet-async";
+import {ChevronDown24Regular, ChevronUp24Regular, Info16Regular, Info24Regular} from "@fluentui/react-icons";
+import {useMsal} from "@azure/msal-react";
 
 import styles from "./Playground.module.css";
-import { chatApi, ChatAppRequest, ChatAppRequestOverrides, ChatAppResponse, ChatAppResponseOrError, configApi, ResponseMessage, RetrievalMode } from "../../api";
-import { VectorSettings } from "../../components/VectorSettings";
-import { PlaygroundInfoDialog } from "./PlaygroundInfoDialog";
-import { QuestionInput } from "../../components/QuestionInput";
-import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
-import { getToken, useLogin } from "../../authConfig";
-import { LoginContext } from "../../loginContext";
+import {
+    chatApi,
+    ChatAppRequest,
+    ChatAppRequestOverrides,
+    ChatAppResponse,
+    ChatAppResponseOrError,
+    configApi,
+    RetrievalMode
+} from "../../api";
+import {VectorSettings} from "../../components/VectorSettings";
+import {PlaygroundInfoDialog} from "./PlaygroundInfoDialog";
+import {QuestionInput} from "../../components/QuestionInput";
+import {Answer} from "../../components/Answer";
+import {getToken, useLogin} from "../../authConfig";
+import {LoginContext} from "../../loginContext";
 
 /**
  * Parameter card component for displaying individual settings with explanations.
@@ -31,14 +51,14 @@ interface ParameterCardProps {
     icon?: string;
 }
 
-const ParameterCard: React.FC<ParameterCardProps> = ({ title, description, children, icon }) => {
+const ParameterCard: React.FC<ParameterCardProps> = ({title, description, children, icon}) => {
     return (
         <div className={styles.parameterCard}>
             <div className={styles.parameterHeader}>
-                {icon && <Icon iconName={icon} className={styles.parameterIcon} />}
+                {icon && <Icon iconName={icon} className={styles.parameterIcon}/>}
                 <h3 className={styles.parameterTitle}>{title}</h3>
                 <TooltipHost content={description}>
-                    <Info16Regular className={styles.infoIcon} />
+                    <Info16Regular className={styles.infoIcon}/>
                 </TooltipHost>
             </div>
             <p className={styles.parameterDescription}>{description}</p>
@@ -59,10 +79,10 @@ async function* readNDJSONStream(reader: ReadableStream<any>) {
 
     try {
         while (true) {
-            const { done, value } = await streamReader.read();
+            const {done, value} = await streamReader.read();
             if (done) break;
 
-            buffer += textDecoder.decode(value, { stream: true });
+            buffer += textDecoder.decode(value, {stream: true});
             const lines = buffer.split("\n");
             buffer = lines.pop() || "";
 
@@ -81,12 +101,12 @@ async function* readNDJSONStream(reader: ReadableStream<any>) {
 }
 
 export function Component(): JSX.Element {
-    const { t, i18n } = useTranslation();
+    const {t, i18n} = useTranslation();
     const navigate = useNavigate();
 
     // Authentication
     const client = useLogin ? useMsal().instance : undefined;
-    const { loggedIn } = useContext(LoginContext);
+    const {loggedIn} = useContext(LoginContext);
 
     // Info dialog state
     const [showInfoDialog, setShowInfoDialog] = useState<boolean>(false);
@@ -155,10 +175,12 @@ export function Component(): JSX.Element {
     // Dummy speech config for Answer component (not used in playground)
     const dummySpeechConfig = {
         speechUrls: [],
-        setSpeechUrls: () => {},
+        setSpeechUrls: () => {
+        },
         audio: useRef(new Audio()).current,
         isPlaying: false,
-        setIsPlaying: () => {}
+        setIsPlaying: () => {
+        }
     };
 
     // Load configuration on mount
@@ -199,16 +221,16 @@ export function Component(): JSX.Element {
     }, []);
 
     const retrievalReasoningOptions: IDropdownOption[] = [
-        { key: "minimal", text: t("labels.agenticReasoningEffortOptions.minimal") },
-        { key: "low", text: t("labels.agenticReasoningEffortOptions.low") },
-        { key: "medium", text: t("labels.agenticReasoningEffortOptions.medium") }
+        {key: "minimal", text: t("labels.agenticReasoningEffortOptions.minimal")},
+        {key: "low", text: t("labels.agenticReasoningEffortOptions.low")},
+        {key: "medium", text: t("labels.agenticReasoningEffortOptions.medium")}
     ];
 
     const reasoningEffortOptions: IDropdownOption[] = [
-        { key: "minimal", text: t("labels.reasoningEffortOptions.minimal") },
-        { key: "low", text: t("labels.reasoningEffortOptions.low") },
-        { key: "medium", text: t("labels.reasoningEffortOptions.medium") },
-        { key: "high", text: t("labels.reasoningEffortOptions.high") }
+        {key: "minimal", text: t("labels.reasoningEffortOptions.minimal")},
+        {key: "low", text: t("labels.reasoningEffortOptions.low")},
+        {key: "medium", text: t("labels.reasoningEffortOptions.medium")},
+        {key: "high", text: t("labels.reasoningEffortOptions.high")}
     ];
 
     /**
@@ -221,7 +243,7 @@ export function Component(): JSX.Element {
             include_category: includeCategory.length === 0 ? undefined : includeCategory,
             exclude_category: excludeCategory.length === 0 ? undefined : excludeCategory,
             top: retrieveCount,
-            ...(useAgenticKnowledgeBase ? { retrieval_reasoning_effort: agenticReasoningEffort } : {}),
+            ...(useAgenticKnowledgeBase ? {retrieval_reasoning_effort: agenticReasoningEffort} : {}),
             temperature: temperature,
             minimum_reranker_score: minimumRerankerScore,
             minimum_search_score: minimumSearchScore,
@@ -247,8 +269,8 @@ export function Component(): JSX.Element {
             top_p: topP,
             // Additional retrieval parameters
             vector_k: vectorK,
-            ...(stopSequences.length > 0 ? { stop_sequences: stopSequences.split(",").map(s => s.trim()) } : {}),
-            ...(seed !== null ? { seed: seed } : {})
+            ...(stopSequences.length > 0 ? {stop_sequences: stopSequences.split(",").map(s => s.trim())} : {}),
+            ...(seed !== null ? {seed: seed} : {})
         };
     };
 
@@ -265,7 +287,7 @@ export function Component(): JSX.Element {
                     answerContent += newContent;
                     const latestResponse: ChatAppResponse = {
                         ...askResponse,
-                        message: { content: answerContent, role: askResponse.message.role }
+                        message: {content: answerContent, role: askResponse.message.role}
                     };
                     setStreamedAnswer(latestResponse);
                     resolve(null);
@@ -283,7 +305,7 @@ export function Component(): JSX.Element {
                     setIsLoading(false);
                     await updateState(event["delta"]["content"]);
                 } else if (event["context"]) {
-                    askResponse.context = { ...askResponse.context, ...event["context"] };
+                    askResponse.context = {...askResponse.context, ...event["context"]};
                 } else if (event["error"]) {
                     throw Error(event["error"]);
                 }
@@ -294,7 +316,7 @@ export function Component(): JSX.Element {
 
         return {
             ...askResponse,
-            message: { content: answerContent, role: askResponse.message.role }
+            message: {content: answerContent, role: askResponse.message.role}
         };
     };
 
@@ -314,8 +336,8 @@ export function Component(): JSX.Element {
 
         try {
             const request: ChatAppRequest = {
-                messages: [{ content: question, role: "user" }],
-                context: { overrides },
+                messages: [{content: question, role: "user"}],
+                context: {overrides},
                 session_state: null
             };
 
@@ -375,11 +397,11 @@ export function Component(): JSX.Element {
                         onClick={() => setShowInfoDialog(true)}
                         title={t("playground.explainFunction")}
                     >
-                        <Info24Regular />
+                        <Info24Regular/>
                         {t("playground.explainFunction")}
                     </button>
                     <button className={styles.backButton} onClick={() => navigate("/")}>
-                        <Icon iconName="Back" />
+                        <Icon iconName="Back"/>
                         {t("playground.backToChat")}
                     </button>
                 </div>
@@ -389,7 +411,7 @@ export function Component(): JSX.Element {
                 {/* Response Settings Section */}
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
-                        <Icon iconName="Chat" className={styles.sectionIcon} />
+                        <Icon iconName="Chat" className={styles.sectionIcon}/>
                         <h2 className={styles.sectionTitle}>{t("playground.sections.response")}</h2>
                     </div>
                     <div className={styles.sectionDescription}>
@@ -429,7 +451,7 @@ export function Component(): JSX.Element {
                 {/* Search Settings Section */}
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
-                        <Icon iconName="Search" className={styles.sectionIcon} />
+                        <Icon iconName="Search" className={styles.sectionIcon}/>
                         <h2 className={styles.sectionTitle}>{t("playground.sections.search")}</h2>
                     </div>
                     <div className={styles.sectionDescription}>
@@ -653,7 +675,7 @@ export function Component(): JSX.Element {
                         >
                             <Dropdown
                                 selectedKey={includeCategory}
-                                options={[{ key: "", text: t("labels.includeCategoryOptions.all") }]}
+                                options={[{key: "", text: t("labels.includeCategoryOptions.all")}]}
                                 onChange={(_, option) => setIncludeCategory(option?.key?.toString() ?? "")}
                                 className={styles.dropdown}
                             />
@@ -677,7 +699,7 @@ export function Component(): JSX.Element {
                 {!useWebSource && (
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
-                            <Icon iconName="MachineLearning" className={styles.sectionIcon} />
+                            <Icon iconName="MachineLearning" className={styles.sectionIcon}/>
                             <h2 className={styles.sectionTitle}>{t("playground.sections.llm")}</h2>
                         </div>
                         <div className={styles.sectionDescription}>
@@ -870,7 +892,7 @@ export function Component(): JSX.Element {
                 {/* Test Interface Section */}
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
-                        <Icon iconName="TestBeaker" className={styles.sectionIcon} />
+                        <Icon iconName="TestBeaker" className={styles.sectionIcon}/>
                         <h2 className={styles.sectionTitle}>{t("playground.sections.testInterface")}</h2>
                     </div>
                     <div className={styles.sectionDescription}>
@@ -891,7 +913,7 @@ export function Component(): JSX.Element {
                                 onClick={clearAnswer}
                                 disabled={isLoading}
                             >
-                                <Icon iconName="Clear" />
+                                <Icon iconName="Clear"/>
                                 {t("playground.clearAnswer")}
                             </button>
                         )}
@@ -901,7 +923,7 @@ export function Component(): JSX.Element {
                     <div className={styles.answerContainer}>
                         {isLoading && !streamedAnswer && (
                             <div className={styles.loadingContainer}>
-                                <Spinner size={SpinnerSize.large} label={t("playground.loading")} />
+                                <Spinner size={SpinnerSize.large} label={t("playground.loading")}/>
                             </div>
                         )}
 
@@ -918,9 +940,12 @@ export function Component(): JSX.Element {
                                 speechConfig={dummySpeechConfig}
                                 isSelected={false}
                                 isStreaming={isStreaming}
-                                onCitationClicked={() => {}}
-                                onThoughtProcessClicked={() => {}}
-                                onSupportingContentClicked={() => {}}
+                                onCitationClicked={() => {
+                                }}
+                                onThoughtProcessClicked={() => {
+                                }}
+                                onSupportingContentClicked={() => {
+                                }}
                                 showFollowupQuestions={false}
                             />
                         )}
@@ -932,7 +957,7 @@ export function Component(): JSX.Element {
                             className={styles.debugToggle}
                             onClick={() => setShowDebugPanel(!showDebugPanel)}
                         >
-                            {showDebugPanel ? <ChevronUp24Regular /> : <ChevronDown24Regular />}
+                            {showDebugPanel ? <ChevronUp24Regular/> : <ChevronDown24Regular/>}
                             {t("playground.debugPanel.title")}
                         </button>
 
@@ -969,20 +994,11 @@ export function Component(): JSX.Element {
                         )}
                     </div>
                 </section>
-
-                {/* Info Banner */}
-                <div className={styles.infoBanner}>
-                    <Icon iconName="Info" className={styles.infoBannerIcon} />
-                    <div className={styles.infoBannerContent}>
-                        <h3>{t("playground.info.title")}</h3>
-                        <p>{t("playground.info.description")}</p>
-                    </div>
-                </div>
             </div>
 
             {/* Info Dialog */}
             {showInfoDialog && (
-                <PlaygroundInfoDialog onClose={() => setShowInfoDialog(false)} />
+                <PlaygroundInfoDialog onClose={() => setShowInfoDialog(false)}/>
             )}
         </div>
     );

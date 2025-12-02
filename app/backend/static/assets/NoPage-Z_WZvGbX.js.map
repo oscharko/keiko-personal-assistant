@@ -1,0 +1,1 @@
+{"version":3,"file":"NoPage-Z_WZvGbX.js","sources":["../../../frontend/src/pages/NoPage.tsx"],"sourcesContent":["export function Component(): JSX.Element {\n    return <h1>404</h1>;\n}\n\nComponent.displayName = \"NoPage\";\n"],"names":["Component","jsx"],"mappings":"wCAAO,SAASA,GAAyB,CACrC,OAAOC,EAAAA,IAAC,MAAG,SAAA,KAAA,CAAG,CAClB,CAEAD,EAAU,YAAc"}

@@ -651,35 +651,108 @@ class SearchManager:
                         logger.info("Successfully uploaded document %s", r.key)
 
     async def remove_content(self, path: Optional[str] = None, only_oid: Optional[str] = None):
+        """
+        Remove content from the search index.
+
+        When a user deletes their uploaded file, ALL index entries for that file
+        should be removed, regardless of the oids value. This handles:
+        - oids == [] (legacy documents uploaded before access control)
+        - oids == ["all"] (shared documents)
+        - oids == [user_oid] (user-specific documents)
+        - oids == None (documents without oids field)
+
+        Args:
+            path: Optional filename to filter by. If None, removes all content.
+            only_oid: Optional user OID. Used for logging purposes only.
+                      All documents matching the path filter will be removed.
+        """
         logger.info(
-            "Removing sections from '{%s or '<all>'}' from search index '%s'", path, self.search_info.index_name
+            "Removing sections from '%s' from search index '%s' (requested by oid=%s)",
+            path or "<all>",
+            self.search_info.index_name,
+            only_oid,
         )
         async with self.search_info.create_search_client() as search_client:
+            total_removed = 0
             while True:
-                filter = None
+                # Build the OData filter - only filter by sourcefile
+                # We remove ALL documents matching the filename, regardless of oids
+                filter_str = None
                 if path is not None:
                     # Replace ' with '' to escape the single quote for the filter
                     # https://learn.microsoft.com/azure/search/query-odata-filter-orderby-syntax#escaping-special-characters-in-string-constants
                     path_for_filter = os.path.basename(path).replace("'", "''")
-                    filter = f"sourcefile eq '{path_for_filter}'"
+                    filter_str = f"sourcefile eq '{path_for_filter}'"
+
+                logger.debug("Using OData filter: %s", filter_str)
+
                 max_results = 1000
-                result = await search_client.search(
-                    search_text="", filter=filter, top=max_results, include_total_count=True
-                )
-                result_count = await result.get_count()
+                try:
+                    result = await search_client.search(
+                        search_text="",
+                        filter=filter_str,
+                        top=max_results,
+                        include_total_count=True,
+                        select=["id", "oids"],  # Request oids for logging
+                    )
+                    result_count = await result.get_count()
+                except Exception as e:
+                    logger.error("Error searching for documents to remove: %s", e)
+                    raise
+
+                logger.debug("Found %d documents matching filter", result_count)
+
                 if result_count == 0:
                     break
+
+                # Remove ALL documents matching the sourcefile filter
                 documents_to_remove = []
                 async for document in result:
-                    # If only_oid is set, only remove documents that have only this oid
-                    if not only_oid or document.get("oids") == [only_oid]:
-                        documents_to_remove.append({"id": document["id"]})
+                    doc_oids = document.get("oids")
+                    logger.debug(
+                        "Marking document for removal: id=%s, oids=%s",
+                        document["id"],
+                        doc_oids,
+                    )
+                    documents_to_remove.append({"id": document["id"]})
+
+                logger.info(
+                    "Found %d documents to remove (matching sourcefile filter)",
+                    len(documents_to_remove),
+                )
+
                 if len(documents_to_remove) == 0:
-                    if result_count < max_results:
-                        break
-                    else:
-                        continue
-                removed_docs = await search_client.delete_documents(documents_to_remove)
-                logger.info("Removed %d sections from index", len(removed_docs))
-                # It can take a few seconds for search results to reflect changes, so wait a bit
+                    # No more documents to remove
+                    break
+
+                try:
+                    removed_docs = await search_client.delete_documents(documents_to_remove)
+                    successful_removals = sum(1 for r in removed_docs if r.succeeded)
+                    failed_removals = sum(1 for r in removed_docs if not r.succeeded)
+
+                    if failed_removals > 0:
+                        for r in removed_docs:
+                            if not r.succeeded:
+                                logger.error(
+                                    "Failed to remove document %s: %s",
+                                    r.key,
+                                    r.error_message,
+                                )
+
+                    total_removed += successful_removals
+                    logger.info(
+                        "Removed %d sections from index (failed: %d)",
+                        successful_removals,
+                        failed_removals,
+                    )
+                except Exception as e:
+                    logger.error("Error deleting documents from index: %s", e)
+                    raise
+
+                # It can take a few seconds for search results to reflect changes
                 await asyncio.sleep(2)
+
+            logger.info(
+                "Finished removing content from index. Total removed: %d",
+                total_removed,
+            )
