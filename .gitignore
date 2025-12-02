@@ -1,88 +1,375 @@
-### JetBrains template
-# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
-# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+# =============================================================================
+# Comprehensive .gitignore for keiko-personal-assistant
+# =============================================================================
 
-# User-specific stuff
-.idea/**/workspace.xml
-.idea/**/tasks.xml
-.idea/**/usage.statistics.xml
-.idea/**/dictionaries
-.idea/**/shelf
+# =============================================================================
+# Python
+# =============================================================================
 
-# AWS User-specific
-.idea/**/aws.xml
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Generated files
-.idea/**/contentModel.xml
+# C extensions
+*.so
 
-# Sensitive or high-churn files
-.idea/**/dataSources/
-.idea/**/dataSources.ids
-.idea/**/dataSources.local.xml
-.idea/**/sqlDataSources.xml
-.idea/**/dynamic.xml
-.idea/**/uiDesigner.xml
-.idea/**/dbnavigator.xml
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Gradle
-.idea/**/gradle.xml
-.idea/**/libraries
+# PyInstaller
+*.manifest
+*.spec
 
-# Gradle and Maven with auto-import
-# When using Gradle or Maven with auto-import, you should exclude module files,
-# since they will be recreated, and may cause churn.  Uncomment if using
-# auto-import.
-# .idea/artifacts
-# .idea/compiler.xml
-# .idea/jarRepositories.xml
-# .idea/modules.xml
-# .idea/*.iml
-# .idea/modules
-# *.iml
-# *.ipr
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
-# CMake
-cmake-build-*/
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytest_cache/
 
-# Mongo Explorer plugin
-.idea/**/mongoSettings.xml
+# Translations
+*.mo
+*.pot
 
-# File-based project format
-*.iws
+# Sphinx documentation
+docs/_build/
 
-# IntelliJ
-out/
+# PyBuilder
+.pybuilder/
+target/
 
-# mpeltonen/sbt-idea plugin
-.idea_modules/
+# Jupyter Notebook
+.ipynb_checkpoints
 
-# JIRA plugin
-atlassian-ide-plugin.xml
+# IPython
+profile_default/
+ipython_config.py
 
-# Cursive Clojure plugin
-.idea/replstate.xml
+# pyenv
+.python-version
 
-# SonarLint plugin
-.idea/sonarlint/
+# pipenv
+Pipfile.lock
 
-# Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
-fabric.properties
+# PEP 582
+__pypackages__/
 
-# Editor-based Rest Client
-.idea/httpRequests
+# Celery
+celerybeat-schedule
+celerybeat.pid
 
-# Android studio 3.1+ serialized cache file
-.idea/caches/build_file_checksums.ser
+# SageMath parsed files
+*.sage.py
 
-/.augment/
-/docs/internal/
-/.azure/
-/scripts/.venv/
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.virtualenv/
 
-# Node.js / npm / yarn
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# =============================================================================
+# Node.js / JavaScript / TypeScript
+# =============================================================================
+
+# Dependencies
+node_modules/
+jspm_packages/
+bower_components/
+
+# Build outputs
+dist/
+.next/
+.nuxt/
+.output/
+.cache/
+
+# Package manager files
 # We use yarn, so ignore npm lock files
 package-lock.json
+.npm
+.yarn-integrity
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# TypeScript
+*.tsbuildinfo
+
+# Parcel cache
+.parcel-cache
+
+# Vite
+*.local
+
+# =============================================================================
+# IDE and Editors
+# =============================================================================
+
+# JetBrains IDEs (PyCharm, WebStorm, IntelliJ, etc.)
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*.swn
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# TextMate
+*.tmproj
+*.tmproject
+tmtags
+
+# =============================================================================
+# Operating System
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# Azure / Cloud
+# =============================================================================
+
+# Azure Developer CLI
+/.azure/
+
+# Azure Functions
+local.settings.json
+.python_packages/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# =============================================================================
+# Docker
+# =============================================================================
+
+# Docker
+.docker/
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# =============================================================================
+# Logs and Databases
+# =============================================================================
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# =============================================================================
+# Environment and Secrets
+# =============================================================================
+
+# Environment files (keep .env.example if it exists)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+!.env.sample
+
+# Backend specific
 /app/backend/.env
+
+# =============================================================================
+# Project Specific
+# =============================================================================
+
+# Augment AI
+/.augment/
+
+# Internal documentation
+/docs/internal/
+
+# Scripts virtual environment
+/scripts/.venv/
+
+# =============================================================================
+# Large Files (exceeding GitHub's 100MB limit)
+# =============================================================================
+
+# Large PDF files in data and docs directories
+/data/*.pdf
+/docs/*.pdf
+
+# =============================================================================
+# Miscellaneous
+# =============================================================================
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Certificates and keys (be careful with these)
+*.pem
+*.key
+*.crt
+!*.example.pem
+!*.example.key
