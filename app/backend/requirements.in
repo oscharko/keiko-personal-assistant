@@ -32,3 +32,5 @@ prompty
 rich
 typing-extensions
 apscheduler
+numpy
+scikit-learn
