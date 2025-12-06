@@ -170,6 +170,10 @@ class IdeasService:
         """
         Create a new idea in the database.
 
+        Generates an embedding for the idea to enable semantic similarity search.
+        The embedding is generated synchronously during creation to ensure
+        immediate availability for similarity detection.
+
         Args:
             idea: The idea to create.
             user_id: ID of the user creating the idea (for audit).
@@ -186,6 +190,19 @@ class IdeasService:
             idea.created_at = current_time
         if not idea.updated_at:
             idea.updated_at = current_time
+
+        # Generate embedding for semantic similarity search
+        if self.openai_client and not idea.embedding:
+            try:
+                text_for_embedding = idea.get_text_for_embedding()
+                idea.embedding = await self.generate_embedding(text_for_embedding)
+                logger.info(
+                    f"Generated embedding for idea {idea.idea_id} "
+                    f"({len(idea.embedding)} dimensions)"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to generate embedding for idea: {e}")
+                # Continue without embedding - it can be generated later by scheduler
 
         # Save to Cosmos DB
         cosmos_item = idea.to_cosmos_item()

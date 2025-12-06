@@ -30,9 +30,11 @@ from typing import Any
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app", "backend"))
 
 from azure.cosmos.aio import CosmosClient
-from azure.identity.aio import DefaultAzureCredential
+from azure.identity.aio import DefaultAzureCredential, get_bearer_token_provider
+from openai import AsyncAzureOpenAI
 
 from ideas.models import Idea, IdeaStatus, RecommendationClass
+from ideas.service import IdeasService
 
 
 # Test data: 45 ideas distributed across all 4 recommendation classes
@@ -715,12 +717,21 @@ SUBMITTER_NAMES = [
 async def seed_ideas():
     """
     Seed the Cosmos DB with test ideas.
+
+    Generates embeddings for each idea to enable semantic similarity search.
     """
     # Get environment variables
     cosmos_endpoint = os.getenv("AZURE_COSMOS_ENDPOINT")
     cosmos_key = os.getenv("AZURE_COSMOS_KEY")
     database_name = os.getenv("AZURE_IDEAS_DATABASE")
     container_name = os.getenv("AZURE_IDEAS_CONTAINER", "ideas")
+
+    # Azure OpenAI configuration for embedding generation
+    azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+    azure_openai_key = os.getenv("AZURE_OPENAI_KEY")
+    embedding_deployment = os.getenv(
+        "AZURE_OPENAI_EMB_DEPLOYMENT", "text-embedding-ada-002"
+    )
 
     if not cosmos_endpoint:
         print("Error: AZURE_COSMOS_ENDPOINT environment variable is required")
@@ -733,13 +744,47 @@ async def seed_ideas():
     print(f"Connecting to Cosmos DB at {cosmos_endpoint}")
     print(f"Database: {database_name}, Container: {container_name}")
 
+    # Create OpenAI client for embedding generation
+    openai_client = None
+    azure_credential = None
+    if azure_openai_endpoint:
+        print(f"Using Azure OpenAI at {azure_openai_endpoint}")
+        print(f"Embedding deployment: {embedding_deployment}")
+        if azure_openai_key:
+            openai_client = AsyncAzureOpenAI(
+                azure_endpoint=azure_openai_endpoint,
+                api_key=azure_openai_key,
+                api_version="2024-02-15-preview",
+            )
+        else:
+            print("Using DefaultAzureCredential for Azure OpenAI")
+            azure_credential = DefaultAzureCredential()
+            token_provider = get_bearer_token_provider(
+                azure_credential, "https://cognitiveservices.azure.com/.default"
+            )
+            openai_client = AsyncAzureOpenAI(
+                azure_endpoint=azure_openai_endpoint,
+                azure_ad_token_provider=token_provider,
+                api_version="2024-02-15-preview",
+            )
+    else:
+        print("Warning: AZURE_OPENAI_ENDPOINT not set - embeddings will not be generated")
+
     # Create Cosmos client
     if cosmos_key:
         client = CosmosClient(cosmos_endpoint, credential=cosmos_key)
     else:
-        print("Using DefaultAzureCredential for authentication")
+        print("Using DefaultAzureCredential for Cosmos DB")
         credential = DefaultAzureCredential()
         client = CosmosClient(cosmos_endpoint, credential=credential)
+
+    # Create IdeasService for embedding generation
+    ideas_service = None
+    if openai_client:
+        ideas_service = IdeasService(
+            openai_client=openai_client,
+            embedding_deployment=embedding_deployment,
+        )
 
     try:
         # Get database and container
@@ -748,6 +793,7 @@ async def seed_ideas():
 
         # Create ideas
         created_count = 0
+        embedding_count = 0
         base_time = int(time.time() * 1000)
 
         for i, idea_data in enumerate(TEST_IDEAS):
@@ -765,15 +811,45 @@ async def seed_ideas():
             department = idea_data.get("department", DEPARTMENTS[i % len(DEPARTMENTS)])
 
             # Determine status based on recommendation class
-            rec_class = idea_data.get("recommendation_class", RecommendationClass.UNCLASSIFIED.value)
+            rec_class = idea_data.get(
+                "recommendation_class", RecommendationClass.UNCLASSIFIED.value
+            )
             if rec_class == RecommendationClass.HIGH_LEVERAGE.value:
-                status = IdeaStatus.APPROVED.value if i % 3 == 0 else IdeaStatus.UNDER_REVIEW.value
+                status = (
+                    IdeaStatus.APPROVED.value
+                    if i % 3 == 0
+                    else IdeaStatus.UNDER_REVIEW.value
+                )
             elif rec_class == RecommendationClass.QUICK_WIN.value:
-                status = IdeaStatus.IMPLEMENTED.value if i % 4 == 0 else IdeaStatus.APPROVED.value
+                status = (
+                    IdeaStatus.IMPLEMENTED.value
+                    if i % 4 == 0
+                    else IdeaStatus.APPROVED.value
+                )
             elif rec_class == RecommendationClass.STRATEGIC.value:
                 status = IdeaStatus.UNDER_REVIEW.value
             else:
                 status = IdeaStatus.SUBMITTED.value
+
+            # Generate embedding for semantic similarity search
+            embedding = []
+            if ideas_service:
+                try:
+                    # Combine title, description, and problem description for embedding
+                    text_for_embedding = (
+                        f"{idea_data['title']}\n\n"
+                        f"{idea_data['description']}\n\n"
+                        f"{idea_data.get('problem_description', '')}"
+                    )
+                    embedding = await ideas_service.generate_embedding(text_for_embedding)
+                    if embedding:
+                        embedding_count += 1
+                        print(
+                            f"  Generated embedding ({len(embedding)} dimensions) "
+                            f"for idea {i + 1}/{len(TEST_IDEAS)}"
+                        )
+                except Exception as e:
+                    print(f"  Warning: Failed to generate embedding: {e}")
 
             # Create the Cosmos DB document
             cosmos_item = {
@@ -794,7 +870,7 @@ async def seed_ideas():
                 "updatedAt": updated_at,
                 "summary": f"AI-generated summary: {idea_data['description'][:150]}...",
                 "tags": idea_data.get("tags", []),
-                "embedding": [],  # Would be generated by the service
+                "embedding": embedding,
                 "impactScore": idea_data.get("impact_score", 0.0),
                 "feasibilityScore": idea_data.get("feasibility_score", 0.0),
                 "recommendationClass": rec_class,
@@ -807,11 +883,19 @@ async def seed_ideas():
             try:
                 await container.create_item(body=cosmos_item)
                 created_count += 1
-                print(f"Created idea {created_count}/{len(TEST_IDEAS)}: {idea_data['title'][:50]}...")
+                print(
+                    f"Created idea {created_count}/{len(TEST_IDEAS)}: "
+                    f"{idea_data['title'][:50]}..."
+                )
             except Exception as e:
                 print(f"Error creating idea '{idea_data['title']}': {e}")
 
+            # Small delay to avoid rate limiting on embedding API
+            if ideas_service:
+                await asyncio.sleep(0.2)
+
         print(f"\nSuccessfully created {created_count} ideas")
+        print(f"Generated embeddings for {embedding_count} ideas")
         print(f"\nIdeas by recommendation class:")
         print(f"  - HIGH_LEVERAGE: 12 ideas")
         print(f"  - QUICK_WIN: 11 ideas")
@@ -821,6 +905,10 @@ async def seed_ideas():
 
     finally:
         await client.close()
+        if openai_client:
+            await openai_client.close()
+        if azure_credential:
+            await azure_credential.close()
 
 
 async def clear_ideas():

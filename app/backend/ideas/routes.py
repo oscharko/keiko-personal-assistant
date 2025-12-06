@@ -268,6 +268,9 @@ async def create_idea(auth_claims: dict[str, Any]):
         if not description:
             return jsonify({"error": "Description is required"}), 400
 
+        # Extract similar ideas if provided
+        similar_ideas_data = request_json.get("similarIdeas", [])
+
         # Create idea object
         current_time = int(time.time() * 1000)
         idea = Idea(
@@ -283,6 +286,7 @@ async def create_idea(auth_claims: dict[str, Any]):
             status=IdeaStatus.SUBMITTED,
             created_at=current_time,
             updated_at=current_time,
+            similar_ideas=similar_ideas_data,
         )
 
         # Get service and create idea

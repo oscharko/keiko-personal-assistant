@@ -121,6 +121,9 @@ class Idea:
     analyzed_at: int = 0
     analysis_version: str = ""
 
+    # Similar ideas detected during creation
+    similar_ideas: list[dict[str, Any]] = field(default_factory=list)
+
     def to_cosmos_item(self) -> dict[str, Any]:
         """
         Convert the idea to a Cosmos DB document format.
@@ -153,6 +156,7 @@ class Idea:
             "clusterLabel": self.cluster_label,
             "analyzedAt": self.analyzed_at,
             "analysisVersion": self.analysis_version,
+            "similarIdeas": self.similar_ideas,
         }
 
     @classmethod
@@ -195,6 +199,7 @@ class Idea:
             cluster_label=item.get("clusterLabel", ""),
             analyzed_at=item.get("analyzedAt", 0),
             analysis_version=item.get("analysisVersion", ""),
+            similar_ideas=item.get("similarIdeas", []),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -248,15 +253,32 @@ class IdeaListResponse:
 class SimilarIdea:
     """Represents a similar idea found during duplicate detection."""
 
-    idea: Idea
+    idea_id: str
+    title: str
+    summary: str | None
     similarity_score: float
+    status: str
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON response."""
         return {
-            "idea": self.idea.to_cosmos_item(),
+            "ideaId": self.idea_id,
+            "title": self.title,
+            "summary": self.summary,
             "similarityScore": self.similarity_score,
+            "status": self.status,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SimilarIdea":
+        """Create instance from dictionary."""
+        return cls(
+            idea_id=data.get("ideaId", ""),
+            title=data.get("title", ""),
+            summary=data.get("summary"),
+            similarity_score=data.get("similarityScore", 0.0),
+            status=data.get("status", "submitted"),
+        )
 
 
 @dataclass

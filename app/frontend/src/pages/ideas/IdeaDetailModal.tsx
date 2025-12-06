@@ -11,7 +11,7 @@ import { useMsal } from "@azure/msal-react";
 import { useTranslation } from "react-i18next";
 
 import { deleteIdeaApi, addIdeaLikeApi, removeIdeaLikeApi, getIdeaEngagementApi, getIdeaCommentsApi, createIdeaCommentApi, updateIdeaCommentApi, deleteIdeaCommentApi } from "../../api";
-import { Idea, IdeaStatus, RecommendationClass, IdeaEngagement, IdeaComment } from "../../api/models";
+import { Idea, IdeaStatus, RecommendationClass, IdeaEngagement, IdeaComment, SimilarIdea } from "../../api/models";
 import { getToken, useLogin } from "../../authConfig";
 import styles from "./IdeaDetailModal.module.css";
 
@@ -448,6 +448,31 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
                             <div className={styles.itemsList}>
                                 {idea.targetUsers.map(user => (
                                     <span key={user} className={styles.listItem}>{user}</span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Similar Ideas */}
+                    {idea.similarIdeas && idea.similarIdeas.length > 0 && (
+                        <div className={styles.section}>
+                            <h3 className={styles.sectionTitle}>{t("ideas.similarIdeasSection")}</h3>
+                            <div className={styles.similarIdeasList}>
+                                {idea.similarIdeas.map((similarIdea: SimilarIdea) => (
+                                    <div key={similarIdea.ideaId} className={styles.similarIdeaItem}>
+                                        <div className={styles.similarIdeaTitle}>{similarIdea.title}</div>
+                                        <div className={styles.similarIdeaMeta}>
+                                            <span className={styles.similarIdeaScore}>
+                                                {Math.round(similarIdea.similarityScore * 100)}% {t("ideas.similar")}
+                                            </span>
+                                            <span className={styles.similarIdeaStatus}>
+                                                {t(`ideas.status.${similarIdea.status}`)}
+                                            </span>
+                                        </div>
+                                        {similarIdea.summary && (
+                                            <p className={styles.similarIdeaSummary}>{similarIdea.summary}</p>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>

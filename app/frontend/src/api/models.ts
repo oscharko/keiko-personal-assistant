@@ -274,6 +274,8 @@ export type Idea = {
     kpiEstimates?: IdeaKPIEstimates;
     // Clustering
     clusterLabel?: string;
+    // Similar ideas detected during creation
+    similarIdeas?: SimilarIdea[];
 };
 
 /**
@@ -288,6 +290,7 @@ export type IdeaSubmission = {
     targetUsers?: string[];
     department?: string;
     status?: IdeaStatus;
+    similarIdeas?: SimilarIdea[];
 };
 
 /**

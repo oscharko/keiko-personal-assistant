@@ -211,15 +211,81 @@
     border: 1px solid #eee;
 }
 
+.warningItemClickable {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 10px 12px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.warningItemClickable:hover {
+    border-color: #DCFF4A;
+    background: #fffef5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.warningItemClickable:focus {
+    outline: 2px solid #DCFF4A;
+    outline-offset: 2px;
+}
+
 .warningItemTitle {
     font-size: 0.9rem;
     color: #333;
     font-weight: 500;
+    flex: 1;
+}
+
+.warningItemMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .warningItemScore {
     font-size: 0.8rem;
     color: #888;
+}
+
+.warningItemIcon {
+    color: #666;
+    font-size: 16px;
+}
+
+/* Similar Idea Dialog */
+.similarIdeaDialog {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.similarIdeaScore {
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.similarIdeaSummary {
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.similarIdeaSummary p {
+    margin: 4px 0 0 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.similarIdeaStatus {
+    font-size: 0.9rem;
+    color: #333;
 }
 
 .warningActions {

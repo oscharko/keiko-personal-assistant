@@ -3,9 +3,11 @@
  * Allows users to submit new ideas with validation and duplicate detection.
  */
 
-import { useState, useCallback, useEffect } from "react";
-import { Panel, PanelType, TextField, PrimaryButton, DefaultButton, MessageBar, MessageBarType, Spinner, SpinnerSize } from "@fluentui/react";
-import { Warning24Regular, Dismiss12Regular } from "@fluentui/react-icons";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { Panel, PanelType, TextField, PrimaryButton, DefaultButton, MessageBar, MessageBarType, Spinner, SpinnerSize, Dialog, DialogType, DialogFooter } from "@fluentui/react";
+import { Warning24Regular, Dismiss12Regular, Info24Regular } from "@fluentui/react-icons";
+
+import { SimilarIdeaDetailDialog } from "./SimilarIdeaDetailDialog";
 import { useMsal } from "@azure/msal-react";
 import { useTranslation } from "react-i18next";
 
@@ -43,8 +45,53 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
     const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
     const [similarIdeas, setSimilarIdeas] = useState<SimilarIdea[]>([]);
     const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+    const [selectedSimilarIdea, setSelectedSimilarIdea] = useState<SimilarIdea | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
+
+    /**
+     * Check if the form has any data entered.
+     */
+    const hasFormData = useMemo(() => {
+        return (
+            title.trim() !== "" ||
+            description.trim() !== "" ||
+            problemDescription.trim() !== "" ||
+            expectedBenefit.trim() !== "" ||
+            affectedProcesses.length > 0 ||
+            targetUsers.length > 0 ||
+            department.trim() !== ""
+        );
+    }, [title, description, problemDescription, expectedBenefit, affectedProcesses, targetUsers, department]);
+
+    /**
+     * Handle close request - show confirmation if form has data.
+     */
+    const handleCloseRequest = useCallback(() => {
+        console.log('[DEBUG] handleCloseRequest called, hasFormData:', hasFormData);
+        console.trace('[DEBUG] handleCloseRequest stack trace');
+        if (hasFormData) {
+            setShowDiscardConfirmation(true);
+        } else {
+            onClose();
+        }
+    }, [hasFormData, onClose]);
+
+    /**
+     * Confirm discard and close the panel.
+     */
+    const handleConfirmDiscard = useCallback(() => {
+        setShowDiscardConfirmation(false);
+        onClose();
+    }, [onClose]);
+
+    /**
+     * Cancel discard and keep the panel open.
+     */
+    const handleCancelDiscard = useCallback(() => {
+        setShowDiscardConfirmation(false);
+    }, []);
 
     /**
      * Validate form fields.
@@ -72,9 +119,10 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
 
     /**
      * Check for similar ideas (duplicate detection).
+     * Combines title, description, and problem description for semantic comparison.
      */
     const checkForDuplicates = useCallback(async () => {
-        const textToCheck = `${title} ${description}`.trim();
+        const textToCheck = `${title} ${description} ${problemDescription}`.trim();
         if (textToCheck.length < 20) {
             setSimilarIdeas([]);
             return;
@@ -97,9 +145,9 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
         } finally {
             setIsCheckingDuplicates(false);
         }
-    }, [client, title, description]);
+    }, [client, title, description, problemDescription]);
 
-    // Debounced duplicate check when title or description changes
+    // Debounced duplicate check when title, description, or problem description changes
     useEffect(() => {
         const timer = setTimeout(() => {
             if (title.length >= 5 && description.length >= 10) {
@@ -108,7 +156,7 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
         }, DUPLICATE_CHECK_DELAY);
 
         return () => clearTimeout(timer);
-    }, [title, description, checkForDuplicates]);
+    }, [title, description, problemDescription, checkForDuplicates]);
 
     /**
      * Handle form submission.
@@ -130,7 +178,8 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
                 affectedProcesses: affectedProcesses.length > 0 ? affectedProcesses : undefined,
                 targetUsers: targetUsers.length > 0 ? targetUsers : undefined,
                 department: department.trim() || undefined,
-                status: IdeaStatus.Submitted
+                status: IdeaStatus.Submitted,
+                similarIdeas: similarIdeas.length > 0 ? similarIdeas : undefined
             };
 
             const newIdea = await createIdeaApi(ideaData, token);
@@ -141,7 +190,7 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
         } finally {
             setIsSubmitting(false);
         }
-    }, [client, title, description, problemDescription, expectedBenefit, affectedProcesses, targetUsers, department, validateForm, onSubmitted, t]);
+    }, [client, title, description, problemDescription, expectedBenefit, affectedProcesses, targetUsers, department, similarIdeas, validateForm, onSubmitted, t]);
 
     /**
      * Handle adding a process tag.
@@ -176,14 +225,21 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
     }, []);
 
     return (
+        <>
         <Panel
             isOpen={true}
-            onDismiss={onClose}
+            onDismiss={handleCloseRequest}
             type={PanelType.medium}
             headerText={t("ideas.submitIdeaTitle")}
             closeButtonAriaLabel={t("ideas.close")}
-            isLightDismiss={!isSubmitting}
+            isLightDismiss={false}
             className={styles.panel}
+            focusTrapZoneProps={{
+                disabled: !!selectedSimilarIdea
+            }}
+            layerProps={{
+                eventBubblingEnabled: false
+            }}
         >
             <div className={styles.content}>
                 <p className={styles.description}>{t("ideas.submitDescription")}</p>
@@ -204,12 +260,20 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
                         </h4>
                         <div className={styles.warningList}>
                             {similarIdeas.slice(0, 3).map(idea => (
-                                <div key={idea.ideaId} className={styles.warningItem}>
+                                <button
+                                    key={idea.ideaId}
+                                    className={styles.warningItemClickable}
+                                    onClick={() => setSelectedSimilarIdea(idea)}
+                                    type="button"
+                                >
                                     <span className={styles.warningItemTitle}>{idea.title}</span>
-                                    <span className={styles.warningItemScore}>
-                                        {Math.round(idea.similarityScore * 100)}% {t("ideas.similar")}
+                                    <span className={styles.warningItemMeta}>
+                                        <span className={styles.warningItemScore}>
+                                            {Math.round(idea.similarityScore * 100)}% {t("ideas.similar")}
+                                        </span>
+                                        <Info24Regular className={styles.warningItemIcon} />
                                     </span>
-                                </div>
+                                </button>
                             ))}
                         </div>
                         <div className={styles.warningActions}>
@@ -357,7 +421,7 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
                 {/* Actions */}
                 <div className={styles.actions}>
                     <DefaultButton
-                        onClick={onClose}
+                        onClick={handleCloseRequest}
                         disabled={isSubmitting}
                         className={styles.cancelButton}
                     >
@@ -378,8 +442,40 @@ export function IdeaSubmissionForm({ onClose, onSubmitted }: IdeaSubmissionFormP
                         <p>{t("ideas.checkingForDuplicates")}</p>
                     </div>
                 )}
+
+                {/* Similar Idea Detail Dialog - rendered INSIDE Panel to prevent outer click detection */}
+                {selectedSimilarIdea && (
+                    <SimilarIdeaDetailDialog
+                        similarIdea={selectedSimilarIdea}
+                        onClose={() => setSelectedSimilarIdea(null)}
+                    />
+                )}
             </div>
         </Panel>
+
+        {/* Discard Confirmation Dialog */}
+        <Dialog
+            hidden={!showDiscardConfirmation}
+            onDismiss={handleCancelDiscard}
+            dialogContentProps={{
+                type: DialogType.normal,
+                title: t("ideas.discardChangesTitle"),
+                subText: t("ideas.discardChangesMessage")
+            }}
+            modalProps={{
+                isBlocking: true,
+                styles: {
+                    main: { maxWidth: 450 },
+                    root: { zIndex: 3000000 }
+                }
+            }}
+        >
+            <DialogFooter>
+                <PrimaryButton onClick={handleConfirmDiscard} text={t("ideas.discardChangesConfirm")} />
+                <DefaultButton onClick={handleCancelDiscard} text={t("ideas.discardChangesCancel")} />
+            </DialogFooter>
+        </Dialog>
+        </>
     );
 }
 
