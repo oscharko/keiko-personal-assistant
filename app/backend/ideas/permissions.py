@@ -208,6 +208,22 @@ def can_delete_idea(
     return has_permission(auth_claims, IdeaPermission.DELETE_ALL_IDEAS)
 
 
+def can_review_idea(auth_claims: dict[str, Any]) -> bool:
+    """
+    Check if user can review ideas (trigger LLM review).
+
+    Only REVIEWER and ADMIN roles can review ideas.
+
+    Args:
+        auth_claims: Authentication claims from the token.
+
+    Returns:
+        True if user can review ideas, False otherwise.
+    """
+    role = get_user_role(auth_claims)
+    return role in (IdeaRole.REVIEWER, IdeaRole.ADMIN)
+
+
 def require_permission(permission: IdeaPermission) -> Callable:
     """
     Decorator to require a specific permission for an endpoint.

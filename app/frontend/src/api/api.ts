@@ -472,6 +472,54 @@ export async function deleteIdeaApi(ideaId: string, idToken: string | undefined)
 }
 
 /**
+ * Trigger LLM-based review of an idea (Phase 2 - Hybrid Approach).
+ * Only users with REVIEWER or ADMIN role can trigger reviews.
+ */
+export async function reviewIdeaApi(ideaId: string, idToken: string | undefined): Promise<Idea> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/review`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Reviewing idea failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
+ * Update the status of an idea.
+ * Only users with REVIEWER or ADMIN role can change status.
+ *
+ * Valid status transitions:
+ * - UNDER_REVIEW -> APPROVED, REJECTED
+ * - APPROVED -> IMPLEMENTED
+ */
+export async function updateIdeaStatusApi(
+    ideaId: string,
+    status: "approved" | "rejected" | "implemented",
+    idToken: string | undefined,
+    reason?: string
+): Promise<Idea> {
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/${ideaId}/status`, {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ status, reason })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Updating idea status failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
+/**
  * Find similar ideas based on text content.
  * Used for duplicate detection before submission.
  */
@@ -581,6 +629,34 @@ export async function getIdeaEngagementApi(ideaId: string, idToken: string | und
     }
 
     return await response.json();
+}
+
+/**
+ * Get aggregated engagement metrics for multiple ideas in a single request.
+ * This is much more efficient than calling getIdeaEngagementApi for each idea.
+ */
+export async function getIdeaEngagementBatchApi(
+    ideaIds: string[],
+    idToken: string | undefined
+): Promise<Record<string, IdeaEngagement>> {
+    if (ideaIds.length === 0) {
+        return {};
+    }
+
+    const headers = await getHeaders(idToken);
+    const response = await fetch(`${BACKEND_URI}/api/ideas/engagement/batch`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ ideaIds })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Getting batch engagement failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.engagements || {};
 }
 
 // Ideas Hub - Comment API Functions

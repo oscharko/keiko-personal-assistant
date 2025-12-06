@@ -160,6 +160,37 @@
 .scoreBarMedium { background: #f57c00; }
 .scoreBarLow { background: #d32f2f; }
 
+/* Review Reasoning */
+.reviewReasoning {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f0f7ff;
+    border-left: 4px solid #1976d2;
+    border-radius: 8px;
+}
+
+.reviewReasoning strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #1976d2;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.reviewReasoning p {
+    margin: 0;
+    line-height: 1.6;
+    color: #333;
+}
+
+.reviewMeta {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}
+
 /* Recommendation Badge */
 .recommendationBadge {
     display: inline-flex;
@@ -276,6 +307,28 @@
     border-top: 1px solid #eee;
 }
 
+.reviewButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1976d2 !important;
+    border: none !important;
+    border-radius: 8px;
+    padding: 0 20px;
+    height: 40px;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.reviewButton:hover {
+    background: #1565c0 !important;
+}
+
+.reviewButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .editButton {
     display: flex;
     align-items: center;
@@ -316,6 +369,91 @@
     cursor: not-allowed;
 }
 
+/* Status Actions */
+.statusActions {
+    padding: 16px 0;
+    border-top: 1px solid #eee;
+    margin-top: 16px;
+}
+
+.statusActionsTitle {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 12px 0;
+}
+
+.statusActionsButtons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.approveButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #2e7d32 !important;
+    border: none !important;
+    padding: 0 20px;
+    min-width: 120px;
+    height: 40px;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.approveButton:hover {
+    background: #1b5e20 !important;
+}
+
+.approveButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.implementButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1565c0 !important;
+    border: none !important;
+    padding: 0 20px;
+    min-width: 160px;
+    height: 40px;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.implementButton:hover {
+    background: #0d47a1 !important;
+}
+
+.implementButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.rejectButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff !important;
+    border: 1px solid #d32f2f !important;
+    padding: 0 20px;
+    min-width: 120px;
+    height: 40px;
+    color: #d32f2f !important;
+    font-weight: 500;
+}
+
+.rejectButton:hover {
+    background: #ffebee !important;
+}
+
+.rejectButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
 .confirmOverlay {
     position: absolute;

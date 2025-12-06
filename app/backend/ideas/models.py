@@ -106,13 +106,21 @@ class Idea:
     tags: list[str] = field(default_factory=list)
     embedding: list[float] = field(default_factory=list)
 
-    # Scoring fields (Phase 2)
+    # Scoring fields (Phase 2) - Initial deterministic scores
     impact_score: float = 0.0
     feasibility_score: float = 0.0
     recommendation_class: str = RecommendationClass.UNCLASSIFIED.value
 
     # KPI estimates (Phase 2)
     kpi_estimates: dict[str, Any] = field(default_factory=dict)
+
+    # LLM Review fields (Phase 2 - Hybrid Approach)
+    review_impact_score: float | None = None  # LLM-reviewed impact score
+    review_feasibility_score: float | None = None  # LLM-reviewed feasibility score
+    review_recommendation_class: str | None = None  # LLM-reviewed recommendation
+    review_reasoning: str = ""  # LLM explanation for the review scores
+    reviewed_at: int = 0  # Timestamp of LLM review
+    reviewed_by: str = ""  # "llm" or user ID if manually triggered
 
     # Clustering (Phase 3)
     cluster_label: str = ""
@@ -153,6 +161,12 @@ class Idea:
             "feasibilityScore": self.feasibility_score,
             "recommendationClass": self.recommendation_class,
             "kpiEstimates": self.kpi_estimates,
+            "reviewImpactScore": self.review_impact_score,
+            "reviewFeasibilityScore": self.review_feasibility_score,
+            "reviewRecommendationClass": self.review_recommendation_class,
+            "reviewReasoning": self.review_reasoning,
+            "reviewedAt": self.reviewed_at,
+            "reviewedBy": self.reviewed_by,
             "clusterLabel": self.cluster_label,
             "analyzedAt": self.analyzed_at,
             "analysisVersion": self.analysis_version,
@@ -196,6 +210,12 @@ class Idea:
             feasibility_score=item.get("feasibilityScore", 0.0),
             recommendation_class=item.get("recommendationClass", RecommendationClass.UNCLASSIFIED.value),
             kpi_estimates=item.get("kpiEstimates", {}),
+            review_impact_score=item.get("reviewImpactScore"),
+            review_feasibility_score=item.get("reviewFeasibilityScore"),
+            review_recommendation_class=item.get("reviewRecommendationClass"),
+            review_reasoning=item.get("reviewReasoning", ""),
+            reviewed_at=item.get("reviewedAt", 0),
+            reviewed_by=item.get("reviewedBy", ""),
             cluster_label=item.get("clusterLabel", ""),
             analyzed_at=item.get("analyzedAt", 0),
             analysis_version=item.get("analysisVersion", ""),
@@ -226,6 +246,39 @@ class Idea:
         if self.expected_benefit:
             parts.append(self.expected_benefit)
         return " ".join(parts)
+
+    def to_search_document(self) -> dict[str, Any]:
+        """
+        Convert the idea to an Azure AI Search document format.
+
+        Returns:
+            Dictionary representation suitable for Azure AI Search indexing.
+        """
+        return {
+            "id": self.idea_id,
+            "title": self.title,
+            "description": self.description,
+            "problemDescription": self.problem_description,
+            "expectedBenefit": self.expected_benefit,
+            "summary": self.summary,
+            "tags": self.tags,
+            "submitterId": self.submitter_id,
+            "department": self.department,
+            "status": self.status.value if isinstance(self.status, IdeaStatus) else self.status,
+            "createdAt": self.created_at,
+            "updatedAt": self.updated_at,
+            "impactScore": self.impact_score,
+            "feasibilityScore": self.feasibility_score,
+            "recommendationClass": self.recommendation_class,
+            "reviewImpactScore": self.review_impact_score,
+            "reviewFeasibilityScore": self.review_feasibility_score,
+            "reviewRecommendationClass": self.review_recommendation_class,
+            "reviewReasoning": self.review_reasoning,
+            "reviewedAt": self.reviewed_at,
+            "reviewedBy": self.reviewed_by,
+            "clusterLabel": self.cluster_label,
+            "embedding": self.embedding if self.embedding else None,
+        }
 
 
 @dataclass

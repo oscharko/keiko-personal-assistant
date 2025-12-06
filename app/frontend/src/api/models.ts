@@ -267,11 +267,18 @@ export type Idea = {
     embedding?: number[];
     analyzedAt?: number;
     analysisVersion?: string;
-    // Scoring fields
+    // Scoring fields (Phase 1 - Initial deterministic scores)
     impactScore?: number;
     feasibilityScore?: number;
     recommendationClass?: RecommendationClass;
     kpiEstimates?: IdeaKPIEstimates;
+    // LLM Review fields (Phase 2 - Hybrid Approach)
+    reviewImpactScore?: number;
+    reviewFeasibilityScore?: number;
+    reviewRecommendationClass?: RecommendationClass;
+    reviewReasoning?: string;
+    reviewedAt?: number;
+    reviewedBy?: string;
     // Clustering
     clusterLabel?: string;
     // Similar ideas detected during creation

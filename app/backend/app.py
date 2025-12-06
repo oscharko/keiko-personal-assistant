@@ -62,6 +62,7 @@ from config import (
     CONFIG_DEFAULT_REASONING_EFFORT,
     CONFIG_DEFAULT_RETRIEVAL_REASONING_EFFORT,
     CONFIG_GLOBAL_BLOB_MANAGER,
+    CONFIG_IDEAS_SEARCH_INDEX_MANAGER,
     CONFIG_INGESTER,
     CONFIG_KNOWLEDGEBASE_CLIENT,
     CONFIG_KNOWLEDGEBASE_CLIENT_WITH_SHAREPOINT,
@@ -682,8 +683,8 @@ async def setup_clients():
     OPENAI_CHATGPT_MODEL = os.environ["AZURE_OPENAI_CHATGPT_MODEL"]
     AZURE_OPENAI_KNOWLEDGEBASE_MODEL = os.getenv("AZURE_OPENAI_KNOWLEDGEBASE_MODEL")
     AZURE_OPENAI_KNOWLEDGEBASE_DEPLOYMENT = os.getenv("AZURE_OPENAI_KNOWLEDGEBASE_DEPLOYMENT")
-    OPENAI_EMB_MODEL = os.getenv("AZURE_OPENAI_EMB_MODEL_NAME", "text-embedding-ada-002")
-    OPENAI_EMB_DIMENSIONS = int(os.getenv("AZURE_OPENAI_EMB_DIMENSIONS") or 1536)
+    OPENAI_EMB_MODEL = os.getenv("AZURE_OPENAI_EMB_MODEL_NAME", "text-embedding-3-large")
+    OPENAI_EMB_DIMENSIONS = int(os.getenv("AZURE_OPENAI_EMB_DIMENSIONS") or 3072)
     OPENAI_REASONING_EFFORT = os.getenv("AZURE_OPENAI_REASONING_EFFORT")
     # Used with Azure OpenAI deployments
     AZURE_OPENAI_SERVICE = os.getenv("AZURE_OPENAI_SERVICE")
@@ -1088,6 +1089,8 @@ async def close_clients():
     await current_app.config[CONFIG_GLOBAL_BLOB_MANAGER].close_clients()
     if user_blob_manager := current_app.config.get(CONFIG_USER_BLOB_MANAGER):
         await user_blob_manager.close_clients()
+    if ideas_search_index_manager := current_app.config.get(CONFIG_IDEAS_SEARCH_INDEX_MANAGER):
+        await ideas_search_index_manager.close()
     await current_app.config[CONFIG_CREDENTIAL].close()
 
 

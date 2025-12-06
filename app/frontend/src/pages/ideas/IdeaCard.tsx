@@ -91,6 +91,12 @@ export function IdeaCard({ idea, onClick, engagement }: IdeaCardProps) {
     const displayTags = idea.tags?.slice(0, maxTags) || [];
     const remainingTags = (idea.tags?.length || 0) - maxTags;
 
+    // Only use review scores - classification is only shown after LLM review
+    const hasBeenReviewed = idea.reviewedAt !== undefined && idea.reviewedAt > 0;
+    const effectiveImpactScore = hasBeenReviewed ? idea.reviewImpactScore : undefined;
+    const effectiveFeasibilityScore = hasBeenReviewed ? idea.reviewFeasibilityScore : undefined;
+    const effectiveRecommendationClass = hasBeenReviewed ? idea.reviewRecommendationClass : undefined;
+
     return (
         <article
             className={styles.ideaCard}
@@ -104,9 +110,9 @@ export function IdeaCard({ idea, onClick, engagement }: IdeaCardProps) {
                 <span className={`${styles.statusBadge} ${getStatusClass(idea.status)}`}>
                     {t(`ideas.status.${idea.status}`)}
                 </span>
-                {idea.recommendationClass && (
-                    <span className={`${styles.recommendationBadge} ${getRecommendationClass(idea.recommendationClass)}`}>
-                        {t(`ideas.recommendation.${idea.recommendationClass}`)}
+                {effectiveRecommendationClass && (
+                    <span className={`${styles.recommendationBadge} ${getRecommendationClass(effectiveRecommendationClass)}`}>
+                        {t(`ideas.recommendation.${effectiveRecommendationClass}`)}
                     </span>
                 )}
             </div>
@@ -131,21 +137,21 @@ export function IdeaCard({ idea, onClick, engagement }: IdeaCardProps) {
                 )}
 
                 {/* Scores (if available) */}
-                {(idea.impactScore !== undefined || idea.feasibilityScore !== undefined) && (
+                {(effectiveImpactScore !== undefined || effectiveFeasibilityScore !== undefined) && (
                     <div className={styles.cardScores}>
-                        {idea.impactScore !== undefined && (
+                        {effectiveImpactScore !== undefined && (
                             <div className={styles.scoreIndicator}>
                                 <span className={styles.scoreLabel}>{t("ideas.impact")}:</span>
-                                <span className={`${styles.scoreValue} ${getScoreClass(idea.impactScore)}`}>
-                                    {idea.impactScore}
+                                <span className={`${styles.scoreValue} ${getScoreClass(effectiveImpactScore)}`}>
+                                    {effectiveImpactScore}
                                 </span>
                             </div>
                         )}
-                        {idea.feasibilityScore !== undefined && (
+                        {effectiveFeasibilityScore !== undefined && (
                             <div className={styles.scoreIndicator}>
                                 <span className={styles.scoreLabel}>{t("ideas.feasibility")}:</span>
-                                <span className={`${styles.scoreValue} ${getScoreClass(idea.feasibilityScore)}`}>
-                                    {idea.feasibilityScore}
+                                <span className={`${styles.scoreValue} ${getScoreClass(effectiveFeasibilityScore)}`}>
+                                    {effectiveFeasibilityScore}
                                 </span>
                             </div>
                         )}

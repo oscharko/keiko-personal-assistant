@@ -257,11 +257,11 @@ class IdeaScorer:
         """
         Determine the recommendation class based on scores.
 
-        Classification rules:
-        - Quick Win: High feasibility (>70), Medium+ impact (>50)
-        - High Leverage: High impact (>70), High feasibility (>70)
-        - Strategic: High impact (>70), Lower feasibility (<70)
-        - Evaluate: Lower scores, needs review
+        Classification rules (according to specification):
+        - Quick Win: impactScore >= 70 AND feasibilityScore >= 60
+        - High Leverage: impactScore >= 80 AND feasibilityScore < 60
+        - Strategic: impactScore >= 60 AND feasibilityScore >= 40
+        - Evaluate: All other cases
 
         Args:
             impact_score: Impact score (0-100).
@@ -270,18 +270,20 @@ class IdeaScorer:
         Returns:
             Recommendation class value.
         """
-        high_impact = impact_score >= 70
-        medium_impact = impact_score >= 50
-        high_feasibility = feasibility_score >= 70
-
-        if high_impact and high_feasibility:
-            return RecommendationClass.HIGH_LEVERAGE.value
-        elif high_impact and not high_feasibility:
-            return RecommendationClass.STRATEGIC.value
-        elif high_feasibility and medium_impact:
+        # Quick Win: High impact and high feasibility
+        if impact_score >= 70 and feasibility_score >= 60:
             return RecommendationClass.QUICK_WIN.value
-        else:
-            return RecommendationClass.EVALUATE.value
+
+        # High Leverage: Very high impact but lower feasibility
+        if impact_score >= 80 and feasibility_score < 60:
+            return RecommendationClass.HIGH_LEVERAGE.value
+
+        # Strategic: Good impact and reasonable feasibility
+        if impact_score >= 60 and feasibility_score >= 40:
+            return RecommendationClass.STRATEGIC.value
+
+        # Evaluate: Lower scores, needs review
+        return RecommendationClass.EVALUATE.value
 
     def calculate_scores(
         self,

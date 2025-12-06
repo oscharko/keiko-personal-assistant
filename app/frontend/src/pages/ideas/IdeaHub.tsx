@@ -20,7 +20,7 @@ import {
 import { useMsal } from "@azure/msal-react";
 import { useTranslation } from "react-i18next";
 
-import { getIdeasApi, getIdeaEngagementApi } from "../../api";
+import { getIdeasApi, getIdeaEngagementBatchApi } from "../../api";
 import { Idea, IdeaListResponse, IdeaStatus, IdeaEngagement } from "../../api/models";
 import { getToken, useLogin } from "../../authConfig";
 import styles from "./IdeaHub.module.css";
@@ -69,8 +69,9 @@ export function Component() {
     // Current user ID for comment ownership checks
     const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
 
-    // Admin status for delete all permission
+    // Admin and reviewer status
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isReviewer, setIsReviewer] = useState(false);
 
     /**
      * Load ideas from the API.
@@ -141,29 +142,18 @@ export function Component() {
         loadIdeas();
     }, [loadIdeas]);
 
-    // Load engagement data for all ideas
+    // Load engagement data for all ideas using batch API
     useEffect(() => {
         const loadEngagement = async () => {
             if (ideas.length === 0) return;
 
             try {
                 const token = client ? await getToken(client) : undefined;
-                const engagementPromises = ideas.map(idea =>
-                    getIdeaEngagementApi(idea.ideaId, token)
-                        .then(engagement => ({ ideaId: idea.ideaId, engagement }))
-                        .catch(() => null)
-                );
+                const ideaIds = ideas.map(idea => idea.ideaId);
 
-                const results = await Promise.all(engagementPromises);
-                const newEngagementMap: Record<string, IdeaEngagement> = {};
-
-                results.forEach(result => {
-                    if (result) {
-                        newEngagementMap[result.ideaId] = result.engagement;
-                    }
-                });
-
-                setEngagementMap(newEngagementMap);
+                // Use batch API to get all engagement data in a single request
+                const engagements = await getIdeaEngagementBatchApi(ideaIds, token);
+                setEngagementMap(engagements);
             } catch (err) {
                 console.error("Error loading engagement data:", err);
             }
@@ -172,15 +162,17 @@ export function Component() {
         loadEngagement();
     }, [client, ideas]);
 
-    // Get current user ID and admin status from MSAL or Beta Auth
+    // Get current user ID, admin and reviewer status from MSAL or Beta Auth
     useEffect(() => {
         // First check for Beta Auth user ID
         const betaUserId = localStorage.getItem("beta_auth_user_id");
         const betaIsAdmin = localStorage.getItem("beta_auth_is_admin") === "true";
+        const betaIsReviewer = localStorage.getItem("beta_auth_is_reviewer") === "true";
 
         if (betaUserId) {
             setCurrentUserId(betaUserId);
             setIsAdmin(betaIsAdmin);
+            setIsReviewer(betaIsReviewer || betaIsAdmin); // Admins are also reviewers
             return;
         }
 
@@ -505,6 +497,7 @@ export function Component() {
                     onDeleted={handleIdeaDeleted}
                     currentUserId={currentUserId}
                     isAdmin={isAdmin}
+                    isReviewer={isReviewer}
                 />
             )}
 

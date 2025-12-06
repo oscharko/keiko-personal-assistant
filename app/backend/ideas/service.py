@@ -135,10 +135,11 @@ class IdeasService:
         openai_client: Optional[AsyncOpenAI] = None,
         chatgpt_model: str = "gpt-4o-mini",
         chatgpt_deployment: Optional[str] = None,
-        embedding_model: str = "text-embedding-ada-002",
+        embedding_model: str = "text-embedding-3-large",
         embedding_deployment: Optional[str] = None,
         ideas_container: Optional[ContainerProxy] = None,
         search_client: Optional[Any] = None,
+        search_index_manager: Optional[Any] = None,
         scoring_config: Optional[ScoringConfig] = None,
         audit_container: Optional[ContainerProxy] = None,
     ):
@@ -152,7 +153,8 @@ class IdeasService:
             embedding_model: Model name for embeddings.
             embedding_deployment: Deployment name for embeddings.
             ideas_container: Cosmos DB container for ideas storage.
-            search_client: Azure AI Search client for similarity search.
+            search_client: Azure AI Search client for similarity search (legacy).
+            search_index_manager: IdeasSearchIndexManager for index operations.
             scoring_config: Configuration for scoring calculations.
             audit_container: Cosmos DB container for audit logging.
         """
@@ -163,6 +165,7 @@ class IdeasService:
         self.embedding_deployment = embedding_deployment
         self.ideas_container = ideas_container
         self.search_client = search_client
+        self.search_index_manager = search_index_manager
         self.scorer = IdeaScorer(scoring_config)
         self.audit_logger = AuditLogger(audit_container)
 
@@ -208,6 +211,16 @@ class IdeasService:
         cosmos_item = idea.to_cosmos_item()
         await self.ideas_container.create_item(body=cosmos_item)
 
+        # Index in Azure AI Search
+        if self.search_index_manager:
+            try:
+                search_doc = idea.to_search_document()
+                await self.search_index_manager.index_document(search_doc)
+                logger.debug(f"Indexed idea {idea.idea_id} in Azure AI Search")
+            except Exception as e:
+                logger.warning(f"Failed to index idea {idea.idea_id} in search: {e}")
+                # Continue - search indexing is not critical for creation
+
         # Log audit entry
         await self.audit_logger.log_create(
             idea_id=idea.idea_id,
@@ -244,6 +257,148 @@ class IdeasService:
         except Exception as e:
             logger.error(f"Error getting idea {idea_id}: {e}")
             return None
+
+    async def search_ideas(
+        self,
+        search_text: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+        status: str | None = None,
+        department: str | None = None,
+        submitter_id: str | None = None,
+        recommendation_class: str | None = None,
+        use_semantic: bool = True,
+        scoring_profile: str | None = None,
+    ) -> IdeaListResponse:
+        """
+        Search ideas using Azure AI Search with full-text and semantic search.
+
+        Args:
+            search_text: Text to search for (searches title, description, summary, tags).
+            page: Page number (1-indexed).
+            page_size: Number of items per page.
+            status: Filter by idea status.
+            department: Filter by department.
+            submitter_id: Filter by submitter.
+            recommendation_class: Filter by recommendation class.
+            use_semantic: Use semantic search for better relevance.
+            scoring_profile: Scoring profile to use (e.g., 'impact-boost', 'feasibility-boost').
+
+        Returns:
+            Paginated list of ideas matching the search criteria.
+        """
+        if not self.search_index_manager:
+            # Fallback to list_ideas if search is not available
+            logger.debug("Search index manager not available, falling back to list_ideas")
+            return await self.list_ideas(
+                page=page,
+                page_size=page_size,
+                status=status,
+                department=department,
+                submitter_id=submitter_id,
+                recommendation_class=recommendation_class,
+            )
+
+        try:
+            # Build filter expression
+            filters = []
+            if status:
+                filters.append(f"status eq '{status}'")
+            if department:
+                filters.append(f"department eq '{department}'")
+            if submitter_id:
+                filters.append(f"submitterId eq '{submitter_id}'")
+            if recommendation_class:
+                filters.append(f"recommendationClass eq '{recommendation_class}'")
+
+            filter_expr = " and ".join(filters) if filters else None
+
+            # Calculate skip for pagination
+            skip = (page - 1) * page_size
+
+            # Execute search
+            search_params = {
+                "search_text": search_text or "*",
+                "filter": filter_expr,
+                "top": page_size,
+                "skip": skip,
+                "include_total_count": True,
+                "select": ["id", "title", "description", "problemDescription", "expectedBenefit",
+                          "summary", "tags", "submitterId", "department", "status",
+                          "createdAt", "updatedAt", "impactScore", "feasibilityScore",
+                          "recommendationClass", "clusterLabel"],
+            }
+
+            # Add semantic search configuration if enabled
+            if use_semantic and search_text:
+                search_params["query_type"] = "semantic"
+                search_params["semantic_configuration_name"] = "ideas-semantic-config"
+
+            # Add scoring profile if specified
+            if scoring_profile:
+                search_params["scoring_profile"] = scoring_profile
+
+            results = await self.search_index_manager.search_client.search(**search_params)
+
+            # Collect results
+            ideas = []
+            total_count = 0
+            async for result in results:
+                # Get total count from first result
+                if total_count == 0 and hasattr(results, 'get_count'):
+                    total_count = await results.get_count()
+
+                # Convert search result to Idea object
+                idea_dict = {
+                    "id": result.get("id"),
+                    "ideaId": result.get("id"),
+                    "type": "idea",
+                    "title": result.get("title", ""),
+                    "description": result.get("description", ""),
+                    "problemDescription": result.get("problemDescription", ""),
+                    "expectedBenefit": result.get("expectedBenefit", ""),
+                    "summary": result.get("summary", ""),
+                    "tags": result.get("tags", []),
+                    "submitterId": result.get("submitterId", ""),
+                    "department": result.get("department", ""),
+                    "status": result.get("status", "submitted"),
+                    "createdAt": result.get("createdAt", 0),
+                    "updatedAt": result.get("updatedAt", 0),
+                    "impactScore": result.get("impactScore", 0.0),
+                    "feasibilityScore": result.get("feasibilityScore", 0.0),
+                    "recommendationClass": result.get("recommendationClass", "unclassified"),
+                    "clusterLabel": result.get("clusterLabel", ""),
+                    "affectedProcesses": [],
+                    "targetUsers": [],
+                    "embedding": [],
+                    "kpiEstimates": {},
+                    "analyzedAt": 0,
+                    "analysisVersion": "",
+                    "similarIdeas": [],
+                }
+                ideas.append(Idea.from_cosmos_item(idea_dict))
+
+            has_more = (skip + len(ideas)) < total_count
+
+            return IdeaListResponse(
+                ideas=ideas,
+                total_count=total_count,
+                page=page,
+                page_size=page_size,
+                has_more=has_more,
+            )
+
+        except Exception as e:
+            logger.error(f"Search failed, falling back to list_ideas: {e}")
+            # Fallback to Cosmos DB query
+            return await self.list_ideas(
+                page=page,
+                page_size=page_size,
+                status=status,
+                department=department,
+                submitter_id=submitter_id,
+                recommendation_class=recommendation_class,
+            )
 
     async def list_ideas(
         self,
@@ -392,6 +547,13 @@ class IdeasService:
             "targetUsers": "target_users",
             "department": "department",
             "status": "status",
+            # LLM Review fields (Phase 2 - Hybrid Approach)
+            "reviewImpactScore": "review_impact_score",
+            "reviewFeasibilityScore": "review_feasibility_score",
+            "reviewRecommendationClass": "review_recommendation_class",
+            "reviewReasoning": "review_reasoning",
+            "reviewedAt": "reviewed_at",
+            "reviewedBy": "reviewed_by",
         }
 
         # Apply updates
@@ -412,6 +574,16 @@ class IdeasService:
         # Save to Cosmos DB
         cosmos_item = existing_idea.to_cosmos_item()
         await self.ideas_container.upsert_item(body=cosmos_item)
+
+        # Update in Azure AI Search
+        if self.search_index_manager:
+            try:
+                search_doc = existing_idea.to_search_document()
+                await self.search_index_manager.update_document(search_doc)
+                logger.debug(f"Updated idea {idea_id} in Azure AI Search")
+            except Exception as e:
+                logger.warning(f"Failed to update idea {idea_id} in search: {e}")
+                # Continue - search indexing is not critical
 
         # Log audit entry
         new_status = existing_idea.status.value if existing_idea.status else None
@@ -460,6 +632,15 @@ class IdeasService:
                 item=idea_id,
                 partition_key=idea_id
             )
+
+            # Delete from Azure AI Search
+            if self.search_index_manager:
+                try:
+                    await self.search_index_manager.delete_document(idea_id)
+                    logger.debug(f"Deleted idea {idea_id} from Azure AI Search")
+                except Exception as e:
+                    logger.warning(f"Failed to delete idea {idea_id} from search: {e}")
+                    # Continue - search deletion is not critical
 
             # Log audit entry
             await self.audit_logger.log_delete(
@@ -842,7 +1023,7 @@ class IdeasService:
             model = self.embedding_deployment or self.embedding_model
 
             # Truncate text if too long (embedding models have token limits)
-            # text-embedding-ada-002 has 8191 token limit, roughly 4 chars per token
+            # text-embedding-3-large has 8191 token limit, roughly 4 chars per token
             max_chars = 30000
             if len(text) > max_chars:
                 logger.info(f"Truncating text from {len(text)} to {max_chars} chars")
@@ -1146,6 +1327,122 @@ class IdeasService:
         idea.analysis_version = "1.3"
 
         return idea
+
+    async def review_idea(self, idea: Idea, reviewer_id: str = "llm") -> Idea:
+        """
+        Perform LLM-based review of an idea (Phase 2 - Hybrid Approach).
+
+        This method uses an LLM to review the initial automated scores and provide
+        a comprehensive assessment with reasoning. The LLM can adjust scores based
+        on qualitative factors that the deterministic algorithm might miss.
+
+        If the idea has not been analyzed yet, the analysis will be performed
+        automatically before the review.
+
+        Args:
+            idea: The idea to review.
+            reviewer_id: ID of the reviewer ("llm" for automated, or user ID for manual).
+
+        Returns:
+            The idea with review fields populated.
+        """
+        # Automatically analyze if not yet done
+        if not idea.analyzed_at:
+            logger.info(f"Idea {idea.idea_id} not analyzed yet, running analysis first")
+            idea = await self.analyze_idea(idea)
+
+        if not self.openai_client:
+            logger.warning("OpenAI client not configured, skipping LLM review")
+            return idea
+
+        try:
+            # Load the review prompt template
+            import os
+            from pathlib import Path
+
+            prompt_path = Path(__file__).parent.parent / "approaches" / "prompts" / "ideas_review.prompty"
+
+            if not prompt_path.exists():
+                logger.error(f"Review prompt template not found at {prompt_path}")
+                return idea
+
+            # Read the prompt template
+            with open(prompt_path, "r", encoding="utf-8") as f:
+                prompt_content = f.read()
+
+            # Extract the system prompt section (between "system:" and "user:")
+            system_prompt_start = prompt_content.find("system:")
+            user_prompt_start = prompt_content.find("user:")
+
+            if system_prompt_start == -1 or user_prompt_start == -1:
+                logger.error("Invalid prompt template: missing 'system:' or 'user:' section")
+                return idea
+
+            system_prompt = prompt_content[system_prompt_start + 7:user_prompt_start].strip()
+            user_prompt_template = prompt_content[user_prompt_start + 5:].strip()
+
+            # Format KPI estimates for display
+            kpi_text = json.dumps(idea.kpi_estimates, indent=2) if idea.kpi_estimates else "No KPI estimates available"
+
+            # Prepare template variables
+            template_vars = {
+                "title": idea.title,
+                "description": idea.description,
+                "problem_description": idea.problem_description or "Not provided",
+                "expected_benefit": idea.expected_benefit or "Not provided",
+                "department": idea.department or "Not specified",
+                "target_users": ", ".join(idea.target_users) if idea.target_users else "Not specified",
+                "affected_processes": ", ".join(idea.affected_processes) if idea.affected_processes else "Not specified",
+                "initial_impact_score": f"{idea.impact_score:.1f}",
+                "initial_feasibility_score": f"{idea.feasibility_score:.1f}",
+                "initial_recommendation_class": idea.recommendation_class,
+                "kpi_estimates": kpi_text,
+            }
+
+            # Replace template variables
+            user_prompt = user_prompt_template
+            for key, value in template_vars.items():
+                user_prompt = user_prompt.replace(f"{{{{{key}}}}}", str(value))
+
+            # Call the LLM with the review-specific system prompt
+            response = await self.openai_client.chat.completions.create(
+                model=self.chatgpt_deployment if self.chatgpt_deployment else self.chatgpt_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.3,  # Lower temperature for more consistent reviews
+            )
+
+            # Parse the response
+            review_data = json.loads(response.choices[0].message.content or "{}")
+
+            # Update the idea with review results
+            idea.review_impact_score = float(review_data.get("impactScore", idea.impact_score))
+            idea.review_feasibility_score = float(review_data.get("feasibilityScore", idea.feasibility_score))
+            idea.review_recommendation_class = review_data.get("recommendationClass", idea.recommendation_class)
+            idea.review_reasoning = review_data.get("reasoning", "")
+            idea.reviewed_at = int(time.time() * 1000)
+            idea.reviewed_by = reviewer_id
+
+            # Automatically set status to "under_review" if not already reviewed/approved
+            if idea.status == IdeaStatus.SUBMITTED:
+                idea.status = IdeaStatus.UNDER_REVIEW
+                idea.update_timestamp()
+
+            logger.info(
+                f"Reviewed idea {idea.idea_id}: "
+                f"Impact {idea.impact_score:.1f} -> {idea.review_impact_score:.1f}, "
+                f"Feasibility {idea.feasibility_score:.1f} -> {idea.review_feasibility_score:.1f}"
+            )
+
+            return idea
+
+        except Exception as e:
+            logger.error(f"Error reviewing idea {idea.idea_id}: {e}")
+            # Don't fail the entire operation, just log the error
+            return idea
 
     # =========================================================================
     # Like Management Methods
@@ -1633,6 +1930,9 @@ class IdeasService:
         """
         Get engagement metrics for multiple ideas efficiently.
 
+        Uses optimized batch queries to reduce database round trips.
+        Aggregation is done in Python since Cosmos DB GROUP BY has limitations.
+
         Args:
             idea_ids: List of idea IDs.
             user_id: Optional user ID to check likes.
@@ -1640,10 +1940,85 @@ class IdeasService:
         Returns:
             Dictionary mapping idea IDs to their engagement metrics.
         """
-        result = {}
+        if not idea_ids or not self.ideas_container:
+            return {}
 
-        # For now, fetch individually (can be optimized with batch queries)
+        # Initialize counters
+        like_counts: dict[str, int] = {idea_id: 0 for idea_id in idea_ids}
+        comment_counts: dict[str, int] = {idea_id: 0 for idea_id in idea_ids}
+        user_likes: set[str] = set()
+
+        try:
+            # Build IN clause for idea IDs
+            id_params = []
+            id_placeholders = []
+            for i, idea_id in enumerate(idea_ids):
+                param_name = f"@id{i}"
+                id_params.append({"name": param_name, "value": idea_id})
+                id_placeholders.append(param_name)
+
+            in_clause = ", ".join(id_placeholders)
+
+            # Query 1: Get all likes for the ideas (just ideaId field)
+            like_query = f"""
+                SELECT c.ideaId
+                FROM c
+                WHERE c.type = 'idea_like'
+                AND c.ideaId IN ({in_clause})
+            """
+            async for item in self.ideas_container.query_items(
+                query=like_query,
+                parameters=id_params,
+            ):
+                idea_id = item.get("ideaId")
+                if idea_id in like_counts:
+                    like_counts[idea_id] += 1
+
+            # Query 2: Get all comments for the ideas (just ideaId field)
+            comment_query = f"""
+                SELECT c.ideaId
+                FROM c
+                WHERE c.type = 'idea_comment'
+                AND c.ideaId IN ({in_clause})
+            """
+            async for item in self.ideas_container.query_items(
+                query=comment_query,
+                parameters=id_params,
+            ):
+                idea_id = item.get("ideaId")
+                if idea_id in comment_counts:
+                    comment_counts[idea_id] += 1
+
+            # Query 3: Check user likes for all ideas in one query
+            if user_id:
+                user_params = id_params + [{"name": "@userId", "value": user_id}]
+                user_like_query = f"""
+                    SELECT c.ideaId
+                    FROM c
+                    WHERE c.type = 'idea_like'
+                    AND c.userId = @userId
+                    AND c.ideaId IN ({in_clause})
+                """
+                async for item in self.ideas_container.query_items(
+                    query=user_like_query,
+                    parameters=user_params,
+                ):
+                    idea_id = item.get("ideaId")
+                    if idea_id:
+                        user_likes.add(idea_id)
+
+        except Exception as e:
+            logger.error(f"Error getting bulk engagement: {e}")
+            # Continue with partial results
+
+        # Build result from aggregated counts
+        result: dict[str, IdeaEngagement] = {}
         for idea_id in idea_ids:
-            result[idea_id] = await self.get_idea_engagement(idea_id, user_id)
+            result[idea_id] = IdeaEngagement(
+                idea_id=idea_id,
+                like_count=like_counts.get(idea_id, 0),
+                comment_count=comment_counts.get(idea_id, 0),
+                user_has_liked=idea_id in user_likes,
+            )
 
         return result

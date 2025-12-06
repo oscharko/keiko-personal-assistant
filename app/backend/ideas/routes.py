@@ -16,9 +16,11 @@ from quart import Blueprint, Response, current_app, jsonify, request
 
 from config import (
     CONFIG_COSMOS_HISTORY_CLIENT,
+    CONFIG_CREDENTIAL,
     CONFIG_IDEAS_CONTAINER,
     CONFIG_IDEAS_HUB_ENABLED,
     CONFIG_IDEAS_SCHEDULER,
+    CONFIG_IDEAS_SEARCH_INDEX_MANAGER,
     CONFIG_IDEAS_SERVICE,
     CONFIG_OPENAI_CLIENT,
     CONFIG_SEARCH_CLIENT,
@@ -32,6 +34,7 @@ from .permissions import (
     IdeaRole,
     can_delete_idea,
     can_edit_idea,
+    can_review_idea,
     can_view_idea,
     get_role_info,
     get_user_role,
@@ -39,6 +42,7 @@ from .permissions import (
     require_permission,
 )
 from .scheduler import IdeasScheduler
+from .search_index import IdeasSearchIndexManager
 from .service import IdeasService
 
 logger = logging.getLogger(__name__)
@@ -124,12 +128,33 @@ async def setup_ideas_module():
         # Get OpenAI client and search client from app config
         openai_client = current_app.config.get(CONFIG_OPENAI_CLIENT)
         search_client = current_app.config.get(CONFIG_SEARCH_CLIENT)
+        azure_credential = current_app.config.get(CONFIG_CREDENTIAL)
 
         # Read model and deployment from environment variables
         chatgpt_model = os.environ.get("AZURE_OPENAI_CHATGPT_MODEL", "gpt-4o-mini")
         chatgpt_deployment = os.environ.get("AZURE_OPENAI_CHATGPT_DEPLOYMENT")
-        embedding_model = os.environ.get("AZURE_OPENAI_EMB_MODEL_NAME", "text-embedding-ada-002")
+        embedding_model = os.environ.get("AZURE_OPENAI_EMB_MODEL_NAME", "text-embedding-3-large")
         embedding_deployment = os.environ.get("AZURE_OPENAI_EMB_DEPLOYMENT")
+
+        # Initialize Azure AI Search Index Manager for Ideas
+        search_index_manager = None
+        AZURE_SEARCH_SERVICE = os.environ.get("AZURE_SEARCH_SERVICE")
+        if AZURE_SEARCH_SERVICE and azure_credential:
+            try:
+                search_endpoint = f"https://{AZURE_SEARCH_SERVICE}.search.windows.net"
+                search_index_manager = IdeasSearchIndexManager(
+                    endpoint=search_endpoint,
+                    credential=azure_credential,
+                )
+                # Create or update the index to ensure schema is current
+                current_app.logger.info("Creating/updating Ideas search index...")
+                await search_index_manager.create_or_update_index()
+            except Exception as e:
+                current_app.logger.warning(f"Failed to initialize Ideas search index: {e}")
+                search_index_manager = None
+
+        # Store search index manager in app config for cleanup
+        current_app.config[CONFIG_IDEAS_SEARCH_INDEX_MANAGER] = search_index_manager
 
         # Initialize the Ideas service
         ideas_service = IdeasService(
@@ -140,6 +165,7 @@ async def setup_ideas_module():
             embedding_deployment=embedding_deployment,
             ideas_container=ideas_container,
             search_client=search_client,
+            search_index_manager=search_index_manager,
             audit_container=audit_container,
         )
         current_app.config[CONFIG_IDEAS_SERVICE] = ideas_service
@@ -155,6 +181,7 @@ async def setup_ideas_module():
                 chatgpt_deployment=chatgpt_deployment,
                 embedding_model=embedding_model,
                 embedding_deployment=embedding_deployment,
+                search_index_manager=search_index_manager,
             )
             _ideas_scheduler.start()
             current_app.config[CONFIG_IDEAS_SCHEDULER] = _ideas_scheduler
@@ -304,6 +331,80 @@ async def create_idea(auth_claims: dict[str, Any]):
     except Exception as e:
         logger.exception("Error creating idea")
         return error_response(e, "/api/ideas")
+
+
+@ideas_bp.route("/search", methods=["GET"])
+@authenticated
+async def search_ideas(auth_claims: dict[str, Any]):
+    """
+    Search ideas using Azure AI Search with full-text and semantic search.
+
+    Query parameters:
+        - q: Search query text (searches title, description, summary, tags)
+        - page: Page number (default: 1)
+        - pageSize: Items per page (default: 20, max: 100)
+        - status: Filter by status
+        - department: Filter by department
+        - myIdeas: Show only user's own ideas (default: false)
+        - recommendationClass: Filter by recommendation class
+        - useSemantic: Use semantic search (default: true)
+        - scoringProfile: Scoring profile (impact-boost, feasibility-boost, balanced-boost)
+
+    Returns:
+        JSON response with paginated search results.
+    """
+    error = _check_ideas_enabled()
+    if error:
+        return error
+
+    user_id = _get_user_id(auth_claims)
+    if not user_id:
+        return jsonify({"error": "User ID not found"}), 401
+
+    try:
+        # Parse query parameters
+        search_text = request.args.get("q")
+        page = max(1, int(request.args.get("page", 1)))
+        page_size = min(100, max(1, int(request.args.get("pageSize", 20))))
+        status = request.args.get("status")
+        department = request.args.get("department")
+        my_ideas = request.args.get("myIdeas", "").lower() == "true"
+        recommendation_class = request.args.get("recommendationClass")
+        use_semantic = request.args.get("useSemantic", "true").lower() == "true"
+        scoring_profile = request.args.get("scoringProfile")
+
+        # Get service and search ideas
+        service = _get_ideas_service()
+        if service:
+            submitter_id = user_id if my_ideas else None
+            result = await service.search_ideas(
+                search_text=search_text,
+                page=page,
+                page_size=page_size,
+                status=status,
+                department=department,
+                submitter_id=submitter_id,
+                recommendation_class=recommendation_class,
+                use_semantic=use_semantic,
+                scoring_profile=scoring_profile,
+            )
+            return jsonify(result.to_dict())
+        else:
+            # Fallback: return empty list
+            return jsonify({
+                "ideas": [],
+                "totalCount": 0,
+                "page": page,
+                "pageSize": page_size,
+                "hasMore": False,
+            })
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        logger.exception("Error searching ideas")
+        return error_response(e, "/api/ideas/search")
+
 
 
 @ideas_bp.route("", methods=["GET"])
@@ -530,6 +631,199 @@ async def delete_idea(auth_claims: dict[str, Any], idea_id: str):
     except Exception as e:
         logger.exception("Error deleting idea")
         return error_response(e, f"/api/ideas/{idea_id}")
+
+
+@ideas_bp.route("/<idea_id>/review", methods=["POST"])
+@authenticated
+async def review_idea_endpoint(auth_claims: dict[str, Any], idea_id: str):
+    """
+    Trigger LLM-based review of an idea (Phase 2 - Hybrid Approach).
+
+    This endpoint performs a comprehensive LLM review of the idea, which:
+    - Reviews the initial automated scores
+    - Provides adjusted impact and feasibility scores
+    - Generates a detailed reasoning for the assessment
+    - Automatically sets the status to "under_review"
+
+    Only users with REVIEWER or ADMIN role can trigger reviews.
+
+    Args:
+        idea_id: The unique identifier of the idea.
+
+    Returns:
+        JSON response with reviewed idea data including review scores and reasoning.
+    """
+    error = _check_ideas_enabled()
+    if error:
+        return error
+
+    user_id = _get_user_id(auth_claims)
+    if not user_id:
+        return jsonify({"error": "User ID not found"}), 401
+
+    try:
+        # Check permission - only reviewers and admins can trigger reviews
+        if not can_review_idea(auth_claims):
+            return jsonify({"error": "You do not have permission to review ideas"}), 403
+
+        service = _get_ideas_service()
+        if not service:
+            return jsonify({"error": "Ideas service not configured"}), 500
+
+        # Get existing idea
+        existing_idea = await service.get_idea(idea_id)
+        if not existing_idea:
+            return jsonify({"error": "Idea not found"}), 404
+
+        # Perform LLM review (analysis is done automatically if not yet performed)
+        reviewed_idea = await service.review_idea(existing_idea, reviewer_id=user_id)
+
+        # Build update data including analysis fields if they were generated
+        update_data = {
+            "reviewImpactScore": reviewed_idea.review_impact_score,
+            "reviewFeasibilityScore": reviewed_idea.review_feasibility_score,
+            "reviewRecommendationClass": reviewed_idea.review_recommendation_class,
+            "reviewReasoning": reviewed_idea.review_reasoning,
+            "reviewedAt": reviewed_idea.reviewed_at,
+            "reviewedBy": reviewed_idea.reviewed_by,
+            "status": reviewed_idea.status.value if isinstance(reviewed_idea.status, IdeaStatus) else reviewed_idea.status,
+        }
+
+        # Include analysis fields if they were generated during review
+        if reviewed_idea.analyzed_at:
+            update_data["analyzedAt"] = reviewed_idea.analyzed_at
+            update_data["analysisVersion"] = reviewed_idea.analysis_version
+            update_data["impactScore"] = reviewed_idea.impact_score
+            update_data["feasibilityScore"] = reviewed_idea.feasibility_score
+            update_data["recommendationClass"] = reviewed_idea.recommendation_class
+            update_data["summary"] = reviewed_idea.summary
+            update_data["clusterLabel"] = reviewed_idea.cluster_label
+            if reviewed_idea.kpi_estimates:
+                update_data["kpiEstimates"] = reviewed_idea.kpi_estimates
+            if reviewed_idea.affected_processes:
+                update_data["affectedProcesses"] = reviewed_idea.affected_processes
+            if reviewed_idea.target_users:
+                update_data["targetUsers"] = reviewed_idea.target_users
+
+        # Save the reviewed idea
+        updated_idea = await service.update_idea(idea_id, update_data)
+
+        if updated_idea:
+            return jsonify(updated_idea.to_dict())
+        else:
+            return jsonify({"error": "Failed to save review results"}), 500
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        logger.exception("Error reviewing idea")
+        return error_response(e, f"/api/ideas/{idea_id}/review")
+
+
+@ideas_bp.route("/<idea_id>/status", methods=["PATCH"])
+@authenticated
+async def update_idea_status(auth_claims: dict[str, Any], idea_id: str):
+    """
+    Update the status of an idea.
+
+    Only users with CHANGE_STATUS permission (REVIEWER or ADMIN) can change status.
+    Valid status transitions:
+    - UNDER_REVIEW -> APPROVED, REJECTED
+    - APPROVED -> IMPLEMENTED
+    - Any status -> REJECTED (by admin)
+
+    Request body:
+        - status: New status (approved, rejected, implemented)
+        - reason: Optional reason for status change
+
+    Args:
+        idea_id: The unique identifier of the idea.
+
+    Returns:
+        JSON response with updated idea.
+    """
+    error = _check_ideas_enabled()
+    if error:
+        return error
+
+    # Check permission to change status
+    if not has_permission(auth_claims, IdeaPermission.CHANGE_STATUS):
+        return jsonify({"error": "You do not have permission to change idea status"}), 403
+
+    try:
+        service = _get_ideas_service()
+        if not service:
+            return jsonify({"error": "Ideas service not configured"}), 500
+
+        # Get the existing idea
+        existing_idea = await service.get_idea(idea_id)
+        if not existing_idea:
+            return jsonify({"error": "Idea not found"}), 404
+
+        # Parse request body
+        request_json = await request.get_json()
+        new_status_str = request_json.get("status", "").lower()
+        reason = request_json.get("reason", "")
+
+        # Validate new status
+        valid_statuses = ["approved", "rejected", "implemented"]
+        if new_status_str not in valid_statuses:
+            return jsonify({
+                "error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+            }), 400
+
+        # Map string to IdeaStatus enum
+        status_map = {
+            "approved": IdeaStatus.APPROVED,
+            "rejected": IdeaStatus.REJECTED,
+            "implemented": IdeaStatus.IMPLEMENTED,
+        }
+        new_status = status_map[new_status_str]
+
+        # Validate status transition
+        current_status = existing_idea.status
+        valid_transitions = {
+            IdeaStatus.SUBMITTED: [IdeaStatus.REJECTED],  # Can reject without review
+            IdeaStatus.UNDER_REVIEW: [IdeaStatus.APPROVED, IdeaStatus.REJECTED],
+            IdeaStatus.APPROVED: [IdeaStatus.IMPLEMENTED, IdeaStatus.REJECTED],
+            IdeaStatus.REJECTED: [],  # Final state
+            IdeaStatus.IMPLEMENTED: [],  # Final state
+        }
+
+        # Admins can force any transition except from final states
+        role = get_user_role(auth_claims)
+        if role == IdeaRole.ADMIN:
+            if current_status not in [IdeaStatus.REJECTED, IdeaStatus.IMPLEMENTED]:
+                valid_transitions[current_status] = list(status_map.values())
+
+        allowed_transitions = valid_transitions.get(current_status, [])
+        if new_status not in allowed_transitions:
+            return jsonify({
+                "error": f"Cannot transition from '{current_status.value}' to '{new_status.value}'"
+            }), 400
+
+        # Update the status
+        user_id = _get_user_id(auth_claims)
+        updates = {
+            "status": new_status.value,
+        }
+
+        updated_idea = await service.update_idea(idea_id, updates)
+        if updated_idea:
+            logger.info(
+                f"Status changed for idea {idea_id}: "
+                f"{current_status.value} -> {new_status.value} by {user_id}"
+                f"{f' (reason: {reason})' if reason else ''}"
+            )
+            return jsonify(updated_idea.to_dict())
+        else:
+            return jsonify({"error": "Failed to update idea status"}), 500
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        logger.exception("Error updating idea status")
+        return error_response(e, f"/api/ideas/{idea_id}/status")
 
 
 @ideas_bp.route("/similar", methods=["GET"])
@@ -1291,6 +1585,60 @@ async def get_engagement(auth_claims: dict[str, Any], idea_id: str) -> Response:
     engagement = await service.get_idea_engagement(idea_id, user_id)
 
     return jsonify(engagement.to_dict())
+
+
+@ideas_bp.route("/engagement/batch", methods=["POST"])
+@authenticated
+async def get_engagement_batch(auth_claims: dict[str, Any]) -> Response:
+    """
+    Get aggregated engagement metrics for multiple ideas in a single request.
+
+    This batch endpoint significantly improves performance when loading
+    the ideas list by reducing the number of API calls from N to 1.
+
+    Request body:
+        ideaIds: List of idea IDs to get engagement for.
+
+    Returns:
+        JSON response with engagement metrics for each idea.
+    """
+    error = _check_ideas_enabled()
+    if error:
+        return error
+
+    user_id = _get_user_id(auth_claims)
+    if not user_id:
+        return error_response("User ID not found", 401)
+
+    service = _get_ideas_service()
+    if not service:
+        return error_response("Ideas service not configured", 500)
+
+    try:
+        data = await request.get_json()
+        idea_ids = data.get("ideaIds", [])
+
+        if not idea_ids:
+            return jsonify({"engagements": {}})
+
+        # Limit batch size to prevent abuse
+        if len(idea_ids) > 100:
+            return error_response("Maximum 100 ideas per batch request", 400)
+
+        # Use optimized bulk query method
+        bulk_engagements = await service.get_bulk_engagement(idea_ids, user_id)
+
+        # Convert to dict format for JSON response
+        engagements = {
+            idea_id: engagement.to_dict()
+            for idea_id, engagement in bulk_engagements.items()
+        }
+
+        return jsonify({"engagements": engagements})
+
+    except Exception as e:
+        logger.exception("Error getting batch engagement")
+        return error_response(e, "/api/ideas/engagement/batch")
 
 
 # =============================================================================

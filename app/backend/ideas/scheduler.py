@@ -19,7 +19,9 @@ from azure.cosmos.aio import ContainerProxy
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
+    from .search_index import IdeasSearchIndexManager
 
+from .clustering import IdeaClusterer
 from .models import Idea, IdeaStatus
 from .scoring import IdeaScorer, ScoringConfig
 
@@ -45,6 +47,7 @@ class IdeasScheduler:
         embedding_model: str = "text-embedding-ada-002",
         embedding_deployment: Optional[str] = None,
         scoring_config: Optional[ScoringConfig] = None,
+        search_index_manager: Optional["IdeasSearchIndexManager"] = None,
     ):
         """
         Initialize the ideas scheduler.
@@ -57,6 +60,7 @@ class IdeasScheduler:
             embedding_model: Model name for embeddings.
             embedding_deployment: Azure OpenAI embedding deployment (optional).
             scoring_config: Configuration for scoring calculations.
+            search_index_manager: Azure AI Search index manager (optional).
         """
         self.ideas_container = ideas_container
         self.openai_client = openai_client
@@ -65,7 +69,13 @@ class IdeasScheduler:
         self.embedding_model = embedding_model
         self.embedding_deployment = embedding_deployment
         self.scoring_config = scoring_config
+        self.search_index_manager = search_index_manager
         self.scorer = IdeaScorer(scoring_config)
+        self.clusterer = IdeaClusterer(
+            openai_client=openai_client,
+            chatgpt_model=chatgpt_model,
+            chatgpt_deployment=chatgpt_deployment,
+        )
         self._scheduler: Optional[AsyncIOScheduler] = None
 
     async def _get_ideas_needing_analysis(
@@ -322,6 +332,135 @@ class IdeasScheduler:
 
         return results
 
+    async def run_review_job(self) -> dict[str, Any]:
+        """
+        Run the LLM review job (Phase 2 - Hybrid Approach).
+
+        Reviews ideas that have been analyzed but not yet reviewed by the LLM.
+        This provides a second-level assessment with more nuanced scoring.
+
+        Returns:
+            Dictionary with job results.
+        """
+        start_time = datetime.now()
+        logger.info(f"Starting review job at {start_time}")
+
+        results = {
+            "started_at": start_time.isoformat(),
+            "reviewed": 0,
+            "skipped": 0,
+            "errors": 0,
+        }
+
+        if not self.openai_client:
+            logger.warning("OpenAI client not configured, skipping review job")
+            results["skipped"] = "all"
+            results["completed_at"] = datetime.now().isoformat()
+            return results
+
+        try:
+            # Import here to avoid circular dependency
+            from .service import IdeasService
+
+            # Create a temporary service instance for review operations
+            service = IdeasService(
+                openai_client=self.openai_client,
+                chatgpt_model=self.chatgpt_model,
+                chatgpt_deployment=self.chatgpt_deployment,
+                embedding_model=self.embedding_model,
+                embedding_deployment=self.embedding_deployment,
+                ideas_container=self.ideas_container,
+                search_client=None,  # Not needed for review
+                search_index_manager=self.search_index_manager,
+                audit_container=None,  # Not needed for review
+            )
+
+            # Query ideas that need review:
+            # - Status is SUBMITTED (not yet reviewed)
+            # - Has been analyzed (analyzedAt > 0)
+            # - Not yet reviewed (reviewedAt = 0 or not defined)
+            query = """
+                SELECT * FROM c
+                WHERE c.type = 'idea'
+                AND c.status = @submitted
+                AND c.analyzedAt > 0
+                AND (NOT IS_DEFINED(c.reviewedAt) OR c.reviewedAt = 0)
+                ORDER BY c.createdAt ASC
+                OFFSET 0 LIMIT 20
+            """
+            parameters = [
+                {"name": "@submitted", "value": IdeaStatus.SUBMITTED.value},
+            ]
+
+            ideas_to_review = []
+            async for item in self.ideas_container.query_items(
+                query=query,
+                parameters=parameters,
+            ):
+                ideas_to_review.append(Idea.from_cosmos_item(item))
+
+            if not ideas_to_review:
+                logger.info("No ideas need review")
+                results["completed_at"] = datetime.now().isoformat()
+                return results
+
+            logger.info(f"Found {len(ideas_to_review)} ideas to review")
+
+            # Review each idea
+            for idea in ideas_to_review:
+                try:
+                    # Perform LLM review
+                    reviewed_idea = await service.review_idea(idea, reviewer_id="llm")
+
+                    # Save the reviewed idea
+                    await self.ideas_container.upsert_item(reviewed_idea.to_cosmos_item())
+                    results["reviewed"] += 1
+
+                    # Update search index if available
+                    if self.search_index_manager:
+                        try:
+                            await self.search_index_manager.update_document(
+                                reviewed_idea.to_search_document()
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to update search index for idea {idea.idea_id}: {e}"
+                            )
+
+                    logger.info(
+                        f"Reviewed idea {idea.idea_id}: "
+                        f"Impact {idea.impact_score:.1f} -> {reviewed_idea.review_impact_score:.1f}, "
+                        f"Feasibility {idea.feasibility_score:.1f} -> {reviewed_idea.review_feasibility_score:.1f}"
+                    )
+
+                    # Small delay to avoid rate limiting
+                    await asyncio.sleep(1.0)
+
+                except Exception as e:
+                    logger.error(f"Error reviewing idea {idea.idea_id}: {e}")
+                    results["errors"] += 1
+
+            duration = (datetime.now() - start_time).total_seconds()
+            results["duration_seconds"] = duration
+            results["completed_at"] = datetime.now().isoformat()
+
+            logger.info(
+                f"Review job completed in {duration:.1f}s: "
+                f"{results['reviewed']} ideas reviewed, {results['errors']} errors"
+            )
+
+        except Exception as e:
+            logger.error(f"Review job failed: {e}")
+            results["error"] = str(e)
+            results["completed_at"] = datetime.now().isoformat()
+
+        return results
+
+    async def trigger_review(self) -> dict[str, Any]:
+        """Trigger an immediate review job."""
+        logger.info("Triggering immediate review job")
+        return await self.run_review_job()
+
     def start(self) -> None:
         """
         Start the background scheduler.
@@ -329,6 +468,9 @@ class IdeasScheduler:
         Schedules:
         1. Daily analysis job at 02:00 (for re-analyzing outdated ideas)
         2. Hourly rescoring job (for ideas with missing scores)
+        3. Daily index sync job at 03:00 (for synchronizing search index)
+        4. Daily review job at 03:30 (for LLM-based review of new ideas)
+        5. Weekly clustering job on Sundays at 04:00 (for batch clustering)
         """
         if self._scheduler is not None:
             logger.warning("Ideas scheduler already running")
@@ -354,10 +496,44 @@ class IdeasScheduler:
             replace_existing=True,
         )
 
+        # Schedule daily index sync job at 03:00 (if search index manager is available)
+        if self.search_index_manager:
+            self._scheduler.add_job(
+                self.run_index_sync_job,
+                trigger=CronTrigger(hour=3, minute=0),
+                id="daily_index_sync",
+                name="Daily Index Synchronization",
+                replace_existing=True,
+            )
+            logger.info("Index sync job scheduled for 03:00 daily")
+
+        # Schedule daily review job at 03:30 (if OpenAI client is available)
+        if self.openai_client:
+            self._scheduler.add_job(
+                self.run_review_job,
+                trigger=CronTrigger(hour=3, minute=30),
+                id="daily_review",
+                name="Daily LLM Review",
+                replace_existing=True,
+            )
+            logger.info("Review job scheduled for 03:30 daily")
+
+        # Schedule weekly clustering job on Sundays at 04:00 (if OpenAI client is available)
+        if self.openai_client:
+            self._scheduler.add_job(
+                self.run_clustering_job,
+                trigger=CronTrigger(day_of_week="sun", hour=4, minute=0),
+                id="weekly_clustering",
+                name="Weekly Batch Clustering",
+                replace_existing=True,
+            )
+            logger.info("Clustering job scheduled for Sundays at 04:00")
+
         self._scheduler.start()
         logger.info(
             "Ideas scheduler started - "
-            "analysis at 02:00, rescoring every hour"
+            "analysis at 02:00, rescoring every hour, "
+            "index sync at 03:00, review at 03:30, clustering on Sundays at 04:00"
         )
 
     def stop(self) -> None:
@@ -376,4 +552,214 @@ class IdeasScheduler:
         """Trigger an immediate analysis job."""
         logger.info("Triggering immediate analysis job")
         return await self.run_analysis_job()
+
+    async def run_index_sync_job(self) -> dict[str, Any]:
+        """
+        Run the index synchronization job.
+
+        Synchronizes all ideas from Cosmos DB to Azure AI Search index.
+        This ensures the search index stays in sync with the database.
+
+        Returns:
+            Dictionary with job results.
+        """
+        start_time = datetime.now()
+        logger.info(f"Starting index synchronization job at {start_time}")
+
+        results = {
+            "started_at": start_time.isoformat(),
+            "indexed": 0,
+            "skipped": 0,
+            "errors": 0,
+        }
+
+        if not self.search_index_manager:
+            logger.warning("Search index manager not available, skipping sync")
+            results["error"] = "Search index manager not configured"
+            results["completed_at"] = datetime.now().isoformat()
+            return results
+
+        try:
+            # Query all non-archived ideas
+            query = """
+                SELECT * FROM c
+                WHERE c.type = 'idea'
+                AND c.status != @archived
+                ORDER BY c.updatedAt DESC
+            """
+            parameters = [
+                {"name": "@archived", "value": IdeaStatus.ARCHIVED.value},
+            ]
+
+            ideas_to_index = []
+            async for item in self.ideas_container.query_items(
+                query=query,
+                parameters=parameters,
+            ):
+                idea = Idea.from_cosmos_item(item)
+                ideas_to_index.append(idea.to_search_document())
+
+            if not ideas_to_index:
+                logger.info("No ideas to synchronize")
+                results["completed_at"] = datetime.now().isoformat()
+                return results
+
+            # Batch index all ideas
+            try:
+                await self.search_index_manager.index_documents(ideas_to_index)
+                results["indexed"] = len(ideas_to_index)
+                logger.info(f"Successfully indexed {len(ideas_to_index)} ideas")
+            except Exception as e:
+                logger.error(f"Error batch indexing ideas: {e}")
+                results["errors"] = len(ideas_to_index)
+                results["error"] = str(e)
+
+            duration = (datetime.now() - start_time).total_seconds()
+            results["duration_seconds"] = duration
+            results["completed_at"] = datetime.now().isoformat()
+
+            logger.info(
+                f"Index sync job completed in {duration:.1f}s: "
+                f"{results['indexed']} indexed, "
+                f"{results['errors']} errors"
+            )
+
+        except Exception as e:
+            logger.error(f"Index sync job failed: {e}")
+            results["error"] = str(e)
+            results["completed_at"] = datetime.now().isoformat()
+
+        return results
+
+    async def trigger_index_sync(self) -> dict[str, Any]:
+        """Trigger an immediate index synchronization job."""
+        logger.info("Triggering immediate index sync job")
+        return await self.run_index_sync_job()
+
+    async def run_clustering_job(self) -> dict[str, Any]:
+        """
+        Run the batch clustering job.
+
+        Clusters all ideas based on their embeddings and generates
+        descriptive labels for each cluster using LLM.
+
+        Returns:
+            Dictionary with job results.
+        """
+        start_time = datetime.now()
+        logger.info(f"Starting clustering job at {start_time}")
+
+        results = {
+            "started_at": start_time.isoformat(),
+            "clustered": 0,
+            "skipped": 0,
+            "errors": 0,
+        }
+
+        try:
+            # Query all non-archived ideas with embeddings
+            query = """
+                SELECT * FROM c
+                WHERE c.type = 'idea'
+                AND c.status != @archived
+                AND IS_DEFINED(c.embedding)
+                AND ARRAY_LENGTH(c.embedding) > 0
+                ORDER BY c.createdAt DESC
+            """
+            parameters = [
+                {"name": "@archived", "value": IdeaStatus.ARCHIVED.value},
+            ]
+
+            ideas = []
+            embeddings = []
+            async for item in self.ideas_container.query_items(
+                query=query,
+                parameters=parameters,
+            ):
+                idea = Idea.from_cosmos_item(item)
+                if idea.embedding:
+                    ideas.append(idea)
+                    embeddings.append(idea.embedding)
+
+            if len(ideas) < 10:
+                logger.info(
+                    f"Not enough ideas for clustering: {len(ideas)} ideas "
+                    "(minimum 10 required)"
+                )
+                results["skipped"] = len(ideas)
+                results["completed_at"] = datetime.now().isoformat()
+                return results
+
+            # Perform clustering
+            cluster_labels, n_clusters = self.clusterer.cluster_ideas(embeddings)
+
+            # Group ideas by cluster
+            clusters: dict[int, list[Idea]] = {}
+            for idea, cluster_id in zip(ideas, cluster_labels):
+                if cluster_id not in clusters:
+                    clusters[cluster_id] = []
+                clusters[cluster_id].append(idea)
+
+            # Generate labels for each cluster and update ideas
+            for cluster_id, cluster_ideas in clusters.items():
+                try:
+                    # Generate cluster label using LLM
+                    titles = [idea.title for idea in cluster_ideas]
+                    summaries = [idea.summary or idea.description for idea in cluster_ideas]
+
+                    cluster_label = await self.clusterer.generate_cluster_label(
+                        titles, summaries
+                    )
+
+                    # Update all ideas in this cluster
+                    for idea in cluster_ideas:
+                        idea.cluster_label = cluster_label
+                        await self.ideas_container.upsert_item(idea.to_cosmos_item())
+                        results["clustered"] += 1
+
+                        # Update search index if available
+                        if self.search_index_manager:
+                            try:
+                                await self.search_index_manager.update_document(
+                                    idea.to_search_document()
+                                )
+                            except Exception as e:
+                                logger.warning(
+                                    f"Failed to update search index for idea {idea.idea_id}: {e}"
+                                )
+
+                    logger.info(
+                        f"Cluster {cluster_id}: '{cluster_label}' "
+                        f"({len(cluster_ideas)} ideas)"
+                    )
+
+                    # Small delay to avoid rate limiting
+                    await asyncio.sleep(0.5)
+
+                except Exception as e:
+                    logger.error(f"Error processing cluster {cluster_id}: {e}")
+                    results["errors"] += len(cluster_ideas)
+
+            duration = (datetime.now() - start_time).total_seconds()
+            results["duration_seconds"] = duration
+            results["completed_at"] = datetime.now().isoformat()
+            results["n_clusters"] = n_clusters
+
+            logger.info(
+                f"Clustering job completed in {duration:.1f}s: "
+                f"{results['clustered']} ideas clustered into {n_clusters} clusters, "
+                f"{results['errors']} errors"
+            )
+
+        except Exception as e:
+            logger.error(f"Clustering job failed: {e}")
+            results["error"] = str(e)
+            results["completed_at"] = datetime.now().isoformat()
+
+        return results
+
+    async def trigger_clustering(self) -> dict[str, Any]:
+        """Trigger an immediate clustering job."""
+        logger.info("Triggering immediate clustering job")
+        return await self.run_clustering_job()
 

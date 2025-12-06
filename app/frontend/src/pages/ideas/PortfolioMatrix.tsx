@@ -62,17 +62,24 @@ export function PortfolioMatrix({ ideas, onIdeaClick }: PortfolioMatrixProps): J
     }, []);
 
     // Calculate plotted positions for each idea
+    // Only show ideas that have been reviewed by LLM (have review scores)
     const plottedIdeas = useMemo((): PlottedIdea[] => {
         const chartWidth = dimensions.width - padding.left - padding.right;
         const chartHeight = dimensions.height - padding.top - padding.bottom;
 
         return ideas
-            .filter(idea => idea.impactScore !== undefined && idea.feasibilityScore !== undefined)
+            .filter(idea => {
+                // Only include ideas that have been reviewed (have reviewedAt timestamp)
+                const hasBeenReviewed = idea.reviewedAt !== undefined && idea.reviewedAt > 0;
+                return hasBeenReviewed &&
+                    idea.reviewImpactScore !== undefined &&
+                    idea.reviewFeasibilityScore !== undefined;
+            })
             .map(idea => ({
                 idea,
-                x: padding.left + (idea.feasibilityScore! / 100) * chartWidth,
-                y: padding.top + chartHeight - (idea.impactScore! / 100) * chartHeight,
-                color: RECOMMENDATION_COLORS[idea.recommendationClass || RecommendationClass.Unclassified],
+                x: padding.left + (idea.reviewFeasibilityScore! / 100) * chartWidth,
+                y: padding.top + chartHeight - (idea.reviewImpactScore! / 100) * chartHeight,
+                color: RECOMMENDATION_COLORS[idea.reviewRecommendationClass || RecommendationClass.Unclassified],
             }));
     }, [ideas, dimensions, padding]);
 
@@ -261,10 +268,10 @@ export function PortfolioMatrix({ ideas, onIdeaClick }: PortfolioMatrixProps): J
                 >
                     <div className={styles.tooltipTitle}>{hoveredIdea.title}</div>
                     <div className={styles.tooltipScore}>
-                        {t("ideas.impact")}: {hoveredIdea.impactScore}
+                        {t("ideas.impact")}: {hoveredIdea.reviewImpactScore}
                     </div>
                     <div className={styles.tooltipScore}>
-                        {t("ideas.feasibility")}: {hoveredIdea.feasibilityScore}
+                        {t("ideas.feasibility")}: {hoveredIdea.reviewFeasibilityScore}
                     </div>
                     <div className={styles.tooltipHint}>{t("ideas.matrix.clickToView")}</div>
                 </div>

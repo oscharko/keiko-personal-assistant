@@ -6,11 +6,11 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Panel, PanelType, PrimaryButton, DefaultButton, Spinner, SpinnerSize, TextField } from "@fluentui/react";
-import { Edit24Regular, Delete24Regular, Lightbulb24Regular, Heart24Regular, Heart24Filled, Comment24Regular, Send24Regular } from "@fluentui/react-icons";
+import { Edit24Regular, Delete24Regular, Lightbulb24Regular, Heart24Regular, Heart24Filled, Comment24Regular, Send24Regular, Checkmark24Regular, Dismiss24Regular, CheckmarkCircle24Regular } from "@fluentui/react-icons";
 import { useMsal } from "@azure/msal-react";
 import { useTranslation } from "react-i18next";
 
-import { deleteIdeaApi, addIdeaLikeApi, removeIdeaLikeApi, getIdeaEngagementApi, getIdeaCommentsApi, createIdeaCommentApi, updateIdeaCommentApi, deleteIdeaCommentApi } from "../../api";
+import { deleteIdeaApi, addIdeaLikeApi, removeIdeaLikeApi, getIdeaEngagementApi, getIdeaCommentsApi, createIdeaCommentApi, updateIdeaCommentApi, deleteIdeaCommentApi, reviewIdeaApi, updateIdeaStatusApi } from "../../api";
 import { Idea, IdeaStatus, RecommendationClass, IdeaEngagement, IdeaComment, SimilarIdea } from "../../api/models";
 import { getToken, useLogin } from "../../authConfig";
 import styles from "./IdeaDetailModal.module.css";
@@ -22,6 +22,7 @@ interface IdeaDetailModalProps {
     onDeleted: (ideaId: string) => void;
     currentUserId?: string;
     isAdmin?: boolean;
+    isReviewer?: boolean;
 }
 
 /**
@@ -86,12 +87,14 @@ function getScoreBarClass(score: number | undefined): string {
     return styles.scoreBarLow;
 }
 
-export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUserId, isAdmin = false }: IdeaDetailModalProps) {
+export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUserId, isAdmin = false, isReviewer = false }: IdeaDetailModalProps) {
     const client = useLogin ? useMsal().instance : undefined;
     const { t } = useTranslation();
 
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isReviewing, setIsReviewing] = useState(false);
+    const [isChangingStatus, setIsChangingStatus] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Engagement state
@@ -258,6 +261,40 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
         });
     };
 
+    /**
+     * Handle triggering LLM review.
+     */
+    const handleReview = useCallback(async () => {
+        setIsReviewing(true);
+        setError(null);
+        try {
+            const token = client ? await getToken(client) : undefined;
+            const updatedIdea = await reviewIdeaApi(idea.ideaId, token);
+            onUpdated(updatedIdea);
+        } catch (err) {
+            console.error("Error reviewing idea:", err);
+            setError(err instanceof Error ? err.message : t("ideas.reviewError"));
+        } finally {
+            setIsReviewing(false);
+        }
+    }, [client, idea.ideaId, onUpdated, t]);
+
+    // Handle status change (approve, reject, implement)
+    const handleStatusChange = useCallback(async (newStatus: "approved" | "rejected" | "implemented") => {
+        setIsChangingStatus(true);
+        setError(null);
+        try {
+            const token = client ? await getToken(client) : undefined;
+            const updatedIdea = await updateIdeaStatusApi(idea.ideaId, newStatus, token);
+            onUpdated(updatedIdea);
+        } catch (err) {
+            console.error("Error changing idea status:", err);
+            setError(err instanceof Error ? err.message : t("ideas.statusChangeError"));
+        } finally {
+            setIsChangingStatus(false);
+        }
+    }, [client, idea.ideaId, onUpdated, t]);
+
     // Check if current user is the owner of the idea
     const isOwner = currentUserId && idea.submitterId === currentUserId;
 
@@ -269,6 +306,18 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
 
     // Check if current user can delete (owner with editable status OR admin can delete any idea)
     const canDelete = (isOwner && isEditableStatus) || isAdmin;
+
+    // Check if current user can review (reviewer or admin, idea not yet reviewed)
+    // Analysis will be performed automatically if not yet done
+    const canReview = (isReviewer || isAdmin) && !idea.reviewedAt;
+
+    // Check if current user can change status (reviewer or admin)
+    const canChangeStatus = isReviewer || isAdmin;
+
+    // Determine which status actions are available based on current status
+    const canApprove = canChangeStatus && idea.status === IdeaStatus.UnderReview;
+    const canReject = canChangeStatus && (idea.status === IdeaStatus.UnderReview || idea.status === IdeaStatus.Submitted || idea.status === IdeaStatus.Approved);
+    const canImplement = canChangeStatus && idea.status === IdeaStatus.Approved;
 
     return (
         <>
@@ -368,7 +417,9 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
                     {/* Scores */}
                     {(idea.impactScore !== undefined || idea.feasibilityScore !== undefined) && (
                         <div className={styles.section}>
-                            <h3 className={styles.sectionTitle}>{t("ideas.scores")}</h3>
+                            <h3 className={styles.sectionTitle}>
+                                {idea.reviewedAt ? t("ideas.initialScores") : t("ideas.scores")}
+                            </h3>
                             <div className={styles.scoresGrid}>
                                 {idea.impactScore !== undefined && (
                                     <div className={styles.scoreCard}>
@@ -397,6 +448,55 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
                                             />
                                         </div>
                                     </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* LLM Review Scores */}
+                    {idea.reviewedAt && (idea.reviewImpactScore !== undefined || idea.reviewFeasibilityScore !== undefined) && (
+                        <div className={styles.section}>
+                            <h3 className={styles.sectionTitle}>{t("ideas.reviewScores")}</h3>
+                            <div className={styles.scoresGrid}>
+                                {idea.reviewImpactScore !== undefined && (
+                                    <div className={styles.scoreCard}>
+                                        <span className={styles.scoreLabel}>{t("ideas.reviewImpactScore")}</span>
+                                        <span className={`${styles.scoreValue} ${getScoreClass(idea.reviewImpactScore)}`}>
+                                            {idea.reviewImpactScore}
+                                        </span>
+                                        <div className={styles.scoreBar}>
+                                            <div
+                                                className={`${styles.scoreBarFill} ${getScoreBarClass(idea.reviewImpactScore)}`}
+                                                style={{ width: `${idea.reviewImpactScore}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                {idea.reviewFeasibilityScore !== undefined && (
+                                    <div className={styles.scoreCard}>
+                                        <span className={styles.scoreLabel}>{t("ideas.reviewFeasibilityScore")}</span>
+                                        <span className={`${styles.scoreValue} ${getScoreClass(idea.reviewFeasibilityScore)}`}>
+                                            {idea.reviewFeasibilityScore}
+                                        </span>
+                                        <div className={styles.scoreBar}>
+                                            <div
+                                                className={`${styles.scoreBarFill} ${getScoreBarClass(idea.reviewFeasibilityScore)}`}
+                                                style={{ width: `${idea.reviewFeasibilityScore}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            {idea.reviewReasoning && (
+                                <div className={styles.reviewReasoning}>
+                                    <strong>{t("ideas.reviewReasoning")}:</strong>
+                                    <p>{idea.reviewReasoning}</p>
+                                </div>
+                            )}
+                            <div className={styles.reviewMeta}>
+                                {t("ideas.reviewedAt")}: {formatDate(idea.reviewedAt)}
+                                {idea.reviewedBy && idea.reviewedBy !== "llm" && (
+                                    <span> {t("ideas.reviewedBy")}: {idea.reviewedBy}</span>
                                 )}
                             </div>
                         </div>
@@ -621,13 +721,83 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
                         </div>
                     </div>
 
+                    {/* Status Actions (Approve/Reject/Implement) */}
+                    {(canApprove || canReject || canImplement) && (
+                        <div className={styles.statusActions}>
+                            <h4 className={styles.statusActionsTitle}>{t("ideas.statusActions")}</h4>
+                            <div className={styles.statusActionsButtons}>
+                                {canApprove && (
+                                    <PrimaryButton
+                                        className={styles.approveButton}
+                                        onClick={() => handleStatusChange("approved")}
+                                        disabled={isChangingStatus || isDeleting || isReviewing}
+                                    >
+                                        {isChangingStatus ? (
+                                            <Spinner size={SpinnerSize.small} />
+                                        ) : (
+                                            <Checkmark24Regular />
+                                        )}
+                                        {t("ideas.approve")}
+                                    </PrimaryButton>
+                                )}
+                                {canImplement && (
+                                    <PrimaryButton
+                                        className={styles.implementButton}
+                                        onClick={() => handleStatusChange("implemented")}
+                                        disabled={isChangingStatus || isDeleting || isReviewing}
+                                    >
+                                        {isChangingStatus ? (
+                                            <Spinner size={SpinnerSize.small} />
+                                        ) : (
+                                            <CheckmarkCircle24Regular />
+                                        )}
+                                        {t("ideas.implement")}
+                                    </PrimaryButton>
+                                )}
+                                {canReject && (
+                                    <DefaultButton
+                                        className={styles.rejectButton}
+                                        onClick={() => handleStatusChange("rejected")}
+                                        disabled={isChangingStatus || isDeleting || isReviewing}
+                                    >
+                                        {isChangingStatus ? (
+                                            <Spinner size={SpinnerSize.small} />
+                                        ) : (
+                                            <Dismiss24Regular />
+                                        )}
+                                        {t("ideas.reject")}
+                                    </DefaultButton>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Actions */}
-                    {(canEdit || canDelete) && (
+                    {(canEdit || canDelete || canReview) && (
                         <div className={styles.actions}>
+                            {canReview && (
+                                <PrimaryButton
+                                    className={styles.reviewButton}
+                                    onClick={handleReview}
+                                    disabled={isReviewing || isDeleting || isChangingStatus}
+                                >
+                                    {isReviewing ? (
+                                        <>
+                                            <Spinner size={SpinnerSize.small} />
+                                            {t("ideas.reviewing")}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Lightbulb24Regular />
+                                            {t("ideas.requestReview")}
+                                        </>
+                                    )}
+                                </PrimaryButton>
+                            )}
                             {canEdit && (
                                 <PrimaryButton
                                     className={styles.editButton}
-                                    disabled={isDeleting}
+                                    disabled={isDeleting || isReviewing || isChangingStatus}
                                 >
                                     <Edit24Regular />
                                     {t("ideas.edit")}
@@ -637,7 +807,7 @@ export function IdeaDetailModal({ idea, onClose, onUpdated, onDeleted, currentUs
                                 <DefaultButton
                                     className={styles.deleteButton}
                                     onClick={() => setShowDeleteConfirm(true)}
-                                    disabled={isDeleting}
+                                    disabled={isDeleting || isReviewing || isChangingStatus}
                                 >
                                     <Delete24Regular />
                                     {t("ideas.delete")}
