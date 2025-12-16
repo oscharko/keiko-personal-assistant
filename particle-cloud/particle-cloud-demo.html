@@ -193,6 +193,10 @@
                 <label>Pulse Strength <span id="val-pulse" class="value-display"></span></label>
                 <input id="inp-pulse" type="range" min="0" max="1.5" step="0.05">
             </div>
+            <div class="control-group">
+                <label>Pulse Size Influence <span id="val-sizePulse" class="value-display"></span></label>
+                <input id="inp-sizePulse" type="range" min="0" max="1.2" step="0.05">
+            </div>
         </div>
 
         <!-- Shape -->
@@ -239,6 +243,18 @@
                 <label>Background</label>
                 <input id="col-bg" type="color" value="#ffffff">
             </div>
+            <div class="control-group">
+                <label>Gradient Bias <span id="val-gradExp" class="value-display"></span></label>
+                <input id="inp-gradExp" type="range" min="0.6" max="2.0" step="0.05">
+            </div>
+            <div class="control-group">
+                <label>Core Glow Radius <span id="val-glowR" class="value-display"></span></label>
+                <input id="inp-glowR" type="range" min="0.05" max="0.6" step="0.01">
+            </div>
+            <div class="control-group">
+                <label>Core Glow Alpha <span id="val-glowA" class="value-display"></span></label>
+                <input id="inp-glowA" type="range" min="0" max="0.8" step="0.02">
+            </div>
         </div>
 
         <!-- Particles -->
@@ -247,6 +263,22 @@
             <div class="control-group">
                 <label>Density (Count) <span id="val-density" class="value-display"></span></label>
                 <input id="inp-density" type="range" min="0.1" max="2.0" step="0.1">
+            </div>
+            <div class="control-group">
+                <label>Core Size Scale <span id="val-coreSize" class="value-display"></span></label>
+                <input id="inp-coreSize" type="range" min="0.4" max="2.0" step="0.05">
+            </div>
+            <div class="control-group">
+                <label>Dust Size Scale <span id="val-dustSize" class="value-display"></span></label>
+                <input id="inp-dustSize" type="range" min="0.4" max="2.0" step="0.05">
+            </div>
+            <div class="control-group">
+                <label>Edge Specks Size <span id="val-speckSize" class="value-display"></span></label>
+                <input id="inp-speckSize" type="range" min="0.3" max="2.4" step="0.05">
+            </div>
+            <div class="control-group">
+                <label>Edge Specks Density <span id="val-speckDensity" class="value-display"></span></label>
+                <input id="inp-speckDensity" type="range" min="0.2" max="2.5" step="0.1">
             </div>
             <div class="control-group">
                 <label>Turbulence <span id="val-turb" class="value-display"></span></label>
@@ -266,6 +298,10 @@
 
     function lerp(a, b, t) {
         return a + (b - a) * t;
+    }
+
+    function fract(x) {
+        return x - Math.floor(x);
     }
 
     function smoothstep(t) {
@@ -390,6 +426,7 @@
             this._shapePoints = [];
             this._core = [];
             this._dust = [];
+            this._specks = [];
 
             this._time = 0;
             this._amp = 0;
@@ -429,7 +466,7 @@
                 background: null, // null => transparent; set to "#fff" for solid
                 blendMode: 'source-over', // 'lighter' / 'screen' also work nicely
                 center: {x: 0.5, y: 0.5}, // normalized [0..1]
-                baseRadius: 0.32, // fraction of min(w,h)
+                baseRadius: 0.34, // fraction of min(w,h)
                 globalRotation: 0, // radians
 
                 // Audio -> motion mapping
@@ -443,6 +480,7 @@
                     speedInfluence: 0.85,  // amp -> outflow speed
                     turbulenceInfluence: 0.90, // amp -> extra turbulence
                     glowInfluence: 0.70,   // amp -> glow alpha
+                    sizeInfluence: 0.35,   // amp -> particle size
                     attack: 0.06,          // seconds, response when amp rises
                     release: 0.14,         // seconds, response when amp falls
                 },
@@ -451,11 +489,11 @@
                 shape: {
                     controlPoints: 72,     // more => more irregular detail
                     irregularity: 0.28,    // random variation in envelope
-                    lobeCount: 8,          // main "petals" like the reference image
-                    lobeAmplitude: 0.42,
-                    lobeSharpness: 2.6,
+                    lobeCount: 7,          // main "petals" like the reference image
+                    lobeAmplitude: 0.38,
+                    lobeSharpness: 2.5,
                     secondaryLobeCount: 3,
-                    secondaryAmplitude: 0.16,
+                    secondaryAmplitude: 0.14,
                     rotationSpeed: 0.0,    // rad/s, if you want a subtle twist
                 },
 
@@ -468,24 +506,24 @@
 
                 coreGlow: {
                     show: true,
-                    radius: 0.22,          // fraction of min(w,h)
-                    alpha: 0.22,
+                    radius: 0.26,          // fraction of min(w,h)
+                    alpha: 0.26,
                     color: '#0864b3',
                 },
 
                 // Color gradient (t = 0 in the core, t = 1 at the rim)
                 gradient: {
                     colorStops: [
-                        {t: 0.0, color: '#0864b3'},
-                        {t: 0.45, color: '#4aa7dd'},
-                        {t: 1.0, color: '#d6f0ff'},
+                        {t: 0.0, color: '#0c6ec9'},
+                        {t: 0.40, color: '#2f94df'},
+                        {t: 1.0, color: '#d9f1ff'},
                     ],
                     alphaStops: [
                         {t: 0.0, a: 1.00},
-                        {t: 0.55, a: 0.60},
+                        {t: 0.60, a: 0.65},
                         {t: 1.0, a: 0.00},
                     ],
-                    tExponent: 1.0, // >1 keeps core darker longer
+                    tExponent: 1.22, // >1 keeps core darker longer
                 },
 
                 layers: {
@@ -497,25 +535,44 @@
                         lifeMin: 1.6,
                         lifeMax: 3.2,
                         gamma: 2.6,              // >1 => more density in the core
-                        sizeMin: 0.9,
-                        sizeMax: 3.6,
+                        sizeMin: 1.0,
+                        sizeMax: 4.0,
+                        sizeScale: 1.0,
                         sizeFalloff: 1.3,
                         alpha: 0.70,
                         alphaFalloff: 1.6,
+                        dissolve: {start: 0.64, count: 2, spread: 18, sizeScale: 0.45, alpha: 0.75},
                     },
                     // Fine dust, longer reach
                     dust: {
                         count: 1900,
-                        radiusFactor: 1.30,
-                        radialJitter: 0.35,
-                        lifeMin: 0.9,
-                        lifeMax: 2.0,
-                        gamma: 1.9,
+                        radiusFactor: 1.40,
+                        radialJitter: 0.38,
+                        lifeMin: 1.0,
+                        lifeMax: 2.2,
+                        gamma: 1.85,
                         sizeMin: 0.45,
-                        sizeMax: 1.7,
+                        sizeMax: 1.85,
+                        sizeScale: 1.0,
                         sizeFalloff: 1.6,
                         alpha: 0.48,
                         alphaFalloff: 2.2,
+                        dissolve: {start: 0.55, count: 2, spread: 26, sizeScale: 0.40, alpha: 0.55},
+                    },
+                    // Sparse crisp specks at the rim
+                    specks: {
+                        count: 1200,
+                        radiusFactor: 1.75,
+                        radialJitter: 0.55,
+                        lifeMin: 0.9,
+                        lifeMax: 1.8,
+                        gamma: 0.95,
+                        sizeMin: 0.28,
+                        sizeMax: 1.10,
+                        sizeScale: 1.0,
+                        sizeFalloff: 1.35,
+                        alpha: 0.70,
+                        alphaFalloff: 2.0,
                     },
                 },
             };
@@ -778,12 +835,15 @@
             // Keep arrays allocated; reuse objects to avoid GC
             const coreCfg = this.params.layers.core;
             const dustCfg = this.params.layers.dust;
+            const speckCfg = this.params.layers.specks;
 
             this._core = this._ensureParticleArray(this._core, coreCfg.count);
             this._dust = this._ensureParticleArray(this._dust, dustCfg.count);
+            this._specks = this._ensureParticleArray(this._specks, speckCfg.count);
 
             for (let i = 0; i < this._core.length; i++) this._resetParticle(this._core[i], coreCfg, true);
             for (let i = 0; i < this._dust.length; i++) this._resetParticle(this._dust[i], dustCfg, true);
+            for (let i = 0; i < this._specks.length; i++) this._resetParticle(this._specks[i], speckCfg, true);
         }
 
         _ensureParticleArray(arr, count) {
@@ -803,6 +863,7 @@
             // Noise offsets (avoid coherent noise bands)
             p.nx = this._rand() * 1000;
             p.ny = this._rand() * 1000;
+            p.dSeed = this._rand() * 1000;
         }
 
         _updateAmplitude(dt) {
@@ -870,6 +931,7 @@
             };
 
             updateLayer(this._dust, this.params.layers.dust);
+            updateLayer(this._specks, this.params.layers.specks);
             updateLayer(this._core, this.params.layers.core);
         }
 
@@ -897,6 +959,7 @@
             const minDim = Math.min(w, h);
             const pulseScale = 1 + this._amp * this.params.pulse.strength;
             const turbBoost = 1 + this._amp * this.params.pulse.turbulenceInfluence;
+            const sizePulse = 1 + this._amp * this.params.pulse.sizeInfluence;
 
             // Optional core "fog/glow" to match dense center
             if (this.params.coreGlow.show) {
@@ -951,7 +1014,7 @@
                     y += (n2 - 0.5) * 2 * turbAmt;
 
                     // Size / alpha fade
-                    const size = lerp(cfg.sizeMax, cfg.sizeMin, Math.pow(t, cfg.sizeFalloff)) * (0.55 + 0.9 * p.sizeBias);
+                    const size = lerp(cfg.sizeMax, cfg.sizeMin, Math.pow(t, cfg.sizeFalloff)) * (0.55 + 0.9 * p.sizeBias) * (cfg.sizeScale || 1) * sizePulse;
                     const aFade = Math.pow(1 - t, cfg.alphaFalloff);
 
                     // Color lookup by t (optionally exponent)
@@ -973,11 +1036,37 @@
                     ctx.beginPath();
                     ctx.arc(x, y, size, 0, TAU);
                     ctx.fill();
+
+                    // Dissolve effect: shed tiny specks near the edge
+                    if (cfg.dissolve && t > cfg.dissolve.start) {
+                        const d = cfg.dissolve;
+                        const dissolveT = clamp((t - d.start) / (1 - d.start), 0, 1);
+                        const extra = d.count | 0;
+                        for (let k = 0; k < extra; k++) {
+                            const h1 = fract(Math.sin(p.dSeed * 1.71 + k * 19.19) * 43758.5453);
+                            const h2 = fract(Math.sin(p.dSeed * 3.17 + k * 11.11) * 12345.6789);
+                            const angJitter = (h1 - 0.5) * 0.9;
+                            const dirjx = Math.cos(p.angle + angJitter);
+                            const dirjy = Math.sin(p.angle + angJitter);
+                            const drift = d.spread * dissolveT * (0.35 + 0.65 * h2);
+                            const sx = x + dirjx * drift + (h2 - 0.5) * d.spread * 0.35;
+                            const sy = y + dirjy * drift + (h1 - 0.5) * d.spread * 0.35;
+                            const sSize = size * d.sizeScale;
+                            const sAlpha = alpha * d.alpha * dissolveT * (1 - k * 0.3);
+                            if (sAlpha <= 0.001) continue;
+                            ctx.globalAlpha = sAlpha;
+                            ctx.beginPath();
+                            ctx.arc(sx, sy, sSize, 0, TAU);
+                            ctx.fill();
+                        }
+                        ctx.globalAlpha = alpha;
+                    }
                 }
             };
 
-            // Draw dust first, then core on top
+            // Draw dust first, specks on top, then core to keep center dense
             drawLayer(this._dust, this.params.layers.dust);
+            drawLayer(this._specks, this.params.layers.specks);
             drawLayer(this._core, this.params.layers.core);
 
             // Reset alpha
@@ -1038,6 +1127,7 @@
     // --- Bind Audio ---
     bindFloat('inp-gain', 'audio.gain', v => v.toFixed(1));
     bindFloat('inp-pulse', 'pulse.strength');
+    bindFloat('inp-sizePulse', 'pulse.sizeInfluence');
 
     // --- Bind Shape ---
     bindFloat('inp-lobes', 'shape.lobeCount', v => v.toFixed(0));
@@ -1047,25 +1137,40 @@
     bindFloat('inp-rot', 'shape.rotationSpeed');
 
     // --- Bind Particles ---
+    const defaults = ParticleCloudVisualizer.defaults();
+    const baseCounts = {
+        core: defaults.layers.core.count,
+        dust: defaults.layers.dust.count,
+        specks: defaults.layers.specks.count,
+    };
+
     const updateDensity = () => {
         const d = Number(document.getElementById('inp-density').value);
+        const s = Number(document.getElementById('inp-speckDensity').value);
         document.getElementById('val-density').textContent = d.toFixed(1);
+        document.getElementById('val-speckDensity').textContent = s.toFixed(1);
         viz.setParams({
             layers: {
-                core: {count: Math.floor(2400 * d)},
-                dust: {count: Math.floor(1900 * d)},
+                core: {count: Math.floor(baseCounts.core * d)},
+                dust: {count: Math.floor(baseCounts.dust * d)},
+                specks: {count: Math.floor(baseCounts.specks * d * s)},
             }
         });
     };
     document.getElementById('inp-density').value = 1.0;
     document.getElementById('val-density').textContent = "1.0";
+    document.getElementById('inp-speckDensity').value = 1.0;
+    document.getElementById('val-speckDensity').textContent = "1.0";
     document.getElementById('inp-density').addEventListener('input', updateDensity);
+    document.getElementById('inp-speckDensity').addEventListener('input', updateDensity);
 
     bindFloat('inp-turb', 'turbulence.strength', v => v.toFixed(0));
+    bindFloat('inp-coreSize', 'layers.core.sizeScale');
+    bindFloat('inp-dustSize', 'layers.dust.sizeScale');
+    bindFloat('inp-speckSize', 'layers.specks.sizeScale');
 
     // --- Bind Colors ---
     // Init colors from defaults
-    const defaults = ParticleCloudVisualizer.defaults();
     document.getElementById('col-core').value = defaults.gradient.colorStops[0].color;
     document.getElementById('col-mid').value = defaults.gradient.colorStops[1].color;
     document.getElementById('col-edge').value = defaults.gradient.colorStops[2].color;
@@ -1081,7 +1186,7 @@
             gradient: {
                 colorStops: [
                     {t: 0.0, color: c1},
-                    {t: 0.45, color: c2},
+                    {t: 0.40, color: c2},
                     {t: 1.0, color: c3},
                 ]
             }
@@ -1093,6 +1198,10 @@
     bindColor('col-edge', updateColors);
 
     bindColor('col-bg', (c) => viz.setParams({background: c}));
+
+    bindFloat('inp-gradExp', 'gradient.tExponent');
+    bindFloat('inp-glowR', 'coreGlow.radius');
+    bindFloat('inp-glowA', 'coreGlow.alpha');
 
     // --- Buttons ---
     document.getElementById('btnMic').addEventListener('click', async () => {
