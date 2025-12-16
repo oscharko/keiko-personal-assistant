@@ -69,16 +69,52 @@
         }
 
         .section {
-            margin-bottom: 24px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         .section-title {
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #888;
-            margin-bottom: 12px;
+            color: #333;
+            padding: 10px 12px;
             font-weight: 600;
+            background: rgba(0,0,0,0.03);
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .section-title::after {
+            content: '▼';
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+
+        .section.collapsed .section-title::after {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 12px;
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .section.collapsed .section-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
         }
 
         .control-group {
@@ -178,111 +214,204 @@
         <button onclick="document.getElementById('ui').classList.add('collapsed'); document.getElementById('toggle-ui').classList.remove('hidden')" style="flex: 0; padding: 4px 8px; font-size: 16px;">×</button>
     </div>
     <div class="ui-content">
+        <!-- Info -->
+        <div class="section">
+            <div class="section-title">About</div>
+            <div class="section-content">
+                <p style="font-size: 12px; line-height: 1.5; color: #666; margin: 0;">
+                    This particle cloud visualizes audio input through a dynamic particle system.
+                    Particles are <strong>born at the center</strong> and flow outward,
+                    <strong>dissolving into fine specks</strong> at the edges.
+                    When audio is detected, the cloud <strong>pulsates</strong> in response to the signal.
+                </p>
+            </div>
+        </div>
+
         <!-- Audio -->
         <div class="section">
             <div class="section-title">Audio & Pulse</div>
-            <div class="buttons">
-                <button id="btnMic">Microphone</button>
-                <button id="btnStop">Stop Audio</button>
-            </div>
-            <div class="control-group">
-                <label>Sensitivity (Gain) <span id="val-gain" class="value-display"></span></label>
-                <input id="inp-gain" type="range" min="1" max="20" step="0.5">
-            </div>
-            <div class="control-group">
-                <label>Pulse Strength <span id="val-pulse" class="value-display"></span></label>
-                <input id="inp-pulse" type="range" min="0" max="1.5" step="0.05">
-            </div>
-            <div class="control-group">
-                <label>Pulse Size Influence <span id="val-sizePulse" class="value-display"></span></label>
-                <input id="inp-sizePulse" type="range" min="0" max="1.2" step="0.05">
+            <div class="section-content">
+                <div class="buttons">
+                    <button id="btnMic">Microphone</button>
+                    <button id="btnStop">Stop Audio</button>
+                </div>
+                <div class="control-group">
+                    <label>Sensitivity (Gain) <span id="val-gain" class="value-display"></span></label>
+                    <input id="inp-gain" type="range" min="1" max="20" step="0.5">
+                </div>
+                <div class="control-group">
+                    <label>Pulse Strength <span id="val-pulse" class="value-display"></span></label>
+                    <input id="inp-pulse" type="range" min="0" max="1.5" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Pulse Size Influence <span id="val-sizePulse" class="value-display"></span></label>
+                    <input id="inp-sizePulse" type="range" min="0" max="1.2" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Pulse Speed Influence <span id="val-speedPulse" class="value-display"></span></label>
+                    <input id="inp-speedPulse" type="range" min="0" max="2.0" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Pulse Turbulence Influence <span id="val-turbPulse" class="value-display"></span></label>
+                    <input id="inp-turbPulse" type="range" min="0" max="2.0" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Pulse Glow Influence <span id="val-glowPulse" class="value-display"></span></label>
+                    <input id="inp-glowPulse" type="range" min="0" max="1.5" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Pulse Attack (s) <span id="val-attack" class="value-display"></span></label>
+                    <input id="inp-attack" type="range" min="0.01" max="0.5" step="0.01">
+                </div>
+                <div class="control-group">
+                    <label>Pulse Release (s) <span id="val-release" class="value-display"></span></label>
+                    <input id="inp-release" type="range" min="0.01" max="1.0" step="0.01">
+                </div>
             </div>
         </div>
 
         <!-- Shape -->
         <div class="section">
             <div class="section-title">Shape</div>
-            <div class="control-group">
-                <label>Lobe Count <span id="val-lobes" class="value-display"></span></label>
-                <input id="inp-lobes" type="range" min="0" max="16" step="1">
-            </div>
-            <div class="control-group">
-                <label>Lobe Amplitude <span id="val-lobeAmp" class="value-display"></span></label>
-                <input id="inp-lobeAmp" type="range" min="0" max="1" step="0.05">
-            </div>
-            <div class="control-group">
-                <label>Base Radius <span id="val-radius" class="value-display"></span></label>
-                <input id="inp-radius" type="range" min="0.1" max="0.6" step="0.01">
-            </div>
-            <div class="control-group">
-                <label>Irregularity <span id="val-irregular" class="value-display"></span></label>
-                <input id="inp-irregular" type="range" min="0" max="1" step="0.05">
-            </div>
-            <div class="control-group">
-                <label>Rotation Speed <span id="val-rot" class="value-display"></span></label>
-                <input id="inp-rot" type="range" min="-1" max="1" step="0.1">
+            <div class="section-content">
+                <div class="control-group">
+                    <label>Lobe Count <span id="val-lobes" class="value-display"></span></label>
+                    <input id="inp-lobes" type="range" min="0" max="16" step="1">
+                </div>
+                <div class="control-group">
+                    <label>Lobe Amplitude <span id="val-lobeAmp" class="value-display"></span></label>
+                    <input id="inp-lobeAmp" type="range" min="0" max="1" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Lobe Sharpness <span id="val-lobeSharp" class="value-display"></span></label>
+                    <input id="inp-lobeSharp" type="range" min="0.5" max="5.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Secondary Lobe Count <span id="val-secLobes" class="value-display"></span></label>
+                    <input id="inp-secLobes" type="range" min="0" max="12" step="1">
+                </div>
+                <div class="control-group">
+                    <label>Secondary Lobe Amplitude <span id="val-secLobeAmp" class="value-display"></span></label>
+                    <input id="inp-secLobeAmp" type="range" min="0" max="0.5" step="0.02">
+                </div>
+                <div class="control-group">
+                    <label>Base Radius <span id="val-radius" class="value-display"></span></label>
+                    <input id="inp-radius" type="range" min="0.1" max="0.6" step="0.01">
+                </div>
+                <div class="control-group">
+                    <label>Irregularity <span id="val-irregular" class="value-display"></span></label>
+                    <input id="inp-irregular" type="range" min="0" max="1" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Rotation Speed <span id="val-rot" class="value-display"></span></label>
+                    <input id="inp-rot" type="range" min="-1" max="1" step="0.1">
+                </div>
             </div>
         </div>
 
         <!-- Colors -->
         <div class="section">
             <div class="section-title">Colors</div>
-            <div class="control-group">
-                <label>Core Color</label>
-                <input id="col-core" type="color">
-            </div>
-            <div class="control-group">
-                <label>Mid Color</label>
-                <input id="col-mid" type="color">
-            </div>
-            <div class="control-group">
-                <label>Edge Color</label>
-                <input id="col-edge" type="color">
-            </div>
-            <div class="control-group">
-                <label>Background</label>
-                <input id="col-bg" type="color" value="#ffffff">
-            </div>
-            <div class="control-group">
-                <label>Gradient Bias <span id="val-gradExp" class="value-display"></span></label>
-                <input id="inp-gradExp" type="range" min="0.6" max="2.0" step="0.05">
-            </div>
-            <div class="control-group">
-                <label>Core Glow Radius <span id="val-glowR" class="value-display"></span></label>
-                <input id="inp-glowR" type="range" min="0.05" max="0.6" step="0.01">
-            </div>
-            <div class="control-group">
-                <label>Core Glow Alpha <span id="val-glowA" class="value-display"></span></label>
-                <input id="inp-glowA" type="range" min="0" max="0.8" step="0.02">
+            <div class="section-content">
+                <div class="control-group">
+                    <label>Core Color</label>
+                    <input id="col-core" type="color">
+                </div>
+                <div class="control-group">
+                    <label>Mid Color</label>
+                    <input id="col-mid" type="color">
+                </div>
+                <div class="control-group">
+                    <label>Edge Color</label>
+                    <input id="col-edge" type="color">
+                </div>
+                <div class="control-group">
+                    <label>Background</label>
+                    <input id="col-bg" type="color" value="#ffffff">
+                </div>
+                <div class="control-group">
+                    <label>Gradient Bias <span id="val-gradExp" class="value-display"></span></label>
+                    <input id="inp-gradExp" type="range" min="0.6" max="2.0" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Core Glow Radius <span id="val-glowR" class="value-display"></span></label>
+                    <input id="inp-glowR" type="range" min="0.05" max="0.6" step="0.01">
+                </div>
+                <div class="control-group">
+                    <label>Core Glow Alpha <span id="val-glowA" class="value-display"></span></label>
+                    <input id="inp-glowA" type="range" min="0" max="0.8" step="0.02">
+                </div>
             </div>
         </div>
 
         <!-- Particles -->
         <div class="section">
             <div class="section-title">Particles</div>
-            <div class="control-group">
-                <label>Density (Count) <span id="val-density" class="value-display"></span></label>
-                <input id="inp-density" type="range" min="0.1" max="2.0" step="0.1">
+            <div class="section-content">
+                <div class="control-group">
+                    <label>Density (Count) <span id="val-density" class="value-display"></span></label>
+                    <input id="inp-density" type="range" min="0.1" max="2.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Core Size Scale <span id="val-coreSize" class="value-display"></span></label>
+                    <input id="inp-coreSize" type="range" min="0.4" max="2.0" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Dust Size Scale <span id="val-dustSize" class="value-display"></span></label>
+                    <input id="inp-dustSize" type="range" min="0.4" max="2.0" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Edge Specks Size <span id="val-speckSize" class="value-display"></span></label>
+                    <input id="inp-speckSize" type="range" min="0.3" max="2.4" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Edge Specks Density <span id="val-speckDensity" class="value-display"></span></label>
+                    <input id="inp-speckDensity" type="range" min="0.2" max="2.5" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Turbulence Strength <span id="val-turb" class="value-display"></span></label>
+                    <input id="inp-turb" type="range" min="0" max="100" step="5">
+                </div>
+                <div class="control-group">
+                    <label>Turbulence Noise Scale <span id="val-turbScale" class="value-display"></span></label>
+                    <input id="inp-turbScale" type="range" min="0.001" max="0.02" step="0.001">
+                </div>
+                <div class="control-group">
+                    <label>Turbulence Noise Speed <span id="val-turbSpeed" class="value-display"></span></label>
+                    <input id="inp-turbSpeed" type="range" min="0" max="1.0" step="0.02">
+                </div>
+                <div class="control-group">
+                    <label>Turbulence Falloff <span id="val-turbFalloff" class="value-display"></span></label>
+                    <input id="inp-turbFalloff" type="range" min="0.5" max="3.0" step="0.1">
+                </div>
             </div>
-            <div class="control-group">
-                <label>Core Size Scale <span id="val-coreSize" class="value-display"></span></label>
-                <input id="inp-coreSize" type="range" min="0.4" max="2.0" step="0.05">
+        </div>
+
+        <!-- Presets -->
+        <div class="section">
+            <div class="section-title">Presets</div>
+            <div class="section-content">
+                <div class="buttons">
+                    <button id="preset-default">Default</button>
+                    <button id="preset-gentle">Gentle</button>
+                </div>
+                <div class="buttons" style="margin-top: 8px;">
+                    <button id="preset-energetic">Energetic</button>
+                    <button id="preset-minimal">Minimal</button>
+                </div>
             </div>
-            <div class="control-group">
-                <label>Dust Size Scale <span id="val-dustSize" class="value-display"></span></label>
-                <input id="inp-dustSize" type="range" min="0.4" max="2.0" step="0.05">
-            </div>
-            <div class="control-group">
-                <label>Edge Specks Size <span id="val-speckSize" class="value-display"></span></label>
-                <input id="inp-speckSize" type="range" min="0.3" max="2.4" step="0.05">
-            </div>
-            <div class="control-group">
-                <label>Edge Specks Density <span id="val-speckDensity" class="value-display"></span></label>
-                <input id="inp-speckDensity" type="range" min="0.2" max="2.5" step="0.1">
-            </div>
-            <div class="control-group">
-                <label>Turbulence <span id="val-turb" class="value-display"></span></label>
-                <input id="inp-turb" type="range" min="0" max="100" step="5">
+        </div>
+
+        <!-- Advanced -->
+        <div class="section">
+            <div class="section-title">Advanced</div>
+            <div class="section-content">
+                <div class="control-group">
+                    <label>Amplitude Display <span id="val-amplitude" class="value-display">0.00</span></label>
+                    <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+                        <div id="amp-meter" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0864b3, #2f94df); transition: width 0.05s;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -853,9 +982,16 @@
             return out;
         }
 
+        /**
+         * Reset/initialize a particle.
+         * Particles are "born" at the center (age=0) and move outward as age increases.
+         * When age >= life, the particle is respawned at the center.
+         * This creates the continuous "creation at core, dissolution at edges" effect.
+         */
         _resetParticle(p, cfg, initial) {
             p.angle = this._rand() * TAU;
             p.life = lerp(cfg.lifeMin, cfg.lifeMax, this._rand());
+            // Initial particles start at random ages for smooth startup; respawned particles start at age 0 (center)
             p.age = initial ? this._rand() * p.life : 0;
             p.radialJitter = 1 + (this._rand() * 2 - 1) * cfg.radialJitter;
             // Bias sizes: many small, few large (pow)
@@ -1037,7 +1173,11 @@
                     ctx.arc(x, y, size, 0, TAU);
                     ctx.fill();
 
-                    // Dissolve effect: shed tiny specks near the edge
+                    /**
+                     * Dissolve effect: As particles approach the edge (t > dissolve.start),
+                     * they shed tiny specks that spread outward, creating the
+                     * "dissolve into fine individual particles" effect required by the spec.
+                     */
                     if (cfg.dissolve && t > cfg.dissolve.start) {
                         const d = cfg.dissolve;
                         const dissolveT = clamp((t - d.start) / (1 - d.start), 0, 1);
@@ -1086,6 +1226,13 @@
     viz.resize();
     viz.start();
 
+    // Update amplitude meter
+    setInterval(() => {
+        const amp = viz.amplitude;
+        document.getElementById('val-amplitude').textContent = amp.toFixed(2);
+        document.getElementById('amp-meter').style.width = (amp * 100) + '%';
+    }, 50);
+
     // Helper builder for wiring inputs
     const bindFloat = (id, path, format = (v) => v.toFixed(2)) => {
         const el = document.getElementById(id);
@@ -1128,10 +1275,18 @@
     bindFloat('inp-gain', 'audio.gain', v => v.toFixed(1));
     bindFloat('inp-pulse', 'pulse.strength');
     bindFloat('inp-sizePulse', 'pulse.sizeInfluence');
+    bindFloat('inp-speedPulse', 'pulse.speedInfluence');
+    bindFloat('inp-turbPulse', 'pulse.turbulenceInfluence');
+    bindFloat('inp-glowPulse', 'pulse.glowInfluence');
+    bindFloat('inp-attack', 'pulse.attack');
+    bindFloat('inp-release', 'pulse.release');
 
     // --- Bind Shape ---
     bindFloat('inp-lobes', 'shape.lobeCount', v => v.toFixed(0));
     bindFloat('inp-lobeAmp', 'shape.lobeAmplitude');
+    bindFloat('inp-lobeSharp', 'shape.lobeSharpness');
+    bindFloat('inp-secLobes', 'shape.secondaryLobeCount', v => v.toFixed(0));
+    bindFloat('inp-secLobeAmp', 'shape.secondaryAmplitude');
     bindFloat('inp-radius', 'baseRadius');
     bindFloat('inp-irregular', 'shape.irregularity');
     bindFloat('inp-rot', 'shape.rotationSpeed');
@@ -1165,6 +1320,9 @@
     document.getElementById('inp-speckDensity').addEventListener('input', updateDensity);
 
     bindFloat('inp-turb', 'turbulence.strength', v => v.toFixed(0));
+    bindFloat('inp-turbScale', 'turbulence.noiseScale', v => v.toFixed(3));
+    bindFloat('inp-turbSpeed', 'turbulence.noiseSpeed');
+    bindFloat('inp-turbFalloff', 'turbulence.falloff');
     bindFloat('inp-coreSize', 'layers.core.sizeScale');
     bindFloat('inp-dustSize', 'layers.dust.sizeScale');
     bindFloat('inp-speckSize', 'layers.specks.sizeScale');
@@ -1216,6 +1374,80 @@
     document.getElementById('btnStop').addEventListener('click', () => {
         viz.disconnectAudio();
         viz.setExternalAmplitude(null);
+    });
+
+    // --- Collapsible sections ---
+    document.querySelectorAll('.section-title').forEach(title => {
+        title.addEventListener('click', () => {
+            title.parentElement.classList.toggle('collapsed');
+        });
+    });
+
+    // --- Presets ---
+    const applyPreset = (params) => {
+        viz.setParams(params);
+        // Update all UI controls to reflect new values
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            const path = input.id.replace('inp-', '');
+            // Trigger input event to update displays
+            input.dispatchEvent(new Event('input'));
+        });
+        document.querySelectorAll('input[type="color"]').forEach(input => {
+            input.dispatchEvent(new Event('input'));
+        });
+    };
+
+    document.getElementById('preset-default').addEventListener('click', () => {
+        applyPreset(ParticleCloudVisualizer.defaults());
+    });
+
+    document.getElementById('preset-gentle').addEventListener('click', () => {
+        applyPreset({
+            baseRadius: 0.28,
+            pulse: { strength: 0.15, speedInfluence: 0.5, turbulenceInfluence: 0.4 },
+            shape: { lobeCount: 5, lobeAmplitude: 0.25, irregularity: 0.15, rotationSpeed: 0.1 },
+            turbulence: { strength: 15 },
+            gradient: {
+                colorStops: [
+                    {t: 0.0, color: '#1e88e5'},
+                    {t: 0.40, color: '#64b5f6'},
+                    {t: 1.0, color: '#e3f2fd'},
+                ]
+            }
+        });
+    });
+
+    document.getElementById('preset-energetic').addEventListener('click', () => {
+        applyPreset({
+            baseRadius: 0.40,
+            pulse: { strength: 0.45, speedInfluence: 1.2, turbulenceInfluence: 1.5, sizeInfluence: 0.6 },
+            shape: { lobeCount: 9, lobeAmplitude: 0.50, irregularity: 0.40, rotationSpeed: -0.3 },
+            turbulence: { strength: 40 },
+            gradient: {
+                colorStops: [
+                    {t: 0.0, color: '#0d47a1'},
+                    {t: 0.40, color: '#1976d2'},
+                    {t: 1.0, color: '#bbdefb'},
+                ]
+            }
+        });
+    });
+
+    document.getElementById('preset-minimal').addEventListener('click', () => {
+        applyPreset({
+            baseRadius: 0.25,
+            pulse: { strength: 0.10, speedInfluence: 0.3, turbulenceInfluence: 0.2 },
+            shape: { lobeCount: 0, lobeAmplitude: 0, irregularity: 0.05, rotationSpeed: 0 },
+            turbulence: { strength: 8 },
+            coreGlow: { alpha: 0.15 },
+            gradient: {
+                colorStops: [
+                    {t: 0.0, color: '#42a5f5'},
+                    {t: 0.40, color: '#90caf9'},
+                    {t: 1.0, color: '#f5f5f5'},
+                ]
+            }
+        });
     });
 
 </script>
