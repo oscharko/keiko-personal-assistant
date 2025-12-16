@@ -353,6 +353,18 @@
                     <input id="inp-density" type="range" min="0.1" max="2.0" step="0.1">
                 </div>
                 <div class="control-group">
+                    <label>Softness (Blur) <span id="val-softness" class="value-display"></span></label>
+                    <input id="inp-softness" type="range" min="0" max="1.0" step="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Spawn Rate <span id="val-spawnRate" class="value-display"></span></label>
+                    <input id="inp-spawnRate" type="range" min="0.3" max="3.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Outward Speed <span id="val-outwardSpeed" class="value-display"></span></label>
+                    <input id="inp-outwardSpeed" type="range" min="0.3" max="3.0" step="0.1">
+                </div>
+                <div class="control-group">
                     <label>Core Size Scale <span id="val-coreSize" class="value-display"></span></label>
                     <input id="inp-coreSize" type="range" min="0.4" max="2.0" step="0.05">
                 </div>
@@ -369,6 +381,14 @@
                     <input id="inp-speckDensity" type="range" min="0.2" max="2.5" step="0.1">
                 </div>
                 <div class="control-group">
+                    <label>Dissolve Count <span id="val-dissolveCount" class="value-display"></span></label>
+                    <input id="inp-dissolveCount" type="range" min="0" max="12" step="1">
+                </div>
+                <div class="control-group">
+                    <label>Dissolve Spread <span id="val-dissolveSpread" class="value-display"></span></label>
+                    <input id="inp-dissolveSpread" type="range" min="5" max="60" step="2">
+                </div>
+                <div class="control-group">
                     <label>Turbulence Strength <span id="val-turb" class="value-display"></span></label>
                     <input id="inp-turb" type="range" min="0" max="100" step="5">
                 </div>
@@ -383,6 +403,29 @@
                 <div class="control-group">
                     <label>Turbulence Falloff <span id="val-turbFalloff" class="value-display"></span></label>
                     <input id="inp-turbFalloff" type="range" min="0.5" max="3.0" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <!-- Layer Visibility -->
+        <div class="section">
+            <div class="section-title">Layer Visibility</div>
+            <div class="section-content">
+                <div class="control-group" style="display: flex; align-items: center; gap: 8px;">
+                    <input id="chk-coreVisible" type="checkbox" checked>
+                    <label for="chk-coreVisible" style="margin: 0;">Core Layer</label>
+                </div>
+                <div class="control-group" style="display: flex; align-items: center; gap: 8px;">
+                    <input id="chk-dustVisible" type="checkbox" checked>
+                    <label for="chk-dustVisible" style="margin: 0;">Dust Layer</label>
+                </div>
+                <div class="control-group" style="display: flex; align-items: center; gap: 8px;">
+                    <input id="chk-specksVisible" type="checkbox" checked>
+                    <label for="chk-specksVisible" style="margin: 0;">Specks Layer</label>
+                </div>
+                <div class="control-group" style="display: flex; align-items: center; gap: 8px;">
+                    <input id="chk-glowVisible" type="checkbox" checked>
+                    <label for="chk-glowVisible" style="margin: 0;">Core Glow</label>
                 </div>
             </div>
         </div>
@@ -603,6 +646,7 @@
                     enabled: true,
                     gain: 6.0,            // RMS*gain => amplitude [0..1]
                     fftSize: 1024,
+                    frequencyBand: 'all', // 'all', 'low', 'mid', 'high'
                 },
                 pulse: {
                     strength: 0.25,        // scale expansion
@@ -640,6 +684,13 @@
                     color: '#0864b3',
                 },
 
+                // Particle rendering options
+                particle: {
+                    softness: 0.0,         // 0 = hard edges, 1 = soft/blurred edges
+                    spawnRate: 1.0,        // multiplier for particle respawn speed
+                    outwardSpeed: 1.0,     // multiplier for outward movement speed
+                },
+
                 // Color gradient (t = 0 in the core, t = 1 at the rim)
                 gradient: {
                     colorStops: [
@@ -658,6 +709,7 @@
                 layers: {
                     // Dense, larger particles closer to center
                     core: {
+                        visible: true,
                         count: 2400,
                         radiusFactor: 0.78,      // relative to baseRadius
                         radialJitter: 0.15,
@@ -670,10 +722,11 @@
                         sizeFalloff: 1.3,
                         alpha: 0.70,
                         alphaFalloff: 1.6,
-                        dissolve: {start: 0.64, count: 2, spread: 18, sizeScale: 0.45, alpha: 0.75},
+                        dissolve: {start: 0.64, count: 5, spread: 22, sizeScale: 0.35, alpha: 0.65},
                     },
                     // Fine dust, longer reach
                     dust: {
+                        visible: true,
                         count: 1900,
                         radiusFactor: 1.40,
                         radialJitter: 0.38,
@@ -686,22 +739,23 @@
                         sizeFalloff: 1.6,
                         alpha: 0.48,
                         alphaFalloff: 2.2,
-                        dissolve: {start: 0.55, count: 2, spread: 26, sizeScale: 0.40, alpha: 0.55},
+                        dissolve: {start: 0.50, count: 6, spread: 32, sizeScale: 0.30, alpha: 0.50},
                     },
-                    // Sparse crisp specks at the rim
+                    // Sparse crisp specks at the rim - enhanced for dissolution effect
                     specks: {
-                        count: 1200,
-                        radiusFactor: 1.75,
-                        radialJitter: 0.55,
-                        lifeMin: 0.9,
-                        lifeMax: 1.8,
-                        gamma: 0.95,
-                        sizeMin: 0.28,
-                        sizeMax: 1.10,
+                        visible: true,
+                        count: 1600,
+                        radiusFactor: 1.85,
+                        radialJitter: 0.60,
+                        lifeMin: 0.8,
+                        lifeMax: 1.6,
+                        gamma: 0.85,
+                        sizeMin: 0.20,
+                        sizeMax: 0.90,
                         sizeScale: 1.0,
-                        sizeFalloff: 1.35,
-                        alpha: 0.70,
-                        alphaFalloff: 2.0,
+                        sizeFalloff: 1.2,
+                        alpha: 0.60,
+                        alphaFalloff: 1.8,
                     },
                 },
             };
@@ -1052,13 +1106,19 @@
 
             const pulseScale = 1 + this._amp * this.params.pulse.strength;
             const speedScale = 1 + this._amp * this.params.pulse.speedInfluence;
+            // Apply outward speed multiplier from particle settings
+            const outwardSpeed = this.params.particle?.outwardSpeed ?? 1.0;
+            const spawnRate = this.params.particle?.spawnRate ?? 1.0;
 
             // Update particles by advancing their "age"; respawn when completed
             const updateLayer = (arr, cfg) => {
                 for (let i = 0; i < arr.length; i++) {
                     const p = arr[i];
-                    p.age += dt * speedScale;
-                    if (p.age >= p.life) this._resetParticle(p, cfg, false);
+                    // Apply outward speed to age progression
+                    p.age += dt * speedScale * outwardSpeed;
+                    // Apply spawn rate to life duration (higher spawn rate = shorter life = faster respawn)
+                    const effectiveLife = p.life / spawnRate;
+                    if (p.age >= effectiveLife) this._resetParticle(p, cfg, false);
 
                     // Precompute end radius (changes slowly, so OK per frame; you can cache if desired)
                     const env = this._shapeEnvelope(p.angle, this._time);
@@ -1116,7 +1176,14 @@
                 ctx.fill();
             }
 
+            // Get particle softness setting
+            const softness = this.params.particle?.softness ?? 0;
+            const useSoftness = softness > 0.01;
+
             const drawLayer = (arr, cfg) => {
+                // Skip if layer is not visible
+                if (cfg.visible === false) return;
+
                 const turb = this.params.turbulence;
                 const nScale = turb.noiseScale;
                 const tSpeed = turb.noiseSpeed;
@@ -1168,6 +1235,12 @@
 
                     ctx.globalAlpha = alpha;
 
+                    // Apply softness via shadow blur for soft particle edges
+                    if (useSoftness) {
+                        ctx.shadowBlur = size * softness * 3;
+                        ctx.shadowColor = fill;
+                    }
+
                     // Draw as circle; small dust is very small but still circular
                     ctx.beginPath();
                     ctx.arc(x, y, size, 0, TAU);
@@ -1182,17 +1255,21 @@
                         const d = cfg.dissolve;
                         const dissolveT = clamp((t - d.start) / (1 - d.start), 0, 1);
                         const extra = d.count | 0;
+                        // Reduce shadow blur for dissolve particles
+                        if (useSoftness) {
+                            ctx.shadowBlur = size * d.sizeScale * softness * 2;
+                        }
                         for (let k = 0; k < extra; k++) {
                             const h1 = fract(Math.sin(p.dSeed * 1.71 + k * 19.19) * 43758.5453);
                             const h2 = fract(Math.sin(p.dSeed * 3.17 + k * 11.11) * 12345.6789);
-                            const angJitter = (h1 - 0.5) * 0.9;
+                            const angJitter = (h1 - 0.5) * 1.2; // Increased spread angle
                             const dirjx = Math.cos(p.angle + angJitter);
                             const dirjy = Math.sin(p.angle + angJitter);
-                            const drift = d.spread * dissolveT * (0.35 + 0.65 * h2);
-                            const sx = x + dirjx * drift + (h2 - 0.5) * d.spread * 0.35;
-                            const sy = y + dirjy * drift + (h1 - 0.5) * d.spread * 0.35;
-                            const sSize = size * d.sizeScale;
-                            const sAlpha = alpha * d.alpha * dissolveT * (1 - k * 0.3);
+                            const drift = d.spread * dissolveT * (0.25 + 0.75 * h2);
+                            const sx = x + dirjx * drift + (h2 - 0.5) * d.spread * 0.45;
+                            const sy = y + dirjy * drift + (h1 - 0.5) * d.spread * 0.45;
+                            const sSize = size * d.sizeScale * (0.5 + 0.5 * h1); // Variable size
+                            const sAlpha = alpha * d.alpha * dissolveT * (1 - k * 0.15); // Slower fade
                             if (sAlpha <= 0.001) continue;
                             ctx.globalAlpha = sAlpha;
                             ctx.beginPath();
@@ -1202,12 +1279,24 @@
                         ctx.globalAlpha = alpha;
                     }
                 }
+
+                // Reset shadow blur after layer
+                if (useSoftness) {
+                    ctx.shadowBlur = 0;
+                    ctx.shadowColor = 'transparent';
+                }
             };
 
             // Draw dust first, specks on top, then core to keep center dense
-            drawLayer(this._dust, this.params.layers.dust);
-            drawLayer(this._specks, this.params.layers.specks);
-            drawLayer(this._core, this.params.layers.core);
+            if (this.params.layers.dust.visible !== false) {
+                drawLayer(this._dust, this.params.layers.dust);
+            }
+            if (this.params.layers.specks.visible !== false) {
+                drawLayer(this._specks, this.params.layers.specks);
+            }
+            if (this.params.layers.core.visible !== false) {
+                drawLayer(this._core, this.params.layers.core);
+            }
 
             // Reset alpha
             ctx.globalAlpha = 1;
@@ -1319,6 +1408,31 @@
     document.getElementById('inp-density').addEventListener('input', updateDensity);
     document.getElementById('inp-speckDensity').addEventListener('input', updateDensity);
 
+    // Bind new particle parameters
+    bindFloat('inp-softness', 'particle.softness');
+    bindFloat('inp-spawnRate', 'particle.spawnRate');
+    bindFloat('inp-outwardSpeed', 'particle.outwardSpeed');
+
+    // Dissolve controls
+    const updateDissolve = () => {
+        const count = Number(document.getElementById('inp-dissolveCount').value);
+        const spread = Number(document.getElementById('inp-dissolveSpread').value);
+        document.getElementById('val-dissolveCount').textContent = count.toFixed(0);
+        document.getElementById('val-dissolveSpread').textContent = spread.toFixed(0);
+        viz.setParams({
+            layers: {
+                core: { dissolve: { count, spread } },
+                dust: { dissolve: { count, spread: spread * 1.2 } },
+            }
+        });
+    };
+    document.getElementById('inp-dissolveCount').value = defaults.layers.core.dissolve.count;
+    document.getElementById('val-dissolveCount').textContent = defaults.layers.core.dissolve.count.toFixed(0);
+    document.getElementById('inp-dissolveSpread').value = defaults.layers.core.dissolve.spread;
+    document.getElementById('val-dissolveSpread').textContent = defaults.layers.core.dissolve.spread.toFixed(0);
+    document.getElementById('inp-dissolveCount').addEventListener('input', updateDissolve);
+    document.getElementById('inp-dissolveSpread').addEventListener('input', updateDissolve);
+
     bindFloat('inp-turb', 'turbulence.strength', v => v.toFixed(0));
     bindFloat('inp-turbScale', 'turbulence.noiseScale', v => v.toFixed(3));
     bindFloat('inp-turbSpeed', 'turbulence.noiseSpeed');
@@ -1326,6 +1440,20 @@
     bindFloat('inp-coreSize', 'layers.core.sizeScale');
     bindFloat('inp-dustSize', 'layers.dust.sizeScale');
     bindFloat('inp-speckSize', 'layers.specks.sizeScale');
+
+    // --- Bind Layer Visibility ---
+    document.getElementById('chk-coreVisible').addEventListener('change', (e) => {
+        viz.setParams({ layers: { core: { visible: e.target.checked } } });
+    });
+    document.getElementById('chk-dustVisible').addEventListener('change', (e) => {
+        viz.setParams({ layers: { dust: { visible: e.target.checked } } });
+    });
+    document.getElementById('chk-specksVisible').addEventListener('change', (e) => {
+        viz.setParams({ layers: { specks: { visible: e.target.checked } } });
+    });
+    document.getElementById('chk-glowVisible').addEventListener('change', (e) => {
+        viz.setParams({ coreGlow: { show: e.target.checked } });
+    });
 
     // --- Bind Colors ---
     // Init colors from defaults
