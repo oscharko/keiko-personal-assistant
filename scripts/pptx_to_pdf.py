@@ -3,16 +3,17 @@
 Convert PowerPoint presentation to PDF including speaker notes.
 
 This script converts a PPTX file to a PDF document where each page contains
-the slide image (rendered via LibreOffice) followed by the speaker notes.
+the slide image (rendered via LibreOffice) followed by the speaker notes below it.
 
 Requirements:
     - python-pptx: For extracting speaker notes from PPTX files
     - reportlab: For PDF creation
     - Pillow: For image processing
+    - PyMuPDF: For PDF to image conversion
     - LibreOffice: For rendering slides to images (must be installed separately)
 
 Installation:
-    pip install python-pptx reportlab Pillow
+    pip install python-pptx reportlab Pillow PyMuPDF
     brew install --cask libreoffice  # macOS
 """
 
@@ -26,18 +27,16 @@ from typing import Optional
 import fitz  # PyMuPDF
 from PIL import Image
 from pptx import Presentation
+from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.lib.colors import HexColor
 from reportlab.platypus import (
     Image as RLImage,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
-    Table,
-    TableStyle,
 )
 
 
@@ -78,9 +77,9 @@ def find_libreoffice() -> Optional[Path]:
 
 
 def export_slides_as_images(
-    pptx_path: Path,
-    output_dir: Path,
-    libreoffice_path: Path,
+        pptx_path: Path,
+        output_dir: Path,
+        libreoffice_path: Path,
 ) -> list[Path]:
     """
     Export PowerPoint slides as PNG images using LibreOffice.
@@ -164,141 +163,6 @@ def get_slide_count(pptx_path: Path) -> int:
     return len(prs.slides)
 
 
-def extract_slide_text_structured(pptx_path: Path) -> list[list[dict]]:
-    """
-    Extract structured text from each slide with formatting information.
-
-    Args:
-        pptx_path: Path to the PPTX file.
-
-    Returns:
-        List of slides, each containing a list of text elements with metadata.
-        Each element is a dict with keys: text, level, is_bold, is_title, top
-    """
-    prs = Presentation(str(pptx_path))
-    all_slides = []
-
-    for slide in prs.slides:
-        elements = []
-
-        # Collect shapes with position info
-        shape_data = []
-        for shape in slide.shapes:
-            if not hasattr(shape, "text") or not shape.text.strip():
-                continue
-
-            top = shape.top if hasattr(shape, "top") and shape.top else 0
-            is_title = False
-
-            # Check if this is a title placeholder
-            if shape.is_placeholder:
-                try:
-                    from pptx.enum.shapes import PP_PLACEHOLDER
-                    ph_type = shape.placeholder_format.type
-                    if ph_type in (
-                        PP_PLACEHOLDER.TITLE,
-                        PP_PLACEHOLDER.CENTER_TITLE,
-                        PP_PLACEHOLDER.SUBTITLE,
-                    ):
-                        is_title = True
-                except Exception:
-                    pass
-
-            shape_data.append({
-                "shape": shape,
-                "top": top,
-                "is_title": is_title,
-            })
-
-        # Sort by vertical position
-        shape_data.sort(key=lambda x: x["top"])
-
-        for data in shape_data:
-            shape = data["shape"]
-            is_title = data["is_title"]
-            top = data["top"]
-
-            if hasattr(shape, "text_frame"):
-                for paragraph in shape.text_frame.paragraphs:
-                    text = paragraph.text.strip()
-                    if not text:
-                        continue
-
-                    # Get indentation level
-                    level = paragraph.level if hasattr(paragraph, "level") else 0
-
-                    # Check if bold
-                    is_bold = False
-                    for run in paragraph.runs:
-                        if run.font.bold:
-                            is_bold = True
-                            break
-
-                    elements.append({
-                        "text": text,
-                        "level": level,
-                        "is_bold": is_bold,
-                        "is_title": is_title,
-                        "top": top,
-                    })
-            else:
-                # Simple text shape
-                elements.append({
-                    "text": shape.text.strip(),
-                    "level": 0,
-                    "is_bold": False,
-                    "is_title": is_title,
-                    "top": top,
-                })
-
-        all_slides.append(elements)
-
-    return all_slides
-
-
-def format_slide_elements(elements: list[dict]) -> str:
-    """
-    Format slide elements into structured text with bullets and hierarchy.
-
-    Args:
-        elements: List of text elements with metadata.
-
-    Returns:
-        Formatted text string.
-    """
-    lines = []
-
-    for elem in elements:
-        text = elem["text"]
-        level = elem["level"]
-        is_title = elem["is_title"]
-        is_bold = elem["is_bold"]
-
-        if is_title:
-            # Titles get a bullet prefix
-            lines.append(f"* {text}")
-        elif level > 0:
-            # Indented items get bullet with indentation
-            indent = "  " * level
-            lines.append(f"{indent}* {text}")
-        elif is_bold:
-            # Bold text (like "Erkenntnis") - mark specially
-            lines.append(f"\n{text}")
-        else:
-            # Regular text - check if it looks like a bullet point
-            # (starts with specific patterns)
-            if (
-                text.startswith(("Rebranding", "Vereinheitlichung", "Konsistenter",
-                                 "Zentrale", "Strategische"))
-                or ":" in text[:50]
-            ):
-                lines.append(f"* {text}")
-            else:
-                lines.append(text)
-
-    return "\n".join(lines)
-
-
 def escape_xml(text: str) -> str:
     """
     Escape special XML characters in text.
@@ -317,23 +181,20 @@ def escape_xml(text: str) -> str:
     )
 
 
-def create_pdf_hybrid(
-    slide_images: list[Path],
-    slide_elements: list[list[dict]],
-    notes: list[str],
-    output_path: Path,
+def create_pdf_with_notes(
+        slide_images: list[Path],
+        notes: list[str],
+        output_path: Path,
 ) -> None:
     """
-    Create a hybrid PDF with slide images, structured text, and speaker notes.
+    Create a PDF with slide images and speaker notes.
 
     Each page contains:
     1. Slide image (visual representation)
-    2. Extracted slide text with formatting (searchable)
-    3. Speaker notes
+    2. Speaker notes below the image
 
     Args:
         slide_images: List of paths to slide images (PNG files).
-        slide_elements: List of structured text elements per slide.
         notes: List of speaker notes corresponding to each slide.
         output_path: Path where the output PDF will be saved.
     """
@@ -361,82 +222,6 @@ def create_pdf_hybrid(
         spaceBefore=0,
         spaceAfter=8,
         fontName="Helvetica-Bold",
-    )
-
-    # Title style (with bullet)
-    title_style = ParagraphStyle(
-        "SlideTitle",
-        parent=styles["Normal"],
-        fontSize=10,
-        leading=14,
-        spaceAfter=3,
-        textColor=HexColor("#333333"),
-        leftIndent=15,
-    )
-
-    # Bullet styles for different levels
-    bullet_style_0 = ParagraphStyle(
-        "Bullet0",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=13,
-        spaceAfter=2,
-        textColor=HexColor("#444444"),
-        leftIndent=15,
-    )
-
-    bullet_style_1 = ParagraphStyle(
-        "Bullet1",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=13,
-        spaceAfter=2,
-        textColor=HexColor("#444444"),
-        leftIndent=30,
-    )
-
-    bullet_style_2 = ParagraphStyle(
-        "Bullet2",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=13,
-        spaceAfter=2,
-        textColor=HexColor("#444444"),
-        leftIndent=45,
-    )
-
-    # Bold/highlight style (like "Erkenntnis")
-    highlight_label_style = ParagraphStyle(
-        "HighlightLabel",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=13,
-        spaceBefore=6,
-        spaceAfter=2,
-        textColor=HexColor("#333333"),
-        leftIndent=10,
-    )
-
-    highlight_text_style = ParagraphStyle(
-        "HighlightText",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=13,
-        spaceAfter=4,
-        textColor=HexColor("#333333"),
-        fontName="Helvetica-Bold",
-        leftIndent=10,
-    )
-
-    # Regular text style
-    text_style = ParagraphStyle(
-        "RegularText",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=13,
-        spaceAfter=2,
-        textColor=HexColor("#444444"),
-        leftIndent=10,
     )
 
     notes_header_style = ParagraphStyle(
@@ -471,8 +256,8 @@ def create_pdf_hybrid(
     # Build the document content
     story = []
 
-    for idx, (image_path, elements, note) in enumerate(
-        zip(slide_images, slide_elements, notes), start=1
+    for idx, (image_path, note) in enumerate(
+            zip(slide_images, notes), start=1
     ):
         # Add slide header
         story.append(Paragraph(f"Folie {idx}", slide_header_style))
@@ -500,62 +285,6 @@ def create_pdf_hybrid(
 
         story.append(Spacer(1, 0.3 * cm))
 
-        # Add separator line
-        separator_data = [[""]]
-        separator = Table(separator_data, colWidths=[page_width])
-        separator.setStyle(TableStyle([
-            ("LINEABOVE", (0, 0), (-1, 0), 1, HexColor("#CCCCCC")),
-        ]))
-        story.append(separator)
-
-        # Add structured slide text
-        if elements:
-            prev_was_highlight_label = False
-
-            for elem in elements:
-                text = escape_xml(elem["text"])
-                level = elem["level"]
-                is_bold = elem["is_bold"]
-                is_title = elem["is_title"]
-
-                # Check if this is a highlight label (like "Erkenntnis")
-                is_highlight_label = (
-                    text.lower() in ("erkenntnis", "fazit", "zusammenfassung",
-                                     "wichtig", "hinweis", "tipp")
-                    or len(text) < 20 and is_bold
-                )
-
-                if is_title:
-                    # Title with bullet
-                    story.append(Paragraph(f"* {text}", title_style))
-                    prev_was_highlight_label = False
-                elif is_highlight_label:
-                    # Highlight label
-                    story.append(Paragraph(text, highlight_label_style))
-                    prev_was_highlight_label = True
-                elif prev_was_highlight_label:
-                    # Text after highlight label - make it bold
-                    story.append(Paragraph(f"<b>{text}</b>", highlight_text_style))
-                    prev_was_highlight_label = False
-                elif level == 0:
-                    # Check if it looks like a bullet point
-                    if ":" in text[:60]:
-                        story.append(Paragraph(f"* {text}", bullet_style_0))
-                    else:
-                        story.append(Paragraph(text, text_style))
-                    prev_was_highlight_label = False
-                elif level == 1:
-                    story.append(Paragraph(f"* {text}", bullet_style_1))
-                    prev_was_highlight_label = False
-                else:
-                    story.append(Paragraph(f"* {text}", bullet_style_2))
-                    prev_was_highlight_label = False
-        else:
-            story.append(Paragraph(
-                "Kein Textinhalt auf dieser Folie.",
-                no_content_style
-            ))
-
         # Add speaker notes
         story.append(Paragraph("Sprechernotizen:", notes_header_style))
 
@@ -577,8 +306,8 @@ def create_pdf_hybrid(
 
 
 def convert_pptx_to_pdf_with_notes(
-    pptx_path: Path,
-    output_path: Optional[Path] = None,
+        pptx_path: Path,
+        output_path: Optional[Path] = None,
 ) -> Path:
     """
     Convert a PowerPoint presentation to PDF including speaker notes.
@@ -677,10 +406,9 @@ def convert_pptx_to_pdf_with_notes(
         pdf_doc.close()
         print(f"Extracted {len(png_files)} slide images")
 
-        # Step 3: Extract speaker notes and structured slide text
-        print("Extracting speaker notes and slide text...")
+        # Step 3: Extract speaker notes
+        print("Extracting speaker notes...")
         notes = extract_speaker_notes(pptx_path)
-        slide_elements = extract_slide_text_structured(pptx_path)
         slide_count = get_slide_count(pptx_path)
         print(f"Found {slide_count} slides with {sum(1 for n in notes if n)} notes")
 
@@ -690,18 +418,15 @@ def convert_pptx_to_pdf_with_notes(
                 f"Warning: Number of images ({len(png_files)}) "
                 f"doesn't match slide count ({slide_count})"
             )
-            # Pad notes and elements if we have more images
+            # Pad notes if we have more images
             while len(notes) < len(png_files):
                 notes.append("")
-            while len(slide_elements) < len(png_files):
-                slide_elements.append([])
             # Truncate if we have fewer images
             notes = notes[:len(png_files)]
-            slide_elements = slide_elements[:len(png_files)]
 
-        # Step 4: Create final hybrid PDF with images, text, and notes
-        print("Creating hybrid PDF with slides, text, and notes...")
-        create_pdf_hybrid(png_files, slide_elements, notes, output_path)
+        # Step 4: Create final PDF with images and notes
+        print("Creating PDF with slides and notes...")
+        create_pdf_with_notes(png_files, notes, output_path)
 
     print(f"Successfully created: {output_path}")
     return output_path
@@ -715,10 +440,10 @@ def main() -> None:
     data_dir = project_root / "data"
 
     # Input PowerPoint file
-    pptx_file = data_dir / "Inside Agentic AI – Die dirigierte Reise durch das KI-Orchester.pptx"
+    pptx_file = data_dir / "Inside Agentic AI.pptx"
 
     # Output PDF file
-    output_file = data_dir / "Inside Agentic AI – Die dirigierte Reise durch das KI-Orchester.pdf"
+    output_file = data_dir / "Inside Agentic AI.pdf"
 
     try:
         convert_pptx_to_pdf_with_notes(pptx_file, output_file)

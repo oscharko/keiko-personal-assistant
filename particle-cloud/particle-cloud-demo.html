@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Particle Cloud Audio Visualizer</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: #ffffff;
+            color: #333;
+        }
+
+        #wrap {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* UI Sidebar */
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        #ui.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .ui-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ui-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .ui-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .control-group input[type="color"] {
+            cursor: pointer;
+            border: none;
+            width: 40px;
+            height: 24px;
+            padding: 0;
+            background: none;
+        }
+
+        .value-display {
+            font-family: monospace;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            flex: 1;
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #e5e5e5;
+        }
+
+        button.active {
+            background: #0864b3;
+            color: white;
+            border-color: #064d8a;
+        }
+
+        #toggle-ui {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 20;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        #toggle-ui.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="wrap">
+    <canvas id="viz"></canvas>
+</div>
+
+<button id="toggle-ui" onclick="document.getElementById('ui').classList.remove('collapsed'); this.classList.add('hidden')">⚙️</button>
+
+<div id="ui">
+    <div class="ui-header">
+        <h2>Configuration</h2>
+        <button onclick="document.getElementById('ui').classList.add('collapsed'); document.getElementById('toggle-ui').classList.remove('hidden')" style="flex: 0; padding: 4px 8px; font-size: 16px;">×</button>
+    </div>
+    <div class="ui-content">
+        <!-- Audio -->
+        <div class="section">
+            <div class="section-title">Audio & Pulse</div>
+            <div class="buttons">
+                <button id="btnMic">Microphone</button>
+                <button id="btnStop">Stop Audio</button>
+            </div>
+            <div class="control-group">
+                <label>Sensitivity (Gain) <span id="val-gain" class="value-display"></span></label>
+                <input id="inp-gain" type="range" min="1" max="20" step="0.5">
+            </div>
+            <div class="control-group">
+                <label>Pulse Strength <span id="val-pulse" class="value-display"></span></label>
+                <input id="inp-pulse" type="range" min="0" max="1.5" step="0.05">
+            </div>
+        </div>
+
+        <!-- Shape -->
+        <div class="section">
+            <div class="section-title">Shape</div>
+            <div class="control-group">
+                <label>Lobe Count <span id="val-lobes" class="value-display"></span></label>
+                <input id="inp-lobes" type="range" min="0" max="16" step="1">
+            </div>
+            <div class="control-group">
+                <label>Lobe Amplitude <span id="val-lobeAmp" class="value-display"></span></label>
+                <input id="inp-lobeAmp" type="range" min="0" max="1" step="0.05">
+            </div>
+            <div class="control-group">
+                <label>Base Radius <span id="val-radius" class="value-display"></span></label>
+                <input id="inp-radius" type="range" min="0.1" max="0.6" step="0.01">
+            </div>
+            <div class="control-group">
+                <label>Irregularity <span id="val-irregular" class="value-display"></span></label>
+                <input id="inp-irregular" type="range" min="0" max="1" step="0.05">
+            </div>
+            <div class="control-group">
+                <label>Rotation Speed <span id="val-rot" class="value-display"></span></label>
+                <input id="inp-rot" type="range" min="-1" max="1" step="0.1">
+            </div>
+        </div>
+
+        <!-- Colors -->
+        <div class="section">
+            <div class="section-title">Colors</div>
+            <div class="control-group">
+                <label>Core Color</label>
+                <input id="col-core" type="color">
+            </div>
+            <div class="control-group">
+                <label>Mid Color</label>
+                <input id="col-mid" type="color">
+            </div>
+            <div class="control-group">
+                <label>Edge Color</label>
+                <input id="col-edge" type="color">
+            </div>
+            <div class="control-group">
+                <label>Background</label>
+                <input id="col-bg" type="color" value="#ffffff">
+            </div>
+        </div>
+
+        <!-- Particles -->
+        <div class="section">
+            <div class="section-title">Particles</div>
+            <div class="control-group">
+                <label>Density (Count) <span id="val-density" class="value-display"></span></label>
+                <input id="inp-density" type="range" min="0.1" max="2.0" step="0.1">
+            </div>
+            <div class="control-group">
+                <label>Turbulence <span id="val-turb" class="value-display"></span></label>
+                <input id="inp-turb" type="range" min="0" max="100" step="5">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    // ========= Utility =========
+    const TAU = Math.PI * 2;
+
+    function clamp(v, lo, hi) {
+        return Math.max(lo, Math.min(hi, v));
+    }
+
+    function lerp(a, b, t) {
+        return a + (b - a) * t;
+    }
+
+    function smoothstep(t) {
+        return t * t * (3 - 2 * t);
+    }
+
+    // Deterministic PRNG (seeded) – Mulberry32
+    function mulberry32(seed) {
+        let a = seed >>> 0;
+        return function rand() {
+            a |= 0;
+            a = (a + 0x6D2B79F5) | 0;
+            let t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    // Parse #RRGGBB / #RGB to {r,g,b}
+    function parseHexColor(hex) {
+        const s = String(hex).trim();
+        if (!s.startsWith('#')) throw new Error('Color must be hex like #RRGGBB');
+        if (s.length === 4) {
+            const r = parseInt(s[1] + s[1], 16);
+            const g = parseInt(s[2] + s[2], 16);
+            const b = parseInt(s[3] + s[3], 16);
+            return {r, g, b};
+        }
+        if (s.length === 7) {
+            const r = parseInt(s.slice(1, 3), 16);
+            const g = parseInt(s.slice(3, 5), 16);
+            const b = parseInt(s.slice(5, 7), 16);
+            return {r, g, b};
+        }
+        throw new Error('Unsupported hex color: ' + hex);
+    }
+
+    // Sample piecewise-linear stops: [{t,color}], t in [0..1]
+    function sampleColorStops(stops, t) {
+        const tt = clamp(t, 0, 1);
+        let i = 0;
+        while (i < stops.length - 1 && tt > stops[i + 1].t) i++;
+        const a = stops[i];
+        const b = stops[Math.min(i + 1, stops.length - 1)];
+        const span = (b.t - a.t) || 1e-9;
+        const u = clamp((tt - a.t) / span, 0, 1);
+        const ca = parseHexColor(a.color);
+        const cb = parseHexColor(b.color);
+        return {
+            r: Math.round(lerp(ca.r, cb.r, u)),
+            g: Math.round(lerp(ca.g, cb.g, u)),
+            b: Math.round(lerp(ca.b, cb.b, u)),
+        };
+    }
+
+    function sampleAlphaStops(stops, t) {
+        const tt = clamp(t, 0, 1);
+        let i = 0;
+        while (i < stops.length - 1 && tt > stops[i + 1].t) i++;
+        const a = stops[i];
+        const b = stops[Math.min(i + 1, stops.length - 1)];
+        const span = (b.t - a.t) || 1e-9;
+        const u = clamp((tt - a.t) / span, 0, 1);
+        return lerp(a.a, b.a, u);
+    }
+
+    // Value-noise 2D (cheap) for turbulence; deterministic but not periodic
+    function makeValueNoise2D(seed) {
+        const s = seed * 1.61803398875;
+
+        function hash(ix, iy) {
+            const x = ix * 127.1 + iy * 311.7 + s * 74.7;
+            const sn = Math.sin(x) * 43758.5453123;
+            return sn - Math.floor(sn); // fract
+        }
+
+        return function noise(x, y) {
+            const x0 = Math.floor(x), y0 = Math.floor(y);
+            const x1 = x0 + 1, y1 = y0 + 1;
+            const sx = smoothstep(x - x0);
+            const sy = smoothstep(y - y0);
+            const n00 = hash(x0, y0);
+            const n10 = hash(x1, y0);
+            const n01 = hash(x0, y1);
+            const n11 = hash(x1, y1);
+            const ix0 = lerp(n00, n10, sx);
+            const ix1 = lerp(n01, n11, sx);
+            return lerp(ix0, ix1, sy); // [0..1]
+        };
+    }
+
+    function deepMerge(target, patch) {
+        for (const k of Object.keys(patch)) {
+            const pv = patch[k];
+            const tv = target[k];
+            if (pv && typeof pv === 'object' && !Array.isArray(pv)) {
+                if (!tv || typeof tv !== 'object' || Array.isArray(tv)) target[k] = {};
+                deepMerge(target[k], pv);
+            } else {
+                target[k] = pv;
+            }
+        }
+        return target;
+    }
+
+    // ========= Particle Cloud Visualizer =========
+    class ParticleCloudVisualizer {
+        constructor(canvas, params = {}) {
+            this.canvas = canvas;
+            this.ctx = canvas.getContext('2d', {alpha: true, desynchronized: true});
+
+            this.params = ParticleCloudVisualizer.defaults();
+            deepMerge(this.params, params);
+
+            this._rand = mulberry32(this.params.seed >>> 0);
+            this._noise2 = makeValueNoise2D(this.params.seed >>> 0);
+
+            this._lutSize = 256;
+            this._rgbLUT = new Array(this._lutSize);
+            this._aLUT = new Float32Array(this._lutSize);
+
+            this._shapePoints = [];
+            this._core = [];
+            this._dust = [];
+
+            this._time = 0;
+            this._amp = 0;
+            this._rawAmp = 0;
+            this._externalAmp = null;
+
+            this._audioCtx = null;
+            this._analyser = null;
+            this._timeDomain = null;
+            this._audioSourceNode = null;
+            this._micStream = null;
+
+            this._running = false;
+            this._raf = 0;
+            this._lastNow = 0;
+
+            this._resizeObserver = null;
+            this._onResize = () => this.resize();
+
+            this._rebuildAll();
+
+            // Resize handling
+            if ('ResizeObserver' in window) {
+                this._resizeObserver = new ResizeObserver(() => this.resize());
+                // Observe the canvas itself and its parent (helps when canvas is auto-sized by flex/grid)
+                this._resizeObserver.observe(this.canvas);
+                if (this.canvas.parentElement) this._resizeObserver.observe(this.canvas.parentElement);
+            } else {
+                window.addEventListener('resize', this._onResize, {passive: true});
+            }
+        }
+
+        static defaults() {
+            return {
+                seed: 4,
+                dprCap: 2,
+                background: null, // null => transparent; set to "#fff" for solid
+                blendMode: 'source-over', // 'lighter' / 'screen' also work nicely
+                center: {x: 0.5, y: 0.5}, // normalized [0..1]
+                baseRadius: 0.32, // fraction of min(w,h)
+                globalRotation: 0, // radians
+
+                // Audio -> motion mapping
+                audio: {
+                    enabled: true,
+                    gain: 6.0,            // RMS*gain => amplitude [0..1]
+                    fftSize: 1024,
+                },
+                pulse: {
+                    strength: 0.25,        // scale expansion
+                    speedInfluence: 0.85,  // amp -> outflow speed
+                    turbulenceInfluence: 0.90, // amp -> extra turbulence
+                    glowInfluence: 0.70,   // amp -> glow alpha
+                    attack: 0.06,          // seconds, response when amp rises
+                    release: 0.14,         // seconds, response when amp falls
+                },
+
+                // Shape = "splash envelope" controlling max radius by angle
+                shape: {
+                    controlPoints: 72,     // more => more irregular detail
+                    irregularity: 0.28,    // random variation in envelope
+                    lobeCount: 8,          // main "petals" like the reference image
+                    lobeAmplitude: 0.42,
+                    lobeSharpness: 2.6,
+                    secondaryLobeCount: 3,
+                    secondaryAmplitude: 0.16,
+                    rotationSpeed: 0.0,    // rad/s, if you want a subtle twist
+                },
+
+                turbulence: {
+                    noiseScale: 0.006,     // spatial frequency (px^-1)
+                    noiseSpeed: 0.22,      // temporal speed
+                    strength: 26,          // px
+                    falloff: 1.4,          // stronger in core, weaker outside
+                },
+
+                coreGlow: {
+                    show: true,
+                    radius: 0.22,          // fraction of min(w,h)
+                    alpha: 0.22,
+                    color: '#0864b3',
+                },
+
+                // Color gradient (t = 0 in the core, t = 1 at the rim)
+                gradient: {
+                    colorStops: [
+                        {t: 0.0, color: '#0864b3'},
+                        {t: 0.45, color: '#4aa7dd'},
+                        {t: 1.0, color: '#d6f0ff'},
+                    ],
+                    alphaStops: [
+                        {t: 0.0, a: 1.00},
+                        {t: 0.55, a: 0.60},
+                        {t: 1.0, a: 0.00},
+                    ],
+                    tExponent: 1.0, // >1 keeps core darker longer
+                },
+
+                layers: {
+                    // Dense, larger particles closer to center
+                    core: {
+                        count: 2400,
+                        radiusFactor: 0.78,      // relative to baseRadius
+                        radialJitter: 0.15,
+                        lifeMin: 1.6,
+                        lifeMax: 3.2,
+                        gamma: 2.6,              // >1 => more density in the core
+                        sizeMin: 0.9,
+                        sizeMax: 3.6,
+                        sizeFalloff: 1.3,
+                        alpha: 0.70,
+                        alphaFalloff: 1.6,
+                    },
+                    // Fine dust, longer reach
+                    dust: {
+                        count: 1900,
+                        radiusFactor: 1.30,
+                        radialJitter: 0.35,
+                        lifeMin: 0.9,
+                        lifeMax: 2.0,
+                        gamma: 1.9,
+                        sizeMin: 0.45,
+                        sizeMax: 1.7,
+                        sizeFalloff: 1.6,
+                        alpha: 0.48,
+                        alphaFalloff: 2.2,
+                    },
+                },
+            };
+        }
+
+        // --- Public API ---
+        start() {
+            if (this._running) return;
+            this._running = true;
+            this._lastNow = performance.now();
+            const tick = (now) => {
+                if (!this._running) return;
+                const dt = Math.min(0.05, Math.max(0.001, (now - this._lastNow) / 1000));
+                this._lastNow = now;
+                this._time += dt;
+
+                this._updateAmplitude(dt);
+                this._updateParticles(dt);
+                this._render();
+
+                this._raf = requestAnimationFrame(tick);
+            };
+            this._raf = requestAnimationFrame(tick);
+        }
+
+        stop() {
+            this._running = false;
+            if (this._raf) cancelAnimationFrame(this._raf);
+            this._raf = 0;
+        }
+
+        destroy() {
+            this.stop();
+            this.disconnectAudio();
+            if (this._resizeObserver) {
+                this._resizeObserver.disconnect();
+                this._resizeObserver = null;
+            } else {
+                window.removeEventListener('resize', this._onResize);
+            }
+        }
+
+        resize() {
+            const dpr = Math.min(this.params.dprCap, window.devicePixelRatio || 1);
+            const rect = this.canvas.getBoundingClientRect();
+            const w = Math.max(2, Math.floor(rect.width * dpr));
+            const h = Math.max(2, Math.floor(rect.height * dpr));
+
+            if (this.canvas.width !== w || this.canvas.height !== h) {
+                this.canvas.width = w;
+                this.canvas.height = h;
+            }
+        }
+
+        setParams(patch) {
+            deepMerge(this.params, patch);
+
+            // If seed changed, rebuild randomness and noise
+            if (patch.seed !== undefined) {
+                this._rand = mulberry32(this.params.seed >>> 0);
+                this._noise2 = makeValueNoise2D(this.params.seed >>> 0);
+            }
+
+            // Rebuild dependent structures if needed
+            if (patch.gradient || patch.shape || patch.layers || patch.seed !== undefined) {
+                this._rebuildAll();
+            }
+        }
+
+        /**
+         * External amplitude override (0..1). Use this when you already compute amplitude
+         * from your STT/TTS pipeline and want deterministic control.
+         * Pass null to return to WebAudio analyser mode.
+         */
+        setExternalAmplitude(valueOrNull) {
+            if (valueOrNull === null || valueOrNull === undefined) {
+                this._externalAmp = null;
+            } else {
+                this._externalAmp = clamp(Number(valueOrNull), 0, 1);
+            }
+        }
+
+        get amplitude() {
+            return this._amp;
+        }
+
+        async connectToMicrophone(getUserMediaConstraints = {}) {
+            this._ensureAudio();
+            if (!navigator.mediaDevices?.getUserMedia) {
+                throw new Error('getUserMedia not supported in this browser.');
+            }
+            // Default constraints suitable for speech
+            const constraints = {
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    ...getUserMediaConstraints,
+                },
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            this._micStream = stream;
+            const source = this._audioCtx.createMediaStreamSource(stream);
+            this._attachAnalyser(source);
+        }
+
+        connectToAudioElement(audioEl, {connectToDestination = true} = {}) {
+            this._ensureAudio();
+            if (!(audioEl instanceof HTMLMediaElement)) {
+                throw new Error('connectToAudioElement expects an HTMLMediaElement.');
+            }
+            const source = this._audioCtx.createMediaElementSource(audioEl);
+            this._attachAnalyser(source);
+            if (connectToDestination) source.connect(this._audioCtx.destination);
+        }
+
+        connectToAudioNode(audioNode) {
+            this._ensureAudio();
+            this._attachAnalyser(audioNode);
+        }
+
+        disconnectAudio() {
+            if (this._audioSourceNode) {
+                try {
+                    this._audioSourceNode.disconnect();
+                } catch {
+                }
+                this._audioSourceNode = null;
+            }
+            if (this._analyser) {
+                try {
+                    this._analyser.disconnect();
+                } catch {
+                }
+                this._analyser = null;
+            }
+            this._timeDomain = null;
+
+            if (this._micStream) {
+                for (const t of this._micStream.getTracks()) t.stop();
+                this._micStream = null;
+            }
+        }
+
+        // --- Internals ---
+        _ensureAudio() {
+            if (!this.params.audio.enabled) return;
+            if (!this._audioCtx) {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) throw new Error('WebAudio AudioContext not supported.');
+                this._audioCtx = new Ctx();
+            }
+            // Some browsers require a user gesture to start audio
+            if (this._audioCtx.state === 'suspended') {
+                this._audioCtx.resume().catch(() => {
+                });
+            }
+        }
+
+        _attachAnalyser(sourceNode) {
+            if (!this.params.audio.enabled) return;
+            if (!this._audioCtx) throw new Error('AudioContext not initialized.');
+            this.disconnectAudio();
+
+            const analyser = this._audioCtx.createAnalyser();
+            analyser.fftSize = this.params.audio.fftSize;
+            analyser.smoothingTimeConstant = 0.0;
+
+            sourceNode.connect(analyser);
+
+            this._audioSourceNode = sourceNode;
+            this._analyser = analyser;
+            this._timeDomain = new Uint8Array(analyser.fftSize);
+        }
+
+        _rebuildAll() {
+            // Re-initialize seeded randomness so parameter changes (without changing the seed)
+            // are reproducible and do not depend on how long the animation has been running.
+            this._rand = mulberry32(this.params.seed >>> 0);
+            this._noise2 = makeValueNoise2D(this.params.seed >>> 0);
+
+            this._buildGradientLUT();
+            this._buildShapeEnvelope();
+            this._buildParticles();
+        }
+
+        _buildGradientLUT() {
+            const grad = this.params.gradient;
+            // Defensive: ensure stops are sorted
+            const colorStops = [...grad.colorStops].sort((a, b) => a.t - b.t);
+            const alphaStops = [...grad.alphaStops].sort((a, b) => a.t - b.t);
+
+            for (let i = 0; i < this._lutSize; i++) {
+                const t = i / (this._lutSize - 1);
+                const c = sampleColorStops(colorStops, t);
+                const a = sampleAlphaStops(alphaStops, t);
+                this._rgbLUT[i] = `rgb(${c.r},${c.g},${c.b})`;
+                this._aLUT[i] = a;
+            }
+        }
+
+        _buildShapeEnvelope() {
+            const s = this.params.shape;
+            const n = Math.max(8, Math.floor(s.controlPoints));
+            this._shapePoints = new Float32Array(n);
+
+            // Random-but-smooth envelope points around the circle
+            for (let i = 0; i < n; i++) {
+                const r = 1 + (this._rand() * 2 - 1) * s.irregularity;
+                this._shapePoints[i] = r;
+            }
+
+            // Light smoothing pass to avoid jagged spikes
+            for (let pass = 0; pass < 2; pass++) {
+                const tmp = new Float32Array(n);
+                for (let i = 0; i < n; i++) {
+                    const a = this._shapePoints[(i - 1 + n) % n];
+                    const b = this._shapePoints[i];
+                    const c = this._shapePoints[(i + 1) % n];
+                    tmp[i] = (a + b * 2 + c) / 4;
+                }
+                this._shapePoints = tmp;
+            }
+
+            // Random phases for lobe waves
+            this._lobePhase1 = this._rand() * TAU;
+            this._lobePhase2 = this._rand() * TAU;
+        }
+
+        _shapeEnvelope(angle, time) {
+            const s = this.params.shape;
+            const points = this._shapePoints;
+            const n = points.length;
+
+            // Rotate the envelope slowly if desired
+            const a = angle + time * s.rotationSpeed + this.params.globalRotation;
+
+            // Sample the base irregular envelope from control points
+            const u = (a / TAU) * n;
+            const i0 = Math.floor(u) % n;
+            const i1 = (i0 + 1) % n;
+            const f = u - Math.floor(u);
+            const w = smoothstep(f);
+            let env = lerp(points[i0], points[i1], w);
+
+            // Add "petal/lobe" structure like the powder burst
+            if (s.lobeAmplitude > 0 && s.lobeCount > 0) {
+                const p = Math.abs(Math.sin(s.lobeCount * a + this._lobePhase1));
+                env *= 1 + s.lobeAmplitude * Math.pow(p, s.lobeSharpness);
+            }
+            if (s.secondaryAmplitude > 0 && s.secondaryLobeCount > 0) {
+                const p2 = Math.abs(Math.sin(s.secondaryLobeCount * a + this._lobePhase2));
+                env *= 1 + s.secondaryAmplitude * Math.pow(p2, 2.0);
+            }
+
+            return env;
+        }
+
+        _buildParticles() {
+            // Keep arrays allocated; reuse objects to avoid GC
+            const coreCfg = this.params.layers.core;
+            const dustCfg = this.params.layers.dust;
+
+            this._core = this._ensureParticleArray(this._core, coreCfg.count);
+            this._dust = this._ensureParticleArray(this._dust, dustCfg.count);
+
+            for (let i = 0; i < this._core.length; i++) this._resetParticle(this._core[i], coreCfg, true);
+            for (let i = 0; i < this._dust.length; i++) this._resetParticle(this._dust[i], dustCfg, true);
+        }
+
+        _ensureParticleArray(arr, count) {
+            const out = arr || [];
+            while (out.length < count) out.push({});
+            out.length = count;
+            return out;
+        }
+
+        _resetParticle(p, cfg, initial) {
+            p.angle = this._rand() * TAU;
+            p.life = lerp(cfg.lifeMin, cfg.lifeMax, this._rand());
+            p.age = initial ? this._rand() * p.life : 0;
+            p.radialJitter = 1 + (this._rand() * 2 - 1) * cfg.radialJitter;
+            // Bias sizes: many small, few large (pow)
+            p.sizeBias = Math.pow(this._rand(), 0.55);
+            // Noise offsets (avoid coherent noise bands)
+            p.nx = this._rand() * 1000;
+            p.ny = this._rand() * 1000;
+        }
+
+        _updateAmplitude(dt) {
+            // External override
+            if (this._externalAmp !== null) {
+                const target = this._externalAmp;
+                const {attack, release} = this.params.pulse;
+                const k = target > this._amp
+                    ? 1 - Math.exp(-dt / Math.max(1e-3, attack))
+                    : 1 - Math.exp(-dt / Math.max(1e-3, release));
+                this._amp += (target - this._amp) * k;
+                this._rawAmp = target;
+                return;
+            }
+
+            // No analyser
+            if (!this._analyser || !this._timeDomain || !this.params.audio.enabled) {
+                // decay to zero
+                const {release} = this.params.pulse;
+                const k = 1 - Math.exp(-dt / Math.max(1e-3, release));
+                this._amp += (0 - this._amp) * k;
+                this._rawAmp = 0;
+                return;
+            }
+
+            this._analyser.getByteTimeDomainData(this._timeDomain);
+            let sumSq = 0;
+            const N = this._timeDomain.length;
+            for (let i = 0; i < N; i++) {
+                const v = (this._timeDomain[i] - 128) / 128;
+                sumSq += v * v;
+            }
+            const rms = Math.sqrt(sumSq / N);
+            const target = clamp(rms * this.params.audio.gain, 0, 1);
+            this._rawAmp = target;
+
+            const {attack, release} = this.params.pulse;
+            const k = target > this._amp
+                ? 1 - Math.exp(-dt / Math.max(1e-3, attack))
+                : 1 - Math.exp(-dt / Math.max(1e-3, release));
+            this._amp += (target - this._amp) * k;
+        }
+
+        _updateParticles(dt) {
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            const minDim = Math.min(w, h);
+
+            const baseR = minDim * this.params.baseRadius;
+
+            const pulseScale = 1 + this._amp * this.params.pulse.strength;
+            const speedScale = 1 + this._amp * this.params.pulse.speedInfluence;
+
+            // Update particles by advancing their "age"; respawn when completed
+            const updateLayer = (arr, cfg) => {
+                for (let i = 0; i < arr.length; i++) {
+                    const p = arr[i];
+                    p.age += dt * speedScale;
+                    if (p.age >= p.life) this._resetParticle(p, cfg, false);
+
+                    // Precompute end radius (changes slowly, so OK per frame; you can cache if desired)
+                    const env = this._shapeEnvelope(p.angle, this._time);
+                    p.endRadius = baseR * cfg.radiusFactor * env * p.radialJitter * pulseScale;
+                }
+            };
+
+            updateLayer(this._dust, this.params.layers.dust);
+            updateLayer(this._core, this.params.layers.core);
+        }
+
+        _render() {
+            const ctx = this.ctx;
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+
+            // Clear / background
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            if (this.params.background) {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = this.params.background;
+                ctx.fillRect(0, 0, w, h);
+            } else {
+                ctx.clearRect(0, 0, w, h);
+            }
+
+            ctx.globalCompositeOperation = this.params.blendMode;
+
+            const cx = w * this.params.center.x;
+            const cy = h * this.params.center.y;
+
+            const minDim = Math.min(w, h);
+            const pulseScale = 1 + this._amp * this.params.pulse.strength;
+            const turbBoost = 1 + this._amp * this.params.pulse.turbulenceInfluence;
+
+            // Optional core "fog/glow" to match dense center
+            if (this.params.coreGlow.show) {
+                const glowR = minDim * this.params.coreGlow.radius * pulseScale;
+                const glowA = this.params.coreGlow.alpha * (1 + this._amp * this.params.pulse.glowInfluence);
+
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+                const cc = parseHexColor(this.params.coreGlow.color);
+                // Powder-like fog: opaque in the center, transparent at the rim
+                grad.addColorStop(0.00, `rgba(${cc.r},${cc.g},${cc.b},1)`);
+                grad.addColorStop(0.25, `rgba(${cc.r},${cc.g},${cc.b},0.85)`);
+                grad.addColorStop(1.00, `rgba(${cc.r},${cc.g},${cc.b},0)`);
+
+                ctx.globalAlpha = clamp(glowA, 0, 1);
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, glowR, 0, TAU);
+                ctx.fill();
+            }
+
+            const drawLayer = (arr, cfg) => {
+                const turb = this.params.turbulence;
+                const nScale = turb.noiseScale;
+                const tSpeed = turb.noiseSpeed;
+                const maxTurb = turb.strength * turbBoost;
+
+                let lastFill = '';
+                for (let i = 0; i < arr.length; i++) {
+                    const p = arr[i];
+                    const t = clamp(p.age / p.life, 0, 1);
+
+                    const dirx = Math.cos(p.angle);
+                    const diry = Math.sin(p.angle);
+
+                    const tPow = Math.pow(t, cfg.gamma);
+                    const r = p.endRadius * tPow;
+
+                    // Base radial position
+                    let x = cx + dirx * r;
+                    let y = cy + diry * r;
+
+                    // Turbulence stronger near the core; fades outward
+                    const turbFade = Math.pow(1 - t, turb.falloff);
+                    const turbAmt = maxTurb * turbFade;
+
+                    // 2D value noise (two calls to decorrelate x/y)
+                    const nx = (x * nScale) + this._time * tSpeed + p.nx;
+                    const ny = (y * nScale) - this._time * tSpeed + p.ny;
+                    const n1 = this._noise2(nx, ny);
+                    const n2 = this._noise2(nx + 19.19, ny + 7.73);
+                    x += (n1 - 0.5) * 2 * turbAmt;
+                    y += (n2 - 0.5) * 2 * turbAmt;
+
+                    // Size / alpha fade
+                    const size = lerp(cfg.sizeMax, cfg.sizeMin, Math.pow(t, cfg.sizeFalloff)) * (0.55 + 0.9 * p.sizeBias);
+                    const aFade = Math.pow(1 - t, cfg.alphaFalloff);
+
+                    // Color lookup by t (optionally exponent)
+                    const tt = Math.pow(t, this.params.gradient.tExponent);
+                    const idx = Math.max(0, Math.min(this._lutSize - 1, (tt * (this._lutSize - 1)) | 0));
+
+                    const fill = this._rgbLUT[idx];
+                    if (fill !== lastFill) {
+                        ctx.fillStyle = fill;
+                        lastFill = fill;
+                    }
+
+                    const alpha = cfg.alpha * aFade * this._aLUT[idx];
+                    if (alpha <= 0.001) continue;
+
+                    ctx.globalAlpha = alpha;
+
+                    // Draw as circle; small dust is very small but still circular
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, TAU);
+                    ctx.fill();
+                }
+            };
+
+            // Draw dust first, then core on top
+            drawLayer(this._dust, this.params.layers.dust);
+            drawLayer(this._core, this.params.layers.core);
+
+            // Reset alpha
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // ========= Demo wiring =========
+    const canvas = document.getElementById('viz');
+
+    // Initial matching reference
+    const viz = new ParticleCloudVisualizer(canvas, {
+        background: '#ffffff',
+        blendMode: 'source-over',
+    });
+
+    viz.resize();
+    viz.start();
+
+    // Helper builder for wiring inputs
+    const bindFloat = (id, path, format = (v) => v.toFixed(2)) => {
+        const el = document.getElementById(id);
+        const valEl = document.getElementById(id.replace('inp', 'val'));
+
+        // Resolve path to get initial value
+        const keys = path.split('.');
+        let obj = viz.params;
+        for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+        const lastKey = keys[keys.length - 1];
+
+        el.value = obj[lastKey];
+        if (valEl) valEl.textContent = format(obj[lastKey]);
+
+        el.addEventListener('input', () => {
+            const v = Number(el.value);
+            if (valEl) valEl.textContent = format(v);
+            
+            // Reconstruct patch object
+            const patch = {};
+            let p = patch;
+            for (let i = 0; i < keys.length - 1; i++) {
+                p[keys[i]] = {};
+                p = p[keys[i]];
+            }
+            p[lastKey] = v;
+            viz.setParams(patch);
+        });
+    };
+
+    const bindColor = (id, updateFn) => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', () => {
+            updateFn(el.value);
+        });
+        // Init value handled by manual set below because mapping is complex
+    };
+
+    // --- Bind Audio ---
+    bindFloat('inp-gain', 'audio.gain', v => v.toFixed(1));
+    bindFloat('inp-pulse', 'pulse.strength');
+
+    // --- Bind Shape ---
+    bindFloat('inp-lobes', 'shape.lobeCount', v => v.toFixed(0));
+    bindFloat('inp-lobeAmp', 'shape.lobeAmplitude');
+    bindFloat('inp-radius', 'baseRadius');
+    bindFloat('inp-irregular', 'shape.irregularity');
+    bindFloat('inp-rot', 'shape.rotationSpeed');
+
+    // --- Bind Particles ---
+    const updateDensity = () => {
+        const d = Number(document.getElementById('inp-density').value);
+        document.getElementById('val-density').textContent = d.toFixed(1);
+        viz.setParams({
+            layers: {
+                core: {count: Math.floor(2400 * d)},
+                dust: {count: Math.floor(1900 * d)},
+            }
+        });
+    };
+    document.getElementById('inp-density').value = 1.0;
+    document.getElementById('val-density').textContent = "1.0";
+    document.getElementById('inp-density').addEventListener('input', updateDensity);
+
+    bindFloat('inp-turb', 'turbulence.strength', v => v.toFixed(0));
+
+    // --- Bind Colors ---
+    // Init colors from defaults
+    const defaults = ParticleCloudVisualizer.defaults();
+    document.getElementById('col-core').value = defaults.gradient.colorStops[0].color;
+    document.getElementById('col-mid').value = defaults.gradient.colorStops[1].color;
+    document.getElementById('col-edge').value = defaults.gradient.colorStops[2].color;
+    document.getElementById('col-bg').value = '#ffffff';
+
+    const updateColors = () => {
+        const c1 = document.getElementById('col-core').value;
+        const c2 = document.getElementById('col-mid').value;
+        const c3 = document.getElementById('col-edge').value;
+        
+        viz.setParams({
+            coreGlow: { color: c1 },
+            gradient: {
+                colorStops: [
+                    {t: 0.0, color: c1},
+                    {t: 0.45, color: c2},
+                    {t: 1.0, color: c3},
+                ]
+            }
+        });
+    };
+
+    bindColor('col-core', updateColors);
+    bindColor('col-mid', updateColors);
+    bindColor('col-edge', updateColors);
+
+    bindColor('col-bg', (c) => viz.setParams({background: c}));
+
+    // --- Buttons ---
+    document.getElementById('btnMic').addEventListener('click', async () => {
+        try {
+            await viz.connectToMicrophone();
+        } catch (e) {
+            console.error(e);
+            alert("Mic error: " + e);
+        }
+    });
+
+    document.getElementById('btnStop').addEventListener('click', () => {
+        viz.disconnectAudio();
+        viz.setExternalAmplitude(null);
+    });
+
+</script>
+</body>
+</html>
