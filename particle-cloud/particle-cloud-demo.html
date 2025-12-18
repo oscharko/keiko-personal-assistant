@@ -40,7 +40,7 @@
             z-index: 10;
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 0 20px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s ease;
         }
 
@@ -50,7 +50,7 @@
 
         .ui-header {
             padding: 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -70,7 +70,7 @@
 
         .section {
             margin-bottom: 16px;
-            border: 1px solid rgba(0,0,0,0.08);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 8px;
             overflow: hidden;
         }
@@ -82,7 +82,7 @@
             color: #333;
             padding: 10px 12px;
             font-weight: 600;
-            background: rgba(0,0,0,0.03);
+            background: rgba(0, 0, 0, 0.03);
             cursor: pointer;
             user-select: none;
             display: flex;
@@ -91,7 +91,7 @@
         }
 
         .section-title:hover {
-            background: rgba(0,0,0,0.05);
+            background: rgba(0, 0, 0, 0.05);
         }
 
         .section-title::after {
@@ -143,6 +143,16 @@
             background: none;
         }
 
+        .control-group select {
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
         .value-display {
             font-family: monospace;
             font-size: 11px;
@@ -186,8 +196,8 @@
             height: 40px;
             border-radius: 50%;
             background: white;
-            border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -206,12 +216,16 @@
     <canvas id="viz"></canvas>
 </div>
 
-<button id="toggle-ui" onclick="document.getElementById('ui').classList.remove('collapsed'); this.classList.add('hidden')">⚙️</button>
+<button id="toggle-ui"
+        onclick="document.getElementById('ui').classList.remove('collapsed'); this.classList.add('hidden')">⚙️
+</button>
 
 <div id="ui">
     <div class="ui-header">
         <h2>Configuration</h2>
-        <button onclick="document.getElementById('ui').classList.add('collapsed'); document.getElementById('toggle-ui').classList.remove('hidden')" style="flex: 0; padding: 4px 8px; font-size: 16px;">×</button>
+        <button onclick="document.getElementById('ui').classList.add('collapsed'); document.getElementById('toggle-ui').classList.remove('hidden')"
+                style="flex: 0; padding: 4px 8px; font-size: 16px;">×
+        </button>
     </div>
     <div class="ui-content">
         <!-- Info -->
@@ -267,6 +281,15 @@
                     <label>Pulse Release (s) <span id="val-release" class="value-display"></span></label>
                     <input id="inp-release" type="range" min="0.01" max="1.0" step="0.01">
                 </div>
+                <div class="control-group">
+                    <label>Frequency Focus</label>
+                    <select id="sel-band">
+                        <option value="all">All bands</option>
+                        <option value="low">Low (0-200 Hz)</option>
+                        <option value="mid">Mid (200-2k Hz)</option>
+                        <option value="high">High (2k-8k Hz)</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -297,6 +320,10 @@
                 <div class="control-group">
                     <label>Base Radius <span id="val-radius" class="value-display"></span></label>
                     <input id="inp-radius" type="range" min="0.1" max="0.6" step="0.01">
+                </div>
+                <div class="control-group">
+                    <label>Aspect Ratio (Y/X) <span id="val-aspect" class="value-display"></span></label>
+                    <input id="inp-aspect" type="range" min="0.6" max="1.6" step="0.02">
                 </div>
                 <div class="control-group">
                     <label>Irregularity <span id="val-irregular" class="value-display"></span></label>
@@ -365,6 +392,10 @@
                     <input id="inp-outwardSpeed" type="range" min="0.3" max="3.0" step="0.1">
                 </div>
                 <div class="control-group">
+                    <label>Lifetime Scale <span id="val-lifeScale" class="value-display"></span></label>
+                    <input id="inp-lifeScale" type="range" min="0.5" max="1.6" step="0.02">
+                </div>
+                <div class="control-group">
                     <label>Core Size Scale <span id="val-coreSize" class="value-display"></span></label>
                     <input id="inp-coreSize" type="range" min="0.4" max="2.0" step="0.05">
                 </div>
@@ -387,6 +418,14 @@
                 <div class="control-group">
                     <label>Dissolve Spread <span id="val-dissolveSpread" class="value-display"></span></label>
                     <input id="inp-dissolveSpread" type="range" min="5" max="60" step="2">
+                </div>
+                <div class="control-group">
+                    <label>Dissolve Start (edge fade) <span id="val-dissolveStart" class="value-display"></span></label>
+                    <input id="inp-dissolveStart" type="range" min="0.30" max="0.85" step="0.01">
+                </div>
+                <div class="control-group">
+                    <label>Dissolve Fade Rate <span id="val-dissolveFade" class="value-display"></span></label>
+                    <input id="inp-dissolveFade" type="range" min="0.5" max="2.0" step="0.05">
                 </div>
                 <div class="control-group">
                     <label>Turbulence Strength <span id="val-turb" class="value-display"></span></label>
@@ -452,7 +491,8 @@
                 <div class="control-group">
                     <label>Amplitude Display <span id="val-amplitude" class="value-display">0.00</span></label>
                     <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
-                        <div id="amp-meter" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0864b3, #2f94df); transition: width 0.05s;"></div>
+                        <div id="amp-meter"
+                             style="width: 0%; height: 100%; background: linear-gradient(90deg, #0864b3, #2f94df); transition: width 0.05s;"></div>
                     </div>
                 </div>
             </div>
@@ -608,6 +648,7 @@
             this._audioCtx = null;
             this._analyser = null;
             this._timeDomain = null;
+            this._freqData = null;
             this._audioSourceNode = null;
             this._micStream = null;
 
@@ -638,21 +679,21 @@
                 background: null, // null => transparent; set to "#fff" for solid
                 blendMode: 'source-over', // 'lighter' / 'screen' also work nicely
                 center: {x: 0.5, y: 0.5}, // normalized [0..1]
-                baseRadius: 0.34, // fraction of min(w,h)
+                baseRadius: 0.33, // fraction of min(w,h)
                 globalRotation: 0, // radians
 
                 // Audio -> motion mapping
                 audio: {
                     enabled: true,
-                    gain: 6.0,            // RMS*gain => amplitude [0..1]
+                    gain: 6,            // RMS*gain => amplitude [0..1]
                     fftSize: 1024,
                     frequencyBand: 'all', // 'all', 'low', 'mid', 'high'
                 },
                 pulse: {
                     strength: 0.25,        // scale expansion
                     speedInfluence: 0.85,  // amp -> outflow speed
-                    turbulenceInfluence: 0.90, // amp -> extra turbulence
-                    glowInfluence: 0.70,   // amp -> glow alpha
+                    turbulenceInfluence: 0.9, // amp -> extra turbulence
+                    glowInfluence: 0.7,   // amp -> glow alpha
                     sizeInfluence: 0.35,   // amp -> particle size
                     attack: 0.06,          // seconds, response when amp rises
                     release: 0.14,         // seconds, response when amp falls
@@ -661,101 +702,104 @@
                 // Shape = "splash envelope" controlling max radius by angle
                 shape: {
                     controlPoints: 72,     // more => more irregular detail
-                    irregularity: 0.28,    // random variation in envelope
+                    irregularity: 0.24,    // random variation in envelope
                     lobeCount: 7,          // main "petals" like the reference image
-                    lobeAmplitude: 0.38,
-                    lobeSharpness: 2.5,
-                    secondaryLobeCount: 3,
-                    secondaryAmplitude: 0.14,
-                    rotationSpeed: 0.0,    // rad/s, if you want a subtle twist
+                    lobeAmplitude: 0.42,
+                    lobeSharpness: 2.6,
+                    secondaryLobeCount: 2,
+                    secondaryAmplitude: 0.12,
+                    rotationSpeed: 0.05,   // rad/s, if you want a subtle twist
+                    aspectRatio: 1.05,     // >1 taller, <1 wider
                 },
 
                 turbulence: {
                     noiseScale: 0.006,     // spatial frequency (px^-1)
-                    noiseSpeed: 0.22,      // temporal speed
-                    strength: 26,          // px
-                    falloff: 1.4,          // stronger in core, weaker outside
+                    noiseSpeed: 0.18,      // temporal speed
+                    strength: 24,          // px
+                    falloff: 1.35,         // stronger in core, weaker outside
                 },
 
                 coreGlow: {
                     show: true,
-                    radius: 0.26,          // fraction of min(w,h)
-                    alpha: 0.26,
-                    color: '#0864b3',
+                    radius: 0.24,          // fraction of min(w,h)
+                    alpha: 0.32,
+                    color: '#0a6bcf',
                 },
 
                 // Particle rendering options
                 particle: {
-                    softness: 0.0,         // 0 = hard edges, 1 = soft/blurred edges
-                    spawnRate: 1.0,        // multiplier for particle respawn speed
-                    outwardSpeed: 1.0,     // multiplier for outward movement speed
+                    softness: 0.35,        // 0 = hard edges, 1 = soft/blurred edges
+                    spawnRate: 1.05,       // multiplier for particle respawn speed
+                    outwardSpeed: 1.1,    // multiplier for outward movement speed
+                    lifeScale: 1,        // scales particle life span
+                    dissolveFade: 1,     // exponent for dissolve fade-out speed
                 },
 
                 // Color gradient (t = 0 in the core, t = 1 at the rim)
                 gradient: {
                     colorStops: [
-                        {t: 0.0, color: '#0c6ec9'},
-                        {t: 0.40, color: '#2f94df'},
-                        {t: 1.0, color: '#d9f1ff'},
+                        {t: 0.0, color: '#0b70d6'},
+                        {t: 0.42, color: '#2196f3'},
+                        {t: 1.0, color: '#e5f2ff'},
                     ],
                     alphaStops: [
                         {t: 0.0, a: 1.00},
-                        {t: 0.60, a: 0.65},
+                        {t: 0.55, a: 0.72},
                         {t: 1.0, a: 0.00},
                     ],
-                    tExponent: 1.22, // >1 keeps core darker longer
+                    tExponent: 1.18, // >1 keeps core darker longer
                 },
 
                 layers: {
                     // Dense, larger particles closer to center
                     core: {
                         visible: true,
-                        count: 2400,
-                        radiusFactor: 0.78,      // relative to baseRadius
-                        radialJitter: 0.15,
-                        lifeMin: 1.6,
-                        lifeMax: 3.2,
+                        count: 2600,
+                        radiusFactor: 0.80,      // relative to baseRadius
+                        radialJitter: 0.14,
+                        lifeMin: 1.8,
+                        lifeMax: 3.6,
                         gamma: 2.6,              // >1 => more density in the core
-                        sizeMin: 1.0,
-                        sizeMax: 4.0,
+                        sizeMin: 1.1,
+                        sizeMax: 4.3,
                         sizeScale: 1.0,
                         sizeFalloff: 1.3,
-                        alpha: 0.70,
-                        alphaFalloff: 1.6,
-                        dissolve: {start: 0.64, count: 5, spread: 22, sizeScale: 0.35, alpha: 0.65},
+                        alpha: 0.72,
+                        alphaFalloff: 1.55,
+                        dissolve: {start: 0.55, count: 7, spread: 30, sizeScale: 0.34, alpha: 0.70},
                     },
                     // Fine dust, longer reach
                     dust: {
                         visible: true,
-                        count: 1900,
-                        radiusFactor: 1.40,
-                        radialJitter: 0.38,
-                        lifeMin: 1.0,
-                        lifeMax: 2.2,
-                        gamma: 1.85,
-                        sizeMin: 0.45,
-                        sizeMax: 1.85,
+                        count: 2200,
+                        radiusFactor: 1.55,
+                        radialJitter: 0.40,
+                        lifeMin: 1.1,
+                        lifeMax: 2.6,
+                        gamma: 1.95,
+                        sizeMin: 0.50,
+                        sizeMax: 1.90,
                         sizeScale: 1.0,
                         sizeFalloff: 1.6,
-                        alpha: 0.48,
-                        alphaFalloff: 2.2,
-                        dissolve: {start: 0.50, count: 6, spread: 32, sizeScale: 0.30, alpha: 0.50},
+                        alpha: 0.52,
+                        alphaFalloff: 2.1,
+                        dissolve: {start: 0.46, count: 8, spread: 40, sizeScale: 0.30, alpha: 0.55},
                     },
                     // Sparse crisp specks at the rim - enhanced for dissolution effect
                     specks: {
                         visible: true,
-                        count: 1600,
-                        radiusFactor: 1.85,
-                        radialJitter: 0.60,
-                        lifeMin: 0.8,
-                        lifeMax: 1.6,
-                        gamma: 0.85,
-                        sizeMin: 0.20,
-                        sizeMax: 0.90,
+                        count: 1800,
+                        radiusFactor: 1.95,
+                        radialJitter: 0.62,
+                        lifeMin: 0.9,
+                        lifeMax: 1.7,
+                        gamma: 0.90,
+                        sizeMin: 0.22,
+                        sizeMax: 0.92,
                         sizeScale: 1.0,
                         sizeFalloff: 1.2,
-                        alpha: 0.60,
-                        alphaFalloff: 1.8,
+                        alpha: 0.64,
+                        alphaFalloff: 1.9,
                     },
                 },
             };
@@ -893,6 +937,7 @@
                 this._analyser = null;
             }
             this._timeDomain = null;
+            this._freqData = null;
 
             if (this._micStream) {
                 for (const t of this._micStream.getTracks()) t.stop();
@@ -929,6 +974,7 @@
             this._audioSourceNode = sourceNode;
             this._analyser = analyser;
             this._timeDomain = new Uint8Array(analyser.fftSize);
+            this._freqData = new Uint8Array(analyser.frequencyBinCount);
         }
 
         _rebuildAll() {
@@ -1070,7 +1116,7 @@
             }
 
             // No analyser
-            if (!this._analyser || !this._timeDomain || !this.params.audio.enabled) {
+            if (!this._analyser || !this.params.audio.enabled) {
                 // decay to zero
                 const {release} = this.params.pulse;
                 const k = 1 - Math.exp(-dt / Math.max(1e-3, release));
@@ -1079,15 +1125,42 @@
                 return;
             }
 
-            this._analyser.getByteTimeDomainData(this._timeDomain);
-            let sumSq = 0;
-            const N = this._timeDomain.length;
-            for (let i = 0; i < N; i++) {
-                const v = (this._timeDomain[i] - 128) / 128;
-                sumSq += v * v;
+            let timeRms = 0;
+            if (this._timeDomain) {
+                this._analyser.getByteTimeDomainData(this._timeDomain);
+                let sumSq = 0;
+                const N = this._timeDomain.length;
+                for (let i = 0; i < N; i++) {
+                    const v = (this._timeDomain[i] - 128) / 128;
+                    sumSq += v * v;
+                }
+                timeRms = Math.sqrt(sumSq / Math.max(1, N));
             }
-            const rms = Math.sqrt(sumSq / N);
-            const target = clamp(rms * this.params.audio.gain, 0, 1);
+
+            let freqEnergy = 0;
+            if (this._freqData) {
+                this._analyser.getByteFrequencyData(this._freqData);
+                const sr = this._audioCtx?.sampleRate || 48000;
+                const nyquist = sr * 0.5;
+                const binHz = nyquist / this._freqData.length;
+                const bandRanges = {
+                    low: [0, 200],
+                    mid: [200, 2000],
+                    high: [2000, 8000],
+                    all: [0, nyquist],
+                };
+                const band = bandRanges[this.params.audio.frequencyBand] || bandRanges.all;
+                const start = clamp(Math.floor(band[0] / binHz), 0, this._freqData.length - 1);
+                const end = clamp(Math.ceil(band[1] / binHz), start + 1, this._freqData.length);
+                let sumSq = 0;
+                for (let i = start; i < end; i++) {
+                    const v = this._freqData[i] / 255;
+                    sumSq += v * v;
+                }
+                freqEnergy = Math.sqrt(sumSq / Math.max(1, end - start));
+            }
+
+            const target = clamp((timeRms * 0.6 + freqEnergy * 0.4) * this.params.audio.gain, 0, 1);
             this._rawAmp = target;
 
             const {attack, release} = this.params.pulse;
@@ -1109,6 +1182,7 @@
             // Apply outward speed multiplier from particle settings
             const outwardSpeed = this.params.particle?.outwardSpeed ?? 1.0;
             const spawnRate = this.params.particle?.spawnRate ?? 1.0;
+            const lifeScale = this.params.particle?.lifeScale ?? 1.0;
 
             // Update particles by advancing their "age"; respawn when completed
             const updateLayer = (arr, cfg) => {
@@ -1117,7 +1191,7 @@
                     // Apply outward speed to age progression
                     p.age += dt * speedScale * outwardSpeed;
                     // Apply spawn rate to life duration (higher spawn rate = shorter life = faster respawn)
-                    const effectiveLife = p.life / spawnRate;
+                    const effectiveLife = p.life * lifeScale / spawnRate;
                     if (p.age >= effectiveLife) this._resetParticle(p, cfg, false);
 
                     // Precompute end radius (changes slowly, so OK per frame; you can cache if desired)
@@ -1179,6 +1253,9 @@
             // Get particle softness setting
             const softness = this.params.particle?.softness ?? 0;
             const useSoftness = softness > 0.01;
+            const aspect = this.params.shape.aspectRatio || 1;
+            const ax = aspect >= 1 ? 1 : aspect;
+            const ay = aspect >= 1 ? aspect : 1;
 
             const drawLayer = (arr, cfg) => {
                 // Skip if layer is not visible
@@ -1188,6 +1265,7 @@
                 const nScale = turb.noiseScale;
                 const tSpeed = turb.noiseSpeed;
                 const maxTurb = turb.strength * turbBoost;
+                const dissolveRate = this.params.particle?.dissolveFade ?? 1;
 
                 let lastFill = '';
                 for (let i = 0; i < arr.length; i++) {
@@ -1201,8 +1279,8 @@
                     const r = p.endRadius * tPow;
 
                     // Base radial position
-                    let x = cx + dirx * r;
-                    let y = cy + diry * r;
+                    let x = cx + dirx * r * ax;
+                    let y = cy + diry * r * ay;
 
                     // Turbulence stronger near the core; fades outward
                     const turbFade = Math.pow(1 - t, turb.falloff);
@@ -1254,6 +1332,7 @@
                     if (cfg.dissolve && t > cfg.dissolve.start) {
                         const d = cfg.dissolve;
                         const dissolveT = clamp((t - d.start) / (1 - d.start), 0, 1);
+                        const dissolvePow = Math.pow(dissolveT, dissolveRate);
                         const extra = d.count | 0;
                         // Reduce shadow blur for dissolve particles
                         if (useSoftness) {
@@ -1265,11 +1344,11 @@
                             const angJitter = (h1 - 0.5) * 1.2; // Increased spread angle
                             const dirjx = Math.cos(p.angle + angJitter);
                             const dirjy = Math.sin(p.angle + angJitter);
-                            const drift = d.spread * dissolveT * (0.25 + 0.75 * h2);
+                            const drift = d.spread * dissolvePow * (0.25 + 0.75 * h2);
                             const sx = x + dirjx * drift + (h2 - 0.5) * d.spread * 0.45;
                             const sy = y + dirjy * drift + (h1 - 0.5) * d.spread * 0.45;
                             const sSize = size * d.sizeScale * (0.5 + 0.5 * h1); // Variable size
-                            const sAlpha = alpha * d.alpha * dissolveT * (1 - k * 0.15); // Slower fade
+                            const sAlpha = alpha * d.alpha * dissolvePow * (1 - k * 0.15); // Slower fade
                             if (sAlpha <= 0.001) continue;
                             ctx.globalAlpha = sAlpha;
                             ctx.beginPath();
@@ -1333,13 +1412,14 @@
         for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
         const lastKey = keys[keys.length - 1];
 
+        el.dataset.path = path;
         el.value = obj[lastKey];
         if (valEl) valEl.textContent = format(obj[lastKey]);
 
         el.addEventListener('input', () => {
             const v = Number(el.value);
             if (valEl) valEl.textContent = format(v);
-            
+
             // Reconstruct patch object
             const patch = {};
             let p = patch;
@@ -1369,6 +1449,11 @@
     bindFloat('inp-glowPulse', 'pulse.glowInfluence');
     bindFloat('inp-attack', 'pulse.attack');
     bindFloat('inp-release', 'pulse.release');
+    const bandSelect = document.getElementById('sel-band');
+    bandSelect.value = viz.params.audio.frequencyBand;
+    bandSelect.addEventListener('change', () => {
+        viz.setParams({audio: {frequencyBand: bandSelect.value}});
+    });
 
     // --- Bind Shape ---
     bindFloat('inp-lobes', 'shape.lobeCount', v => v.toFixed(0));
@@ -1377,6 +1462,7 @@
     bindFloat('inp-secLobes', 'shape.secondaryLobeCount', v => v.toFixed(0));
     bindFloat('inp-secLobeAmp', 'shape.secondaryAmplitude');
     bindFloat('inp-radius', 'baseRadius');
+    bindFloat('inp-aspect', 'shape.aspectRatio');
     bindFloat('inp-irregular', 'shape.irregularity');
     bindFloat('inp-rot', 'shape.rotationSpeed');
 
@@ -1412,17 +1498,21 @@
     bindFloat('inp-softness', 'particle.softness');
     bindFloat('inp-spawnRate', 'particle.spawnRate');
     bindFloat('inp-outwardSpeed', 'particle.outwardSpeed');
+    bindFloat('inp-lifeScale', 'particle.lifeScale');
+    bindFloat('inp-dissolveFade', 'particle.dissolveFade');
 
     // Dissolve controls
     const updateDissolve = () => {
         const count = Number(document.getElementById('inp-dissolveCount').value);
         const spread = Number(document.getElementById('inp-dissolveSpread').value);
+        const start = Number(document.getElementById('inp-dissolveStart').value);
         document.getElementById('val-dissolveCount').textContent = count.toFixed(0);
         document.getElementById('val-dissolveSpread').textContent = spread.toFixed(0);
+        document.getElementById('val-dissolveStart').textContent = start.toFixed(2);
         viz.setParams({
             layers: {
-                core: { dissolve: { count, spread } },
-                dust: { dissolve: { count, spread: spread * 1.2 } },
+                core: {dissolve: {count, spread, start}},
+                dust: {dissolve: {count, spread: spread * 1.2, start}},
             }
         });
     };
@@ -1430,8 +1520,11 @@
     document.getElementById('val-dissolveCount').textContent = defaults.layers.core.dissolve.count.toFixed(0);
     document.getElementById('inp-dissolveSpread').value = defaults.layers.core.dissolve.spread;
     document.getElementById('val-dissolveSpread').textContent = defaults.layers.core.dissolve.spread.toFixed(0);
+    document.getElementById('inp-dissolveStart').value = defaults.layers.core.dissolve.start;
+    document.getElementById('val-dissolveStart').textContent = defaults.layers.core.dissolve.start.toFixed(2);
     document.getElementById('inp-dissolveCount').addEventListener('input', updateDissolve);
     document.getElementById('inp-dissolveSpread').addEventListener('input', updateDissolve);
+    document.getElementById('inp-dissolveStart').addEventListener('input', updateDissolve);
 
     bindFloat('inp-turb', 'turbulence.strength', v => v.toFixed(0));
     bindFloat('inp-turbScale', 'turbulence.noiseScale', v => v.toFixed(3));
@@ -1443,16 +1536,16 @@
 
     // --- Bind Layer Visibility ---
     document.getElementById('chk-coreVisible').addEventListener('change', (e) => {
-        viz.setParams({ layers: { core: { visible: e.target.checked } } });
+        viz.setParams({layers: {core: {visible: e.target.checked}}});
     });
     document.getElementById('chk-dustVisible').addEventListener('change', (e) => {
-        viz.setParams({ layers: { dust: { visible: e.target.checked } } });
+        viz.setParams({layers: {dust: {visible: e.target.checked}}});
     });
     document.getElementById('chk-specksVisible').addEventListener('change', (e) => {
-        viz.setParams({ layers: { specks: { visible: e.target.checked } } });
+        viz.setParams({layers: {specks: {visible: e.target.checked}}});
     });
     document.getElementById('chk-glowVisible').addEventListener('change', (e) => {
-        viz.setParams({ coreGlow: { show: e.target.checked } });
+        viz.setParams({coreGlow: {show: e.target.checked}});
     });
 
     // --- Bind Colors ---
@@ -1466,14 +1559,17 @@
         const c1 = document.getElementById('col-core').value;
         const c2 = document.getElementById('col-mid').value;
         const c3 = document.getElementById('col-edge').value;
-        
+        const stops = viz.params.gradient.colorStops || [];
+        const midT = stops[1]?.t ?? 0.42;
+        const edgeT = stops[stops.length - 1]?.t ?? 1.0;
+
         viz.setParams({
-            coreGlow: { color: c1 },
+            coreGlow: {color: c1},
             gradient: {
                 colorStops: [
-                    {t: 0.0, color: c1},
-                    {t: 0.40, color: c2},
-                    {t: 1.0, color: c3},
+                    {t: stops[0]?.t ?? 0.0, color: c1},
+                    {t: midT, color: c2},
+                    {t: edgeT, color: c3},
                 ]
             }
         });
@@ -1512,14 +1608,53 @@
     });
 
     // --- Presets ---
+    const getPathValue = (obj, path) => {
+        const keys = path.split('.');
+        let cur = obj;
+        for (const k of keys) {
+            if (!cur || typeof cur !== 'object' || !(k in cur)) return undefined;
+            cur = cur[k];
+        }
+        return cur;
+    };
+
     const applyPreset = (params) => {
         viz.setParams(params);
-        // Update all UI controls to reflect new values
-        document.querySelectorAll('input[type="range"]').forEach(input => {
-            const path = input.id.replace('inp-', '');
-            // Trigger input event to update displays
+        // Update all UI controls to reflect new values without overriding the preset
+        document.querySelectorAll('input[type="range"][data-path]').forEach(input => {
+            const v = getPathValue(viz.params, input.dataset.path);
+            if (v !== undefined) input.value = v;
             input.dispatchEvent(new Event('input'));
         });
+
+        // Density scales
+        const densityVal = clamp(viz.params.layers.core.count / baseCounts.core, 0.1, 2.0);
+        const speckVal = clamp(viz.params.layers.specks.count / Math.max(1, baseCounts.specks * densityVal), 0.2, 2.5);
+        document.getElementById('inp-density').value = densityVal;
+        document.getElementById('inp-speckDensity').value = speckVal;
+        updateDensity();
+
+        // Dissolve params
+        document.getElementById('inp-dissolveCount').value = viz.params.layers.core.dissolve.count;
+        document.getElementById('inp-dissolveSpread').value = viz.params.layers.core.dissolve.spread;
+        document.getElementById('inp-dissolveStart').value = viz.params.layers.core.dissolve.start;
+        updateDissolve();
+
+        // Selects & checkboxes
+        bandSelect.value = viz.params.audio.frequencyBand;
+        document.getElementById('chk-coreVisible').checked = viz.params.layers.core.visible !== false;
+        document.getElementById('chk-dustVisible').checked = viz.params.layers.dust.visible !== false;
+        document.getElementById('chk-specksVisible').checked = viz.params.layers.specks.visible !== false;
+        document.getElementById('chk-glowVisible').checked = viz.params.coreGlow.show !== false;
+
+        // Colors
+        const gStops = viz.params.gradient?.colorStops || [];
+        if (gStops.length >= 3) {
+            document.getElementById('col-core').value = gStops[0].color;
+            document.getElementById('col-mid').value = gStops[1].color;
+            document.getElementById('col-edge').value = gStops[gStops.length - 1].color;
+        }
+        document.getElementById('col-bg').value = viz.params.background || '#ffffff';
         document.querySelectorAll('input[type="color"]').forEach(input => {
             input.dispatchEvent(new Event('input'));
         });
@@ -1532,9 +1667,9 @@
     document.getElementById('preset-gentle').addEventListener('click', () => {
         applyPreset({
             baseRadius: 0.28,
-            pulse: { strength: 0.15, speedInfluence: 0.5, turbulenceInfluence: 0.4 },
-            shape: { lobeCount: 5, lobeAmplitude: 0.25, irregularity: 0.15, rotationSpeed: 0.1 },
-            turbulence: { strength: 15 },
+            pulse: {strength: 0.15, speedInfluence: 0.5, turbulenceInfluence: 0.4},
+            shape: {lobeCount: 5, lobeAmplitude: 0.25, irregularity: 0.15, rotationSpeed: 0.1},
+            turbulence: {strength: 15},
             gradient: {
                 colorStops: [
                     {t: 0.0, color: '#1e88e5'},
@@ -1548,9 +1683,9 @@
     document.getElementById('preset-energetic').addEventListener('click', () => {
         applyPreset({
             baseRadius: 0.40,
-            pulse: { strength: 0.45, speedInfluence: 1.2, turbulenceInfluence: 1.5, sizeInfluence: 0.6 },
-            shape: { lobeCount: 9, lobeAmplitude: 0.50, irregularity: 0.40, rotationSpeed: -0.3 },
-            turbulence: { strength: 40 },
+            pulse: {strength: 0.45, speedInfluence: 1.2, turbulenceInfluence: 1.5, sizeInfluence: 0.6},
+            shape: {lobeCount: 9, lobeAmplitude: 0.50, irregularity: 0.40, rotationSpeed: -0.3},
+            turbulence: {strength: 40},
             gradient: {
                 colorStops: [
                     {t: 0.0, color: '#0d47a1'},
@@ -1564,10 +1699,10 @@
     document.getElementById('preset-minimal').addEventListener('click', () => {
         applyPreset({
             baseRadius: 0.25,
-            pulse: { strength: 0.10, speedInfluence: 0.3, turbulenceInfluence: 0.2 },
-            shape: { lobeCount: 0, lobeAmplitude: 0, irregularity: 0.05, rotationSpeed: 0 },
-            turbulence: { strength: 8 },
-            coreGlow: { alpha: 0.15 },
+            pulse: {strength: 0.10, speedInfluence: 0.3, turbulenceInfluence: 0.2},
+            shape: {lobeCount: 0, lobeAmplitude: 0, irregularity: 0.05, rotationSpeed: 0},
+            turbulence: {strength: 8},
+            coreGlow: {alpha: 0.15},
             gradient: {
                 colorStops: [
                     {t: 0.0, color: '#42a5f5'},
